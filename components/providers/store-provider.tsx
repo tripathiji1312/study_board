@@ -133,6 +133,7 @@ export interface Resource {
 
 export interface Exam {
     id: number
+    title: string
     subjectId: string
     type: "CAT1" | "CAT2" | "FAT" | "Lab"
     date: string
@@ -276,7 +277,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             const settingsData = settingsRes.ok ? await settingsRes.json() : null
             const semsData = semsRes.ok ? await semsRes.json() : []
             const todosData = todosRes.ok ? await todosRes.json() : []
-            const assignsData = assignsRes.ok ? await assignsRes.json() : []
+            const rawAssigns = assignsRes.ok ? await assignsRes.json() : []
+            // Map backend fields (subject, due) to frontend (course, dueDate)
+            const assignsData = rawAssigns.map((a: any) => ({
+                ...a,
+                course: a.subject,
+                dueDate: a.due
+            }))
             const projectsData = projectsRes.ok ? await projectsRes.json() : []
             const subjectsData = subjectsRes.ok ? await subjectsRes.json() : []
             const scheduleData = scheduleRes.ok ? await scheduleRes.json() : []
@@ -455,17 +462,35 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const addAssignment = async (assignment: Omit<Assignment, "id">) => {
         const tempId = Date.now()
         setAssignments([{ ...assignment, id: tempId, status: "Pending" }, ...assignments])
-        const res = await fetch('/api/assignments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(assignment) })
+
+        // Map frontend fields to backend
+        const backendData = {
+            ...assignment,
+            subject: assignment.course,
+            due: assignment.dueDate
+        }
+
+        const res = await fetch('/api/assignments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(backendData) })
         if (res.ok) {
             const saved = await res.json()
-            setAssignments(prev => prev.map(a => a.id === tempId ? saved : a))
+            // Map back to frontend
+            const savedFrontend = { ...saved, course: saved.subject, dueDate: saved.due }
+            setAssignments(prev => prev.map(a => a.id === tempId ? savedFrontend : a))
             toast.success("Assignment created")
         }
     }
 
     const updateAssignment = async (assignment: Assignment) => {
         setAssignments(prev => prev.map(a => a.id === assignment.id ? assignment : a))
-        await fetch('/api/assignments', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(assignment) })
+
+        // Map frontend fields to backend
+        const backendData = {
+            ...assignment,
+            subject: assignment.course,
+            due: assignment.dueDate
+        }
+
+        await fetch('/api/assignments', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(backendData) })
         toast.success("Assignment updated")
     }
 

@@ -2,342 +2,249 @@
 
 import * as React from "react"
 import { Shell } from "@/components/ui/shell"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
 import { Calendar } from "@/components/ui/calendar"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import {
-    Dialog,
-    DialogContent,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog"
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
-import {
-    IconPlus,
-    IconTrash,
-    IconCalendarEvent,
-    IconClock,
-    IconBook,
-    IconFlask,
-    IconNotebook,
-    IconTarget,
-    IconMapPin,
-    IconAlertCircle
-} from "@tabler/icons-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useStore } from "@/components/providers/store-provider"
-import { format, isSameDay, isToday, isFuture, parseISO, startOfDay, addDays } from "date-fns"
-import { motion, AnimatePresence } from "framer-motion"
-
-const TYPE_CONFIG: Record<string, { icon: typeof IconBook, color: string, bg: string }> = {
-    "Class": { icon: IconBook, color: "text-blue-500", bg: "bg-blue-500" },
-    "Lab": { icon: IconFlask, color: "text-purple-500", bg: "bg-purple-500" },
-    "Exam": { icon: IconAlertCircle, color: "text-red-500", bg: "bg-red-500" },
-    "Study": { icon: IconNotebook, color: "text-green-500", bg: "bg-green-500" },
-    "Personal": { icon: IconTarget, color: "text-orange-500", bg: "bg-orange-500" },
-}
+import { format, isSameDay, parseISO, startOfDay } from "date-fns"
+import {
+    IconCalendar,
+    IconClock,
+    IconSchool,
+    IconFlag,
+    IconAlertTriangle,
+    IconCheck,
+    IconPlus,
+    IconMapPin
+} from "@tabler/icons-react"
+import { Button } from "@/components/ui/button"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Checkbox } from "@/components/ui/checkbox"
+import { cn } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
 
 export default function SchedulePage() {
-    const { schedule, subjects, currentSemester, addScheduleEvent, deleteScheduleEvent } = useStore()
-    const [selectedDate, setSelectedDate] = React.useState<Date>(new Date())
-    const [isDialogOpen, setIsDialogOpen] = React.useState(false)
+    const { schedule, assignments, exams, todos, toggleTodo } = useStore()
+    const [date, setDate] = React.useState<Date | undefined>(new Date())
 
-    // Form State
-    const [title, setTitle] = React.useState("")
-    const [type, setType] = React.useState("Class")
-    const [time, setTime] = React.useState("")
-    const [duration, setDuration] = React.useState("1h")
-    const [location, setLocation] = React.useState("")
-    const [subjectId, setSubjectId] = React.useState("")
+    // Helper: Is a date "busy"? (Has any event)
+    const isDayBusy = (day: Date) => {
+        const dayName = format(day, "EEEE")
+        const dateStr = format(day, "yyyy-MM-dd")
 
-    const currentSubjects = subjects.filter(s => s.semesterId === currentSemester?.id)
+        const hasClass = schedule.some(ev => ev.day === dayName || ev.day === dateStr)
+        const hasAssignment = assignments.some(a => a.dueDate && isSameDay(parseISO(a.dueDate), day))
+        const hasExam = exams.some(e => isSameDay(new Date(e.date), day))
+        const hasTodo = todos.some(t => t.category === "today" && isSameDay(day, new Date())) // Simple todo logic for now
 
-    // Get events for selected date
-    const selectedDateStr = format(selectedDate, "yyyy-MM-dd")
-    const eventsForSelectedDate = schedule
-        .filter(e => e.day === selectedDateStr || e.day === format(selectedDate, "EEEE"))
-        .sort((a, b) => a.time.localeCompare(b.time))
+        return hasClass || hasAssignment || hasExam || hasTodo
+    }
 
-    // Get upcoming events (next 7 days)
-    const upcomingEvents = schedule
-        .filter(e => {
-            try {
-                const eventDate = parseISO(e.day)
-                return isFuture(eventDate) || isToday(eventDate)
-            } catch {
-                return false // Weekly recurring events
+    // Helper: Does day have exam? (For heavy styling)
+    const isExamDay = (day: Date) => {
+        return exams.some(e => isSameDay(new Date(e.date), day))
+    }
+
+    const selectedDate = date || new Date()
+
+    // Get Items for Selected Date
+    const getItemsForDate = (viewDate: Date) => {
+        const items = []
+
+        const dayName = format(viewDate, "EEEE")
+        const dateStr = format(viewDate, "yyyy-MM-dd")
+
+        // 1. Classes
+        schedule.forEach(ev => {
+            if (ev.day === dayName || ev.day === dateStr) {
+                items.push({
+                    id: `ev-${ev.id}`,
+                    type: "Class",
+                    title: ev.title,
+                    time: ev.startTime,
+                    endTime: ev.endTime,
+                    subtitle: ev.location,
+                    original: ev
+                })
             }
         })
-        .sort((a, b) => a.day.localeCompare(b.day))
-        .slice(0, 5)
 
-    // Dates with events (for calendar highlighting)
-    const datesWithEvents = React.useMemo(() => {
-        return schedule
-            .map(e => {
-                try {
-                    return parseISO(e.day)
-                } catch {
-                    return null
-                }
-            })
-            .filter(Boolean) as Date[]
-    }, [schedule])
-
-    const handleAdd = (e: React.FormEvent) => {
-        e.preventDefault()
-        if (!title || !time) return
-
-        const selectedSubject = subjects.find(s => s.id === subjectId)
-        const eventTitle = selectedSubject && (type === "Class" || type === "Lab") ? selectedSubject.name : title
-
-        addScheduleEvent({
-            title: eventTitle,
-            type,
-            time,
-            duration,
-            location: location || undefined,
-            day: format(selectedDate, "yyyy-MM-dd"),
-            subjectId: subjectId && subjectId !== "none" ? subjectId : undefined
+        // 2. Assignments
+        assignments.forEach(a => {
+            if (a.dueDate && isSameDay(parseISO(a.dueDate), viewDate)) {
+                items.push({
+                    id: `as-${a.id}`,
+                    type: "Assignment",
+                    title: a.title,
+                    time: "23:59",
+                    subtitle: a.course,
+                    priority: a.priority,
+                    status: a.status,
+                    original: a
+                })
+            }
         })
 
-        setTitle("")
-        setTime("")
-        setDuration("1h")
-        setLocation("")
-        setSubjectId("")
-        setIsDialogOpen(false)
+        // 3. Exams
+        exams.forEach(e => {
+            if (isSameDay(new Date(e.date), viewDate)) {
+                items.push({
+                    id: `ex-${e.id}`,
+                    type: "Exam",
+                    title: e.title,
+                    time: format(new Date(e.date), "HH:mm"),
+                    subtitle: e.subjectId,
+                    original: e
+                })
+            }
+        })
+
+        // 4. Todos (Only if selected date is TODAY, or maybe implement date-based todos later)
+        if (isSameDay(viewDate, new Date())) {
+            todos.filter(t => t.category === "today").forEach(t => {
+                items.push({
+                    id: `td-${t.id}`,
+                    type: "Todo",
+                    title: t.text,
+                    subtitle: "Task",
+                    original: t
+                })
+            })
+        }
+
+        return items.sort((a, b) => (a.time || "23:59").localeCompare(b.time || "23:59"))
     }
 
-    const EventCard = ({ event, showDate = false }: { event: typeof schedule[0], showDate?: boolean }) => {
-        const config = TYPE_CONFIG[event.type] || TYPE_CONFIG["Personal"]
-        const Icon = config.icon
-
-        return (
-            <motion.div
-                layout
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-all group"
-            >
-                <div className={`w-1 h-12 rounded-full ${config.bg}`} />
-                <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{event.title}</p>
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mt-1">
-                        {showDate && (
-                            <span className="font-medium">
-                                {(() => {
-                                    try {
-                                        return format(parseISO(event.day), "MMM d")
-                                    } catch {
-                                        return event.day
-                                    }
-                                })()}
-                            </span>
-                        )}
-                        <span className="flex items-center gap-1">
-                            <IconClock className="w-3 h-3" /> {event.time}
-                        </span>
-                        <span>·</span>
-                        <span>{event.duration}</span>
-                        {event.location && (
-                            <>
-                                <span>·</span>
-                                <span className="flex items-center gap-1">
-                                    <IconMapPin className="w-3 h-3" /> {event.location}
-                                </span>
-                            </>
-                        )}
-                    </div>
-                </div>
-                <Badge variant="outline" className={`text-xs ${config.color}`}>{event.type}</Badge>
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="opacity-0 group-hover:opacity-100 text-destructive shrink-0 h-8 w-8"
-                    onClick={() => deleteScheduleEvent(event.id)}
-                >
-                    <IconTrash className="w-4 h-4" />
-                </Button>
-            </motion.div>
-        )
-    }
+    const events = getItemsForDate(selectedDate)
 
     return (
         <Shell>
-            <div className="flex flex-col gap-6">
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight">Calendar</h1>
-                        <p className="text-muted-foreground">Your personal academic calendar</p>
-                    </div>
-                    <Button onClick={() => setIsDialogOpen(true)}>
-                        <IconPlus className="w-4 h-4 mr-2" /> Add Event
-                    </Button>
-                </div>
+            <div className="max-w-6xl mx-auto h-[calc(100vh-8rem)] flex flex-col md:flex-row gap-6">
 
-                <div className="grid gap-6 lg:grid-cols-3">
-                    {/* Calendar */}
-                    <Card className="lg:col-span-2">
-                        <CardContent className="p-4">
-                            <Calendar
-                                mode="single"
-                                selected={selectedDate}
-                                onSelect={(date) => date && setSelectedDate(date)}
-                                className="w-full"
-                                modifiers={{
-                                    hasEvent: datesWithEvents
-                                }}
-                                modifiersStyles={{
-                                    hasEvent: {
-                                        fontWeight: "bold",
-                                        textDecoration: "underline",
-                                        textDecorationColor: "hsl(var(--primary))"
-                                    }
-                                }}
-                            />
-                        </CardContent>
-                    </Card>
-
-                    {/* Upcoming Events */}
-                    <Card>
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-lg flex items-center gap-2">
-                                <IconCalendarEvent className="w-5 h-5" />
-                                Upcoming
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <ScrollArea className="h-[280px]">
-                                {upcomingEvents.length > 0 ? (
-                                    <div className="space-y-2">
-                                        {upcomingEvents.map(event => (
-                                            <EventCard key={event.id} event={event} showDate />
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="py-8 text-center text-muted-foreground">
-                                        <p className="text-sm">No upcoming events</p>
-                                    </div>
-                                )}
-                            </ScrollArea>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                {/* Selected Date Events */}
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-lg">
-                            {format(selectedDate, "EEEE, MMMM d, yyyy")}
-                            {isToday(selectedDate) && (
-                                <Badge variant="secondary" className="ml-2">Today</Badge>
-                            )}
-                        </CardTitle>
+                {/* LEFT: Calendar */}
+                <Card className="w-full md:w-[380px] flex flex-col shadow-md">
+                    <CardHeader>
+                        <CardTitle>Calendar</CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        {eventsForSelectedDate.length > 0 ? (
-                            <div className="space-y-2">
-                                <AnimatePresence>
-                                    {eventsForSelectedDate.map(event => (
-                                        <EventCard key={event.id} event={event} />
-                                    ))}
-                                </AnimatePresence>
-                            </div>
-                        ) : (
-                            <div className="py-8 text-center">
-                                <p className="text-muted-foreground mb-3">No events on this day</p>
-                                <Button variant="outline" size="sm" onClick={() => setIsDialogOpen(true)}>
-                                    <IconPlus className="w-4 h-4 mr-1" /> Add Event
-                                </Button>
-                            </div>
-                        )}
+                    <CardContent className="flex-1 flex justify-center p-0">
+                        <Calendar
+                            mode="single"
+                            selected={date}
+                            onSelect={setDate}
+                            className="rounded-md border-0"
+                            modifiers={{
+                                busy: (day) => isDayBusy(day),
+                                exam: (day) => isExamDay(day)
+                            }}
+                            modifiersStyles={{
+                                busy: { fontWeight: "bold", textDecoration: "underline", textDecorationColor: "hsl(var(--primary))" },
+                                exam: { color: "hsl(var(--destructive))", fontWeight: "bold" }
+                            }}
+                        />
                     </CardContent>
+                    <div className="p-4 border-t bg-muted/20 space-y-2">
+                        <h4 className="font-medium text-sm">Key</h4>
+                        <div className="flex gap-4 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-primary" /> Busy</div>
+                            <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-red-500" /> Exam</div>
+                        </div>
+                    </div>
                 </Card>
 
-                {/* Add Dialog */}
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogContent className="max-w-md">
-                        <DialogHeader>
-                            <DialogTitle>Add Event — {format(selectedDate, "MMM d")}</DialogTitle>
-                        </DialogHeader>
-                        <form onSubmit={handleAdd} className="space-y-4">
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-2">
-                                    <Label>Type</Label>
-                                    <Select value={type} onValueChange={setType}>
-                                        <SelectTrigger><SelectValue /></SelectTrigger>
-                                        <SelectContent>
-                                            {Object.keys(TYPE_CONFIG).map(t => (
-                                                <SelectItem key={t} value={t}>{t}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                {(type === "Class" || type === "Lab") && currentSubjects.length > 0 && (
-                                    <div className="space-y-2">
-                                        <Label>Subject</Label>
-                                        <Select value={subjectId} onValueChange={setSubjectId}>
-                                            <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="none">None</SelectItem>
-                                                {currentSubjects.map(s => (
-                                                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                )}
-                            </div>
+                {/* RIGHT: Agenda Details */}
+                <Card className="flex-1 flex flex-col shadow-md overflow-hidden">
+                    <div className="p-6 border-b flex justify-between items-center bg-card">
+                        <div>
+                            <h2 className="text-2xl font-bold">{format(selectedDate, "EEEE")}</h2>
+                            <p className="text-muted-foreground">{format(selectedDate, "MMMM do, yyyy")}</p>
+                        </div>
+                        <Button>
+                            <IconPlus className="w-4 h-4 mr-2" /> Add Event
+                        </Button>
+                    </div>
 
-                            <div className="space-y-2">
-                                <Label>Title</Label>
-                                <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Event name" required={!subjectId || subjectId === "none"} />
-                            </div>
+                    <ScrollArea className="flex-1 bg-muted/5 p-6">
+                        {events.length > 0 ? (
+                            <div className="space-y-6 max-w-3xl">
+                                {events.map((item, i) => {
+                                    const isCompleted = item.type === "Todo" && item.original.completed
 
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-2">
-                                    <Label>Time</Label>
-                                    <Input type="time" value={time} onChange={e => setTime(e.target.value)} required />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Duration</Label>
-                                    <Select value={duration} onValueChange={setDuration}>
-                                        <SelectTrigger><SelectValue /></SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="30m">30 min</SelectItem>
-                                            <SelectItem value="1h">1 hour</SelectItem>
-                                            <SelectItem value="1.5h">1.5 hours</SelectItem>
-                                            <SelectItem value="2h">2 hours</SelectItem>
-                                            <SelectItem value="3h">3 hours</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
+                                    return (
+                                        <div key={item.id} className="flex gap-4 group">
+                                            {/* Time Column */}
+                                            <div className="w-16 flex flex-col items-end pt-1">
+                                                <span className="font-mono text-sm font-semibold text-foreground/80">
+                                                    {item.time || "All Day"}
+                                                </span>
+                                                {item.endTime && (
+                                                    <span className="text-xs text-muted-foreground">{item.endTime}</span>
+                                                )}
+                                            </div>
 
-                            <div className="space-y-2">
-                                <Label>Location</Label>
-                                <Input value={location} onChange={e => setLocation(e.target.value)} placeholder="Room / Building" />
-                            </div>
+                                            {/* Visual Line */}
+                                            <div className="relative flex flex-col items-center">
+                                                <div className={cn(
+                                                    "w-3 h-3 rounded-full border-2 z-10 bg-background transition-colors",
+                                                    item.type === "Exam" ? "border-red-500 bg-red-500" :
+                                                        item.type === "Assignment" ? "border-orange-500 bg-orange-500" :
+                                                            item.type === "Class" ? "border-primary bg-primary" :
+                                                                "border-slate-400 bg-slate-400"
+                                                )} />
+                                                {i !== events.length - 1 && (
+                                                    <div className="w-0.5 bg-border flex-1 my-1" />
+                                                )}
+                                            </div>
 
-                            <DialogFooter>
-                                <Button type="submit" className="w-full">Add Event</Button>
-                            </DialogFooter>
-                        </form>
-                    </DialogContent>
-                </Dialog>
+                                            {/* Card Content */}
+                                            <div className="flex-1 pb-6">
+                                                <div className={cn(
+                                                    "rounded-xl border bg-card p-4 shadow-sm transition-all hover:shadow-md",
+                                                    item.type === "Exam" && "border-l-4 border-l-red-500 bg-red-50/50 dark:bg-red-900/10",
+                                                    item.type === "Assignment" && "border-l-4 border-l-orange-500 bg-orange-50/50 dark:bg-orange-900/10",
+                                                    isCompleted && "opacity-60 grayscale"
+                                                )}>
+                                                    <div className="flex justify-between items-start">
+                                                        <div>
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <Badge variant="outline" className="text-[10px] h-5">
+                                                                    {item.type}
+                                                                </Badge>
+                                                                {item.subtitle && (
+                                                                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                                                        {item.type === "Class" && <IconMapPin className="w-3 h-3" />}
+                                                                        {item.subtitle}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <h3 className={cn("text-lg font-semibold", isCompleted && "line-through")}>
+                                                                {item.title}
+                                                            </h3>
+                                                        </div>
+
+                                                        {item.type === "Todo" && (
+                                                            <Checkbox
+                                                                checked={isCompleted}
+                                                                onCheckedChange={(checked) => {
+                                                                    const todoId = String(item.id).replace("td-", "")
+                                                                    toggleTodo(todoId, !!checked)
+                                                                }}
+                                                            />
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        ) : (
+                            <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
+                                <IconCalendar className="w-16 h-16 mb-4 opacity-20" />
+                                <h3 className="text-xl font-medium">Clear Schedule</h3>
+                                <p>No events planned for this day.</p>
+                            </div>
+                        )}
+                    </ScrollArea>
+                </Card>
             </div>
         </Shell>
     )

@@ -28,6 +28,7 @@ import { StudyGraph } from "@/components/dashboard/study-graph"
 import { ExamWidget } from "@/components/dashboard/exam-widget"
 import { MoodWidget } from "@/components/dashboard/mood-widget"
 import { AmbienceWidget } from "@/components/dashboard/ambience-widget"
+import { SmartScheduleWidget } from "@/components/dashboard/smart-schedule"
 import { format, isToday, parseISO, differenceInDays } from "date-fns"
 
 const RESOURCE_ICONS: Record<string, typeof IconLink> = {
@@ -274,67 +275,10 @@ export default function DashboardPage() {
                     {/* Exam Countdown */}
                     <ExamWidget />
 
-                    {/* Schedule */}
-                    <Card className="flex flex-col h-[220px]">
-                        <CardHeader className="pb-2 flex flex-row items-center justify-between flex-shrink-0">
-                            <CardTitle className="text-sm font-medium">Today's Schedule</CardTitle>
-                            <Button variant="ghost" size="sm" asChild className="h-8 text-xs">
-                                <Link href="/schedule">View All</Link>
-                            </Button>
-                        </CardHeader>
-                        <CardContent className="flex-1 overflow-hidden">
-                            {todayEvents.length > 0 ? (
-                                <ScrollArea className="h-full pr-2">
-                                    <div className="space-y-3">
-                                        {todayEvents.map(event => (
-                                            <div key={event.id} className="flex items-center gap-3">
-                                                <span className="text-xs font-mono text-muted-foreground w-12">{event.startTime}</span>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-sm font-medium truncate">{event.title}</p>
-                                                    <p className="text-xs text-muted-foreground">{event.type}</p>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </ScrollArea>
-                            ) : (
-                                <div className="h-full flex items-center justify-center">
-                                    <p className="text-sm text-muted-foreground">No events today</p>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    {/* Tasks */}
-                    <Card className="flex flex-col h-[220px]">
-                        <CardHeader className="pb-2 flex flex-row items-center justify-between flex-shrink-0">
-                            <CardTitle className="text-sm font-medium">
-                                Tasks
-                                {completedToday > 0 && <span className="text-muted-foreground ml-1">({completedToday} done)</span>}
-                            </CardTitle>
-                            <Button variant="ghost" size="sm" asChild className="h-8 text-xs">
-                                <Link href="/todos">View All</Link>
-                            </Button>
-                        </CardHeader>
-                        <CardContent className="flex-1 overflow-hidden">
-                            {todayTodos.length > 0 ? (
-                                <ScrollArea className="h-full pr-2">
-                                    <div className="space-y-3">
-                                        {todayTodos.map(todo => (
-                                            <div key={todo.id} className="flex items-center gap-3">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                                                <p className="text-sm truncate">{todo.text}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </ScrollArea>
-                            ) : (
-                                <div className="h-full flex items-center justify-center">
-                                    <p className="text-sm text-muted-foreground">All done!</p>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
+                    {/* Smart Schedule (Replaces Schedule & Task List) */}
+                    <div className="md:col-span-1 lg:col-span-1 row-span-2">
+                        <SmartScheduleWidget />
+                    </div>
 
                     {/* Mood Tracker */}
                     <MoodWidget />
