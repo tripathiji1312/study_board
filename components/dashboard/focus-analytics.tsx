@@ -19,8 +19,10 @@ export function FocusAnalytics() {
 
     // 2. Highest Daily Focus (Record)
     const dailyTotals = logs.reduce((acc, log) => {
-        const date = log.date.split('T')[0]
-        acc[date] = (acc[date] || 0) + (log.studyTime || 0)
+        if (log.date) {
+            const date = log.date.split('T')[0]
+            acc[date] = (acc[date] || 0) + (log.studyTime || 0)
+        }
         return acc
     }, {} as Record<string, number>)
     const maxMinutes = Math.max(0, ...Object.values(dailyTotals))

@@ -596,7 +596,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
     const addDailyLog = async (log: Omit<DailyLog, "id">) => {
         try {
-            const res = await fetch('/api/focus/logs', {
+            const res = await fetch('/api/logs', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(log)

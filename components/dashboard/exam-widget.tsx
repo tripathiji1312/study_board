@@ -68,7 +68,7 @@ export function ExamWidget() {
     }
 
     return (
-        <Card className="flex flex-col h-full">
+        <Card className="flex flex-col h-full shadow-sm hover:shadow-md transition-shadow duration-200">
             <CardHeader className="pb-2 flex flex-row items-center justify-between">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                     <IconClock className="w-4 h-4" /> Exam Countdown

@@ -93,10 +93,13 @@ export function AppSidebar({ className }: SidebarProps) {
             {/* Header */}
             <div className="flex h-14 items-center justify-between border-b px-4">
                 <Link className="flex items-center gap-2 font-bold text-lg" href="/">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
-                        <IconSchool className="w-4 h-4 text-white" />
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-primary to-purple-600 flex items-center justify-center shadow-lg shadow-primary/20 ring-1 ring-white/10 group-hover:scale-105 transition-transform">
+                        <IconSchool className="w-5 h-5 text-white" />
                     </div>
-                    <span>StudyHub</span>
+                    <span className="text-xl tracking-tight">
+                        <span className="font-bold text-foreground">Study</span>
+                        <span className="font-light text-muted-foreground">Board</span>
+                    </span>
                 </Link>
                 <ModeToggle />
             </div>

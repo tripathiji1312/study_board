@@ -50,7 +50,7 @@ export function SpotifyWidget() {
 
     if (loading) {
         return (
-            <Card>
+            <Card className="h-full flex flex-col justify-center">
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium flex items-center gap-2">
                         <IconBrandSpotify className="w-4 h-4 text-[#1DB954]" />
@@ -73,7 +73,7 @@ export function SpotifyWidget() {
     // Not connected - show connect button
     if (!data?.connected) {
         return (
-            <Card>
+            <Card className="h-full flex flex-col justify-center">
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium flex items-center gap-2">
                         <IconBrandSpotify className="w-4 h-4 text-[#1DB954]" />
@@ -101,7 +101,7 @@ export function SpotifyWidget() {
     // Connected but nothing playing
     if (!data.isPlaying || !data.track) {
         return (
-            <Card>
+            <Card className="h-full flex flex-col justify-center">
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium flex items-center gap-2">
                         <IconBrandSpotify className="w-4 h-4 text-[#1DB954]" />
@@ -125,7 +125,7 @@ export function SpotifyWidget() {
 
     // Playing!
     return (
-        <Card className="overflow-hidden">
+        <Card className="overflow-hidden h-full flex flex-col justify-center">
             <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                     <IconBrandSpotify className="w-4 h-4 text-[#1DB954]" />
