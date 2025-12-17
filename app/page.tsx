@@ -228,8 +228,7 @@ export default function DashboardPage() {
                     </Link>
                 </div>
 
-                {/* Study Graph */}
-                <StudyGraph />
+
 
                 {/* Quick Add */}
                 <form onSubmit={handleQuickAdd} className="flex gap-2">
@@ -382,6 +381,9 @@ export default function DashboardPage() {
                     {/* Spotify */}
                     <SpotifyWidget />
                 </div>
+                {/* Study Graph */}
+                <StudyGraph />
+
                 {/* Resources Section */}
                 <Card>
                     <CardHeader className="pb-2 flex flex-row items-center justify-between">

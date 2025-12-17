@@ -48,12 +48,12 @@ export default function FocusPage() {
         const today = new Date().toISOString().split('T')[0]
         return logs
             .filter(log => log.date?.toString().startsWith(today))
-            .reduce((acc, log) => acc + ((log as any).studyTime || 0), 0)
+            .reduce((acc, log) => acc + (log.focusMinutes || 0), 0)
     }, [logs])
 
     // Calculate total study time from logs
     const totalMinutes = React.useMemo(() => {
-        return logs.reduce((acc, log) => acc + ((log as any).studyTime || 0), 0)
+        return logs.reduce((acc, log) => acc + (log.focusMinutes || 0), 0)
     }, [logs])
 
     // Timer Logic
