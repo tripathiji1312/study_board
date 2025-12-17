@@ -1,0 +1,134 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// ========== SEMESTER ==========
+model Semester {
+  id        Int      @id @default(autoincrement())
+  name      String   // "Fall 2024", "Spring 2025"
+  startDate String
+  endDate   String
+  isCurrent Boolean  @default(false)
+  subjects  Subject[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ========== SUBJECT (Enhanced) ==========
+model Subject {
+  id          String   @id @default(uuid())
+  name        String
+  code        String
+  credits     Int
+  type        String   // "Theory", "Lab", "Embedded"
+  slot        String?  // "A1", "B1+TB1", etc.
+  
+  // Teacher Info
+  teacherName  String?
+  teacherEmail String?
+  cabinNo      String?
+  labRoom      String?
+  classRoom    String?
+  
+  // Marks
+  cat1        Float?
+  cat2        Float?
+  da          Float?  // Digital Assignments (20 marks = 20%)
+  fat         Float?
+  labInternal Float?
+  labFat      Float?
+  
+  // Relations
+  semesterId  Int?
+  semester    Semester? @relation(fields: [semesterId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ========== ASSIGNMENT ==========
+model Assignment {
+  id          Int      @id @default(autoincrement())
+  title       String
+  subject     String   // Subject name (for display)
+  subjectId   String?  // Link to Subject model
+  due         String
+  priority    String
+  status      String
+  platform    String?  // "VTOP", "Google Classroom", "Moodle", "Other"
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ========== TODO ==========
+model Todo {
+  id        String   @id @default(uuid())
+  text      String
+  completed Boolean  @default(false)
+  category  String   // "today", "upcoming", "backlog"
+  dueDate   String?  // Optional due date
+  subjectId String?  // Optional link to Subject
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ========== PROJECT ==========
+model Project {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  progress    Int      @default(0)
+  status      String
+  tech        String   // Stored as comma separated string
+  githubUrl   String?  // GitHub repository URL
+  updated     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ========== SCHEDULE EVENT ==========
+model ScheduleEvent {
+  id        Int      @id @default(autoincrement())
+  title     String
+  type      String   // "Class", "Exam", "Study", "Other"
+  time      String
+  duration  String
+  location  String?
+  day       String   // "Monday", "2024-12-25", etc.
+  subjectId String?  // Optional: link to subject for class events
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ========== RESOURCE ==========
+model Resource {
+  id        Int      @id @default(autoincrement())
+  title     String
+  type      String   // "pdf", "video", "link"
+  url       String?
+  category  String
+  meta      String?  // size, duration, etc.
+  subjectId String?  // Optional: link to subject
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ========== USER SETTINGS ==========
+model UserSettings {
+  id             Int     @id @default(autoincrement())
+  displayName    String  @default("Student")
+  email          String?
+  department     String  @default("CSE")
+  currentSemId   Int?
+  focusDuration  Int     @default(25) // Pomodoro focus minutes
+  breakDuration  Int     @default(5)  // Pomodoro break minutes
+}
