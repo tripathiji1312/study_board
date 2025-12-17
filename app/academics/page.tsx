@@ -15,12 +15,14 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-import { IconSchool, IconUser, IconPencil, IconTrophy, IconTarget } from "@tabler/icons-react"
+import { IconSchool, IconUser, IconPencil, IconTrophy, IconTarget, IconBook, IconTrash } from "@tabler/icons-react"
 import { useStore } from "@/components/providers/store-provider"
 import { motion } from "framer-motion"
+import { SyllabusTracker } from "@/components/academics/syllabus-tracker"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 
 export default function AcademicsPage() {
-    const { subjects, currentSemester, updateSubject } = useStore()
+    const { subjects, currentSemester, updateSubject, deleteSubject } = useStore()
     const [selectedSubject, setSelectedSubject] = React.useState<typeof subjects[0] | null>(null)
     const [isMarksDialogOpen, setIsMarksDialogOpen] = React.useState(false)
 
@@ -158,7 +160,7 @@ export default function AcademicsPage() {
                                                         <Badge variant="secondary" className="text-xs">{sub.type}</Badge>
                                                     </div>
                                                 </div>
-                                                <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => { e.stopPropagation(); openMarksDialog(sub) }}>
                                                     <IconPencil className="w-4 h-4" />
                                                 </Button>
                                             </div>
@@ -198,6 +200,33 @@ export default function AcademicsPage() {
                                                 </p>
                                             )}
                                         </CardContent>
+
+                                        {/* Actions Footer */}
+                                        <div className="p-4 pt-0 flex justify-between gap-2 mt-auto">
+                                            <Sheet>
+                                                <SheetTrigger asChild>
+                                                    <Button variant="outline" size="sm" className="w-full" onClick={(e) => e.stopPropagation()}>
+                                                        <IconBook className="w-4 h-4 mr-2" />
+                                                        Syllabus
+                                                    </Button>
+                                                </SheetTrigger>
+                                                <SheetContent className="w-full sm:max-w-2xl" onClick={(e) => e.stopPropagation()}>
+                                                    <SheetHeader className="mb-8">
+                                                        <SheetTitle className="text-2xl">{sub.name} Syllabus</SheetTitle>
+                                                    </SheetHeader>
+                                                    <SyllabusTracker subjectId={sub.id} />
+                                                </SheetContent>
+                                            </Sheet>
+
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="text-muted-foreground hover:text-destructive shrink-0"
+                                                onClick={(e) => { e.stopPropagation(); deleteSubject(sub.id) }}
+                                            >
+                                                <IconTrash className="w-4 h-4" />
+                                            </Button>
+                                        </div>
                                     </Card>
                                 </motion.div>
                             )

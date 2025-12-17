@@ -35,12 +35,13 @@ export interface Subject {
     credits: number
     type: "Theory" | "Lab" | "Embedded"
     slot?: string
-    teacherName?: string
     teacherEmail?: string
     cabinNo?: string
     labRoom?: string
     classRoom?: string
     semesterId?: number
+    teacherName?: string
+    modules?: Module[]
     marks: {
         CAT1?: number
         CAT2?: number
@@ -49,6 +50,13 @@ export interface Subject {
         LabInternal?: number
         LabFAT?: number
     }
+}
+
+export interface Module {
+    id: string
+    title: string
+    topics?: string[]
+    status: "Pending" | "In Progress" | "Completed" | "Revised"
 }
 
 export interface Todo {
@@ -60,48 +68,60 @@ export interface Todo {
     subjectId?: string
 }
 
+// Added missing interfaces
 export interface Assignment {
     id: number
     title: string
-    subject: string
-    subjectId?: string
-    due: string
+    course: string
+    dueDate: string
     priority: Priority
     status: Status
-    platform?: string
-    description?: string
 }
 
 export interface Project {
     id: number
     title: string
     description: string
-    progress: number
-    status: string
     tech: string[]
-    githubUrl?: string
-    updated: string
+    status: Status
+    dueDate: string
+    updated?: string
 }
 
 export interface ScheduleEvent {
     id: number
     title: string
-    type: string
-    time: string
-    duration: string
-    location?: string
+    type: "Lecture" | "Lab" | "Study" | "Personal"
     day: string
-    subjectId?: string
+    startTime: string
+    endTime: string
+    location?: string
 }
 
 export interface Resource {
     id: number
     title: string
+    url: string
     type: "pdf" | "video" | "link"
-    url?: string
     category: string
-    meta?: string
     subjectId?: string
+}
+
+export interface Exam {
+    id: number
+    subjectId: string
+    type: "CAT1" | "CAT2" | "FAT" | "Lab"
+    date: string
+    time?: string
+    syllabus?: string
+}
+
+export interface DailyLog {
+    id: number
+    date: string
+    mood: number // 1-5 or similar
+    focusMinutes: number
+    notes?: string
 }
 
 interface StoreContextType {
@@ -115,6 +135,8 @@ interface StoreContextType {
     projects: Project[]
     schedule: ScheduleEvent[]
     resources: Resource[]
+    exams: Exam[]
+    logs: DailyLog[]
 
     // Settings
     updateSettings: (settings: Partial<UserSettings>) => void
@@ -126,9 +148,14 @@ interface StoreContextType {
     setCurrentSemester: (id: number) => void
 
     // Subjects
-    addSubject: (subject: Omit<Subject, "id" | "marks">) => void
+    addSubject: (subject: Omit<Subject, "id" | "marks" | "modules">) => void
     updateSubject: (subject: Partial<Subject> & { id: string }) => void
     deleteSubject: (id: string) => void
+
+    // Modules (Syllabus)
+    addModule: (subjectId: string, module: Omit<Module, "id">) => void
+    updateModule: (subjectId: string, module: Module) => void
+    deleteModule: (subjectId: string, moduleId: string) => void
 
     // Todos
     addTodo: (todo: Omit<Todo, "id">) => void
@@ -152,6 +179,10 @@ interface StoreContextType {
     // Resources
     addResource: (resource: Omit<Resource, "id">) => void
     deleteResource: (id: number) => void
+
+    addExam: (exam: Omit<Exam, "id">) => void
+    deleteExam: (id: number) => void
+    addLog: (log: Omit<DailyLog, "id">) => void
 }
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined)
@@ -165,6 +196,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const [projects, setProjects] = useState<Project[]>([])
     const [schedule, setSchedule] = useState<ScheduleEvent[]>([])
     const [resources, setResources] = useState<Resource[]>([])
+    const [exams, setExams] = useState<Exam[]>([])
+    const [logs, setLogs] = useState<DailyLog[]>([])
 
     const currentSemester = semesters.find(s => s.isCurrent) || null
 
@@ -173,7 +206,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         const fetchData = async () => {
             try {
                 // Fetch all data in parallel
-                const [settingsRes, semsRes, todosRes, assignsRes, projectsRes, subjectsRes, scheduleRes, resourcesRes] = await Promise.all([
+                const [settingsRes, semsRes, todosRes, assignsRes, projectsRes, subjectsRes, scheduleRes, resourcesRes, examsRes, logsRes] = await Promise.all([
                     fetch('/api/settings'),
                     fetch('/api/semesters'),
                     fetch('/api/todos'),
@@ -181,7 +214,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
                     fetch('/api/projects'),
                     fetch('/api/academics'),
                     fetch('/api/schedule'),
-                    fetch('/api/resources')
+                    fetch('/api/resources'),
+                    fetch('/api/exams'),
+                    fetch('/api/logs')
                 ])
 
                 // Parse each response safely
@@ -193,6 +228,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
                 const subjectsData = subjectsRes.ok ? await subjectsRes.json() : []
                 const scheduleData = scheduleRes.ok ? await scheduleRes.json() : []
                 const resourcesData = resourcesRes.ok ? await resourcesRes.json() : []
+                const examsData = examsRes.ok ? await examsRes.json() : []
+                const logsData = logsRes.ok ? await logsRes.json() : []
 
                 if (settingsData) setSettings(settingsData)
                 setSemesters(semsData)
@@ -200,6 +237,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
                 setAssignments(assignsData)
                 setSchedule(scheduleData)
                 setResources(resourcesData)
+                setExams(examsData)
+                setLogs(logsData)
 
                 // Transform projects tech
                 const formattedProjects = projectsData.map((p: any) => ({
@@ -294,6 +333,42 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         setSubjects(prev => prev.filter(s => s.id !== id))
         await fetch(`/api/academics?id=${id}`, { method: 'DELETE' })
         toast.info("Subject deleted")
+    }
+
+    // Modules (Syllabus)
+    const addModule = (subjectId: string, module: Omit<Module, "id">) => {
+        setSubjects(prev => prev.map(sub => {
+            if (sub.id === subjectId) {
+                const newModule = { ...module, id: Date.now().toString() }
+                return { ...sub, modules: [...(sub.modules || []), newModule] }
+            }
+            return sub
+        }))
+    }
+
+    const updateModule = (subjectId: string, module: Module) => {
+        setSubjects(prev => prev.map(sub => {
+            if (sub.id === subjectId) {
+                return {
+                    ...sub,
+                    modules: sub.modules?.map(m => m.id === module.id ? module : m)
+                }
+            }
+            return sub
+        }))
+    }
+
+    const deleteModule = (subjectId: string, moduleId: string) => {
+        setSubjects(prev => prev.map(sub => {
+            if (sub.id === subjectId) {
+                return {
+                    ...sub,
+                    modules: sub.modules?.filter(m => m.id !== moduleId)
+                }
+            }
+            return sub
+        }))
+        toast.success("Module deleted")
     }
 
     // === TODOS ===
@@ -403,9 +478,53 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }
 
     const deleteResource = async (id: number) => {
-        setResources(resources.filter(r => r.id !== id))
-        await fetch(`/api/resources?id=${id}`, { method: 'DELETE' })
-        toast.info("Resource removed")
+        try {
+            await fetch(`/api/resources?id=${id}`, { method: 'DELETE' })
+            setResources(prev => prev.filter(r => r.id !== id))
+            toast.success("Resource deleted")
+        } catch (error) {
+            toast.error("Failed to delete resource")
+        }
+    }
+
+    const addExam = async (exam: Omit<Exam, "id">) => {
+        try {
+            const res = await fetch('/api/exams', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(exam)
+            })
+            const data = await res.json()
+            setExams(prev => [...prev, data])
+            toast.success("Exam added")
+        } catch (error) {
+            toast.error("Failed to add exam")
+        }
+    }
+
+    const deleteExam = async (id: number) => {
+        try {
+            await fetch(`/api/exams?id=${id}`, { method: 'DELETE' })
+            setExams(prev => prev.filter(e => e.id !== id))
+            toast.success("Exam deleted")
+        } catch (error) {
+            toast.error("Failed to delete exam")
+        }
+    }
+
+    const addLog = async (log: Omit<DailyLog, "id">) => {
+        try {
+            const res = await fetch('/api/logs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(log)
+            })
+            const data = await res.json()
+            setLogs(prev => [...prev, data])
+            toast.success("Day logged")
+        } catch (error) {
+            toast.error("Failed to log day")
+        }
     }
 
     return (
@@ -419,6 +538,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             projects,
             schedule,
             resources,
+            exams,
+            logs,
             updateSettings,
             addSemester,
             updateSemester,
@@ -427,6 +548,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             addSubject,
             updateSubject,
             deleteSubject,
+            addModule,
+            updateModule,
+            deleteModule,
             addTodo,
             toggleTodo,
             deleteTodo,
@@ -439,7 +563,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             addScheduleEvent,
             deleteScheduleEvent,
             addResource,
-            deleteResource
+            deleteResource,
+            addExam,
+            deleteExam,
+            addLog
         }}>
             {children}
         </StoreContext.Provider>

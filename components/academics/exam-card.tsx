@@ -1,0 +1,106 @@
+"use client"
+
+import { IconCalendar, IconClock, IconBook, IconTrash, IconAlertTriangle } from "@tabler/icons-react"
+import { format, differenceInDays, parseISO } from "date-fns"
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Progress } from "@/components/ui/progress"
+import { cn } from "@/lib/utils"
+import { Exam, useStore } from "@/components/providers/store-provider"
+
+interface ExamCardProps {
+    exam: Exam
+}
+
+export function ExamCard({ exam }: ExamCardProps) {
+    const { subjects, deleteExam } = useStore()
+    const subject = subjects.find(s => s.id === exam.subjectId)
+
+    const daysLeft = differenceInDays(parseISO(exam.date), new Date())
+    const isUrgent = daysLeft <= 3 && daysLeft >= 0
+    const isToday = daysLeft === 0
+    const isPast = daysLeft < 0
+
+    const getUrgencyColor = () => {
+        if (isPast) return "bg-muted text-muted-foreground border-transparent"
+        if (isToday) return "bg-red-500/10 text-red-600 border-red-200 animate-pulse"
+        if (isUrgent) return "bg-orange-500/10 text-orange-600 border-orange-200"
+        return "bg-primary/10 text-primary border-primary/20"
+    }
+
+    return (
+        <Card className={cn("group transition-all hover:shadow-md", isUrgent && "border-orange-200 shadow-orange-100")}>
+            <CardHeader className="pb-3 flex flex-row items-start justify-between space-y-0">
+                <div>
+                    <Badge variant="outline" className={cn("mb-2", getUrgencyColor())}>
+                        {isPast ? "Completed" : isToday ? "Today!" : `${daysLeft} days left`}
+                    </Badge>
+                    <CardTitle className="text-lg font-bold leading-tight">
+                        {subject?.name || "Unknown Subject"}
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground font-medium mt-1">
+                        {exam.type} Exam
+                    </p>
+                </div>
+                <div className="flex flex-col items-end text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                        <IconCalendar className="w-4 h-4" />
+                        <span>{format(parseISO(exam.date), "MMM d")}</span>
+                    </div>
+                    {exam.time && (
+                        <div className="flex items-center gap-1 mt-1">
+                            <IconClock className="w-4 h-4" />
+                            <span>{exam.time}</span>
+                        </div>
+                    )}
+                </div>
+            </CardHeader>
+            <CardContent className="pb-3">
+                {/* Syllabus / Notes Section */}
+                <div className="space-y-3">
+                    {exam.syllabus ? (
+                        <div className="p-3 bg-secondary/50 rounded-lg text-sm">
+                            <div className="flex items-center gap-2 mb-1 text-muted-foreground">
+                                <IconBook className="w-3 h-3" />
+                                <span className="text-xs uppercase tracking-wider font-semibold">Syllabus</span>
+                            </div>
+                            <p className="line-clamp-2 text-foreground/90">{exam.syllabus}</p>
+                        </div>
+                    ) : (
+                        <div className="p-3 border border-dashed rounded-lg text-center">
+                            <p className="text-xs text-muted-foreground">No syllabus details added.</p>
+                        </div>
+                    )}
+
+                    {/* Subject Progress Integration (Optional - showing subject completion if available) */}
+                    {subject?.modules && subject.modules.length > 0 && (
+                        <div className="space-y-1.5">
+                            <div className="flex justify-between text-xs">
+                                <span className="text-muted-foreground">Subject Preparation</span>
+                                <span className="font-medium">
+                                    {Math.round((subject.modules.filter(m => m.status === 'Completed' || m.status === 'Revised').length / subject.modules.length) * 100)}%
+                                </span>
+                            </div>
+                            <Progress
+                                value={(subject.modules.filter(m => m.status === 'Completed' || m.status === 'Revised').length / subject.modules.length) * 100}
+                                className="h-1.5"
+                            />
+                        </div>
+                    )}
+                </div>
+            </CardContent>
+            <CardFooter className="pt-0 flex justify-end">
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground hover:text-destructive h-8 px-2"
+                    onClick={() => deleteExam(exam.id)}
+                >
+                    <IconTrash className="w-4 h-4 mr-2" />
+                    Remove
+                </Button>
+            </CardFooter>
+        </Card>
+    )
+}

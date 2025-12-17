@@ -23,6 +23,10 @@ import {
 } from "@tabler/icons-react"
 import { useStore } from "@/components/providers/store-provider"
 import { SpotifyWidget } from "@/components/spotify-widget"
+import { StudyGraph } from "@/components/dashboard/study-graph"
+import { ExamWidget } from "@/components/dashboard/exam-widget"
+import { MoodWidget } from "@/components/dashboard/mood-widget"
+import { AmbienceWidget } from "@/components/dashboard/ambience-widget"
 import { format, isToday, parseISO, differenceInDays } from "date-fns"
 
 const RESOURCE_ICONS: Record<string, typeof IconLink> = {
@@ -31,6 +35,9 @@ const RESOURCE_ICONS: Record<string, typeof IconLink> = {
     "Link": IconLink,
     "Book": IconBook,
 }
+
+import { FocusAnalytics } from "@/components/dashboard/focus-analytics"
+import { IconTargetArrow } from "@tabler/icons-react"
 
 export default function DashboardPage() {
     const {
@@ -94,7 +101,7 @@ export default function DashboardPage() {
     const getGreeting = () => {
         const hour = new Date().getHours()
         if (hour < 12) return "Good morning"
-        if (hour < 17) return "Good afternoon"
+        if (hour < 18) return "Good afternoon"
         return "Good evening"
     }
 
@@ -109,14 +116,25 @@ export default function DashboardPage() {
         <Shell>
             <div className="space-y-6">
                 {/* Header */}
-                <div className="space-y-1">
-                    <h1 className="text-2xl font-bold tracking-tight">
-                        {getGreeting()}, {settings?.displayName || "Student"}
-                    </h1>
-                    <p className="text-sm text-muted-foreground">
-                        {format(new Date(), "EEEE, MMMM d")} {currentSemester && `· ${currentSemester.name}`}
-                    </p>
-                </div>
+                <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-3xl font-light tracking-tight text-foreground/90">
+                            {getGreeting()}, <span className="font-semibold text-primary">{settings?.displayName || "Scholar"}</span>
+                        </h1>
+                        <p className="text-muted-foreground">Here's your daily overview.</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <Button variant="default" size="lg" className="rounded-full px-6 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all" asChild>
+                            <Link href="/focus">
+                                <IconTargetArrow className="w-5 h-5 mr-2" />
+                                Enter Laser Mode
+                            </Link>
+                        </Button>
+                    </div>
+                </header>
+
+                {/* Focus Analytics Row */}
+                <FocusAnalytics />
 
                 {/* Stats Row */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -174,6 +192,9 @@ export default function DashboardPage() {
                     </Link>
                 </div>
 
+                {/* Study Graph */}
+                <StudyGraph />
+
                 {/* Quick Add */}
                 <form onSubmit={handleQuickAdd} className="flex gap-2">
                     <Input
@@ -214,6 +235,10 @@ export default function DashboardPage() {
 
                 {/* Main Grid */}
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+
+                    {/* Exam Countdown */}
+                    <ExamWidget />
+
                     {/* Schedule */}
                     <Card>
                         <CardHeader className="pb-2 flex flex-row items-center justify-between">
@@ -267,6 +292,12 @@ export default function DashboardPage() {
                             )}
                         </CardContent>
                     </Card>
+
+                    {/* Mood Tracker */}
+                    <MoodWidget />
+
+                    {/* Ambience */}
+                    <AmbienceWidget />
 
                     {/* Spotify */}
                     <SpotifyWidget />

@@ -134,3 +134,23 @@ model UserSettings {
   emailNotifications Boolean @default(false)
   notificationEmail String?  // Pomodoro break minutes
 }
+
+model Exam {
+  id          Int      @id @default(autoincrement())
+  title       String // "CAT 1", "FAT"
+  subjectId   String? // Optional link to subject
+  date        DateTime
+  syllabus    String? // Text or JSON for module tracking
+  room        String?
+  seat        String?
+  createdAt   DateTime @default(now())
+}
+
+model DailyLog {
+  id        Int      @id @default(autoincrement())
+  date      DateTime @default(now()) // Only one per day ideally
+  mood      Int // 1 (Bad) to 5 (Great)
+  note      String? // "Brain dump"
+  sleep     Int? // Hours of sleep
+  studyTime Int? // Minutes studied
+}
