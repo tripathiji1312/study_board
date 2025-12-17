@@ -7,7 +7,8 @@ import { format, subDays, isSameDay, startOfWeek } from "date-fns"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 export function StudyGraph() {
-    const { logs, todos, assignments } = useStore()
+    const { dailyLogs, todos, assignments } = useStore()
+    const logs = dailyLogs || []
 
     // Calculate 52 weeks ago from today
     const today = new Date()
@@ -27,17 +28,13 @@ export function StudyGraph() {
     const getActivityLevel = (date: Date) => {
         let score = 0
         // Check logs
-        const log = logs.find(l => isSameDay(new Date(l.date), date))
+        const log = logs.find(l => l.date && isSameDay(new Date(l.date), date))
         if (log) score += 1
-        if (log?.studyTime && log.studyTime > 60) score += 2
+        if ((log as any)?.studyTime && (log as any).studyTime > 60) score += 2
 
-        // Check Assignments (using dummy created date or due date if completed)
-        // Ideally we track completion date, for now approximation:
-        const completedAssigns = assignments.filter(a => a.status === "Completed" && isSameDay(new Date(a.due), date))
+        // Check Assignments
+        const completedAssigns = (assignments || []).filter(a => a.status === "Completed" && a.dueDate && isSameDay(new Date(a.dueDate), date))
         score += completedAssigns.length * 2
-
-        // Check Todos
-        // const completedTodos = todos.filter(t => t.completed) // needs completedAt date, skipping for now
 
         if (score === 0) return "bg-muted"
         if (score <= 1) return "bg-green-200 dark:bg-green-900"

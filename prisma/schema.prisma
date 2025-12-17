@@ -154,3 +154,37 @@ model DailyLog {
   sleep     Int? // Hours of sleep
   studyTime Int? // Minutes studied
 }
+
+// ========== LIBRARY TRACKER ==========
+model Book {
+  id        String   @id @default(uuid())
+  title     String
+  author    String
+  status    String   @default("toread") // "toread", "reading", "completed"
+  progress  Int      @default(0)
+  total     Int      @default(100)
+  dueDate   DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ========== IDEA BOARD ==========
+model Idea {
+  id        String   @id @default(uuid())
+  content   String
+  status    String   @default("brainstorm") // "brainstorm", "planned", "done"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ========== SNIPPET LIBRARY ==========
+model Snippet {
+  id        String   @id @default(uuid())
+  title     String
+  content   String
+  language  String   @default("text") // "text", "javascript", "python", etc.
+  type      String   @default("text") // "code", "text"
+  tags      String?  // JSON string or comma-separated
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

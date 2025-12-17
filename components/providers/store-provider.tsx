@@ -69,6 +69,30 @@ export interface Todo {
 }
 
 // Added missing interfaces
+export interface Book {
+    id: string
+    title: string
+    author: string
+    status: "toread" | "reading" | "completed"
+    progress: number
+    total: number
+    dueDate?: string
+}
+
+export interface Idea {
+    id: string
+    content: string
+    status: "brainstorm" | "planned" | "done"
+}
+
+export interface Snippet {
+    id: string
+    title: string
+    content: string
+    type: "text" | "code"
+    language: string
+}
+
 export interface Assignment {
     id: number
     title: string
@@ -119,7 +143,7 @@ export interface Exam {
 export interface DailyLog {
     id: number
     date: string
-    mood: number // 1-5 or similar
+    mood: number
     focusMinutes: number
     notes?: string
 }
@@ -136,13 +160,18 @@ interface StoreContextType {
     schedule: ScheduleEvent[]
     resources: Resource[]
     exams: Exam[]
-    logs: DailyLog[]
+    dailyLogs: DailyLog[]
+
+    // Library
+    books: Book[]
+    ideas: Idea[]
+    snippets: Snippet[]
 
     // Settings
     updateSettings: (settings: Partial<UserSettings>) => void
 
     // Semesters
-    addSemester: (semester: Omit<Semester, "id">) => void
+    addSemester: (semester: any) => void
     updateSemester: (semester: Semester) => void
     deleteSemester: (id: number) => void
     setCurrentSemester: (id: number) => void
@@ -159,30 +188,43 @@ interface StoreContextType {
 
     // Todos
     addTodo: (todo: Omit<Todo, "id">) => void
-    toggleTodo: (id: string, currentStatus: boolean) => void
+    toggleTodo: (id: string, completed: boolean) => void
     deleteTodo: (id: string) => void
 
     // Assignments
-    addAssignment: (assignment: Omit<Assignment, "id">) => void
+    addAssignment: (assignment: any) => void
     updateAssignment: (assignment: Assignment) => void
     deleteAssignment: (id: number) => void
 
     // Projects
-    addProject: (project: Omit<Project, "id" | "updated">) => void
+    addProject: (project: any) => void
     updateProject: (project: Project) => void
     deleteProject: (id: number) => void
+    updateProjectStatus: (id: string, status: any) => void
 
     // Schedule
-    addScheduleEvent: (event: Omit<ScheduleEvent, "id">) => void
+    addScheduleEvent: (event: any) => void
     deleteScheduleEvent: (id: number) => void
 
     // Resources
-    addResource: (resource: Omit<Resource, "id">) => void
+    addResource: (resource: any) => void
     deleteResource: (id: number) => void
 
-    addExam: (exam: Omit<Exam, "id">) => void
+    addExam: (exam: any) => void
     deleteExam: (id: number) => void
-    addLog: (log: Omit<DailyLog, "id">) => void
+    addDailyLog: (log: Omit<DailyLog, "id" | "date">) => void
+
+    // New Features
+    addBook: (book: Omit<Book, "id">) => void
+    updateBook: (id: string, updates: Partial<Book>) => void
+    deleteBook: (id: string) => void
+
+    addIdea: (idea: Omit<Idea, "id">) => void
+    updateIdea: (id: string, updates: Partial<Idea>) => void
+    deleteIdea: (id: string) => void
+
+    addSnippet: (snippet: Omit<Snippet, "id">) => void
+    deleteSnippet: (id: string) => void
 }
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined)
@@ -197,91 +239,106 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const [schedule, setSchedule] = useState<ScheduleEvent[]>([])
     const [resources, setResources] = useState<Resource[]>([])
     const [exams, setExams] = useState<Exam[]>([])
-    const [logs, setLogs] = useState<DailyLog[]>([])
+    const [dailyLogs, setDailyLogs] = useState<DailyLog[]>([])
+
+    // NEW STATE
+    const [books, setBooks] = useState<Book[]>([])
+    const [ideas, setIdeas] = useState<Idea[]>([])
+    const [snippets, setSnippets] = useState<Snippet[]>([])
 
     const currentSemester = semesters.find(s => s.isCurrent) || null
 
     // --- Initial Data Fetch ---
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                // Fetch all data in parallel
-                const [settingsRes, semsRes, todosRes, assignsRes, projectsRes, subjectsRes, scheduleRes, resourcesRes, examsRes, logsRes] = await Promise.all([
-                    fetch('/api/settings'),
-                    fetch('/api/semesters'),
-                    fetch('/api/todos'),
-                    fetch('/api/assignments'),
-                    fetch('/api/projects'),
-                    fetch('/api/academics'),
-                    fetch('/api/schedule'),
-                    fetch('/api/resources'),
-                    fetch('/api/exams'),
-                    fetch('/api/logs')
-                ])
-
-                // Parse each response safely
-                const settingsData = settingsRes.ok ? await settingsRes.json() : null
-                const semsData = semsRes.ok ? await semsRes.json() : []
-                const todosData = todosRes.ok ? await todosRes.json() : []
-                const assignsData = assignsRes.ok ? await assignsRes.json() : []
-                const projectsData = projectsRes.ok ? await projectsRes.json() : []
-                const subjectsData = subjectsRes.ok ? await subjectsRes.json() : []
-                const scheduleData = scheduleRes.ok ? await scheduleRes.json() : []
-                const resourcesData = resourcesRes.ok ? await resourcesRes.json() : []
-                const examsData = examsRes.ok ? await examsRes.json() : []
-                const logsData = logsRes.ok ? await logsRes.json() : []
-
-                if (settingsData) setSettings(settingsData)
-                setSemesters(semsData)
-                setTodos(todosData)
-                setAssignments(assignsData)
-                setSchedule(scheduleData)
-                setResources(resourcesData)
-                setExams(examsData)
-                setLogs(logsData)
-
-                // Transform projects tech
-                const formattedProjects = projectsData.map((p: any) => ({
-                    ...p,
-                    tech: p.tech ? p.tech.split(',') : []
-                }))
-                setProjects(formattedProjects)
-
-                // Transform subjects marks
-                const formattedSubjects = subjectsData.map((s: any) => ({
-                    ...s,
-                    marks: {
-                        CAT1: s.cat1,
-                        CAT2: s.cat2,
-                        DA: s.da,
-                        FAT: s.fat,
-                        LabInternal: s.labInternal,
-                        LabFAT: s.labFat
-                    }
-                }))
-                setSubjects(formattedSubjects)
-
-            } catch (error) {
-                console.error("Failed to fetch data:", error)
-            }
-        }
         fetchData()
     }, [])
 
+    const fetchData = async () => {
+        try {
+            // Fetch all data in parallel
+            const [settingsRes, semsRes, todosRes, assignsRes, projectsRes, subjectsRes, scheduleRes, resourcesRes, examsRes, logsRes, booksRes, ideasRes, snippetsRes] = await Promise.all([
+                fetch('/api/settings'),
+                fetch('/api/semesters'),
+                fetch('/api/todos'),
+                fetch('/api/assignments'),
+                fetch('/api/projects'),
+                fetch('/api/academics'),
+                fetch('/api/schedule'),
+                fetch('/api/resources'),
+                fetch('/api/exams'),
+                fetch('/api/logs'),
+                fetch('/api/library'),
+                fetch('/api/ideas'),
+                fetch('/api/snippets')
+            ])
+
+            // Parse each response safely
+            const settingsData = settingsRes.ok ? await settingsRes.json() : null
+            const semsData = semsRes.ok ? await semsRes.json() : []
+            const todosData = todosRes.ok ? await todosRes.json() : []
+            const assignsData = assignsRes.ok ? await assignsRes.json() : []
+            const projectsData = projectsRes.ok ? await projectsRes.json() : []
+            const subjectsData = subjectsRes.ok ? await subjectsRes.json() : []
+            const scheduleData = scheduleRes.ok ? await scheduleRes.json() : []
+            const resourcesData = resourcesRes.ok ? await resourcesRes.json() : []
+            const examsData = examsRes.ok ? await examsRes.json() : []
+            const logsData = logsRes.ok ? await logsRes.json() : []
+
+            if (settingsData) setSettings(settingsData)
+            setSemesters(semsData)
+            setTodos(todosData)
+            setAssignments(assignsData)
+            setSchedule(scheduleData)
+            setResources(resourcesData)
+            setExams(examsData)
+            setDailyLogs(logsData)
+
+            // Transform projects tech
+            const formattedProjects = projectsData.map((p: any) => ({
+                ...p,
+                tech: p.tech ? p.tech.split(',') : []
+            }))
+            setProjects(formattedProjects)
+
+            // Transform subjects marks
+            const formattedSubjects = subjectsData.map((s: any) => ({
+                ...s,
+                marks: {
+                    CAT1: s.cat1,
+                    CAT2: s.cat2,
+                    DA: s.da,
+                    FAT: s.fat,
+                    LabInternal: s.labInternal,
+                    LabFAT: s.labFat
+                }
+            }))
+            setSubjects(formattedSubjects)
+
+            // NEW DATA
+            if (booksRes.ok) setBooks(await booksRes.json())
+            if (ideasRes.ok) setIdeas(await ideasRes.json())
+            if (snippetsRes.ok) setSnippets(await snippetsRes.json())
+
+        } catch (error) {
+            console.error("Failed to fetch data:", error)
+        }
+    }
+
     // === SETTINGS ===
-    const updateSettings = async (data: Partial<UserSettings>) => {
-        const updated = { ...settings, ...data }
+    const updateSettings = async (newSettings: Partial<UserSettings>) => {
+        if (!settings) return
+        const updated = { ...settings, ...newSettings }
         setSettings(updated as UserSettings)
         await fetch('/api/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updated) })
         toast.success("Settings saved")
     }
 
     // === SEMESTERS ===
-    const addSemester = async (semester: Omit<Semester, "id">) => {
-        const res = await fetch('/api/semesters', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(semester) })
+    const addSemester = async (sem: any) => {
+        const res = await fetch('/api/semesters', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(sem) })
         const saved = await res.json()
         setSemesters(prev => [saved, ...prev])
-        if (semester.isCurrent) {
+        if (sem.isCurrent) {
             setSemesters(prev => prev.map(s => ({ ...s, isCurrent: s.id === saved.id })))
         }
         toast.success("Semester created")
@@ -306,7 +363,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }
 
     // === SUBJECTS ===
-    const addSubject = async (subject: Omit<Subject, "id" | "marks">) => {
+    const addSubject = async (subject: Omit<Subject, "id" | "marks" | "modules">) => {
         const res = await fetch('/api/academics', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(subject) })
         const saved = await res.json()
         setSubjects(prev => [{ ...saved, marks: {} }, ...prev])
@@ -512,19 +569,76 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         }
     }
 
-    const addLog = async (log: Omit<DailyLog, "id">) => {
+    const addDailyLog = async (log: Omit<DailyLog, "id">) => {
         try {
-            const res = await fetch('/api/logs', {
+            const res = await fetch('/api/focus/logs', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(log)
             })
             const data = await res.json()
-            setLogs(prev => [...prev, data])
+            setDailyLogs(prev => [data, ...prev])
             toast.success("Day logged")
         } catch (error) {
             toast.error("Failed to log day")
         }
+    }
+
+    const updateProjectStatus = async (id: string, status: any) => {
+        setProjects(prev => prev.map(p => p.id === Number(id) ? { ...p, status } : p))
+        await fetch('/api/projects', { method: 'PUT', body: JSON.stringify({ id, status }) })
+    }
+
+    // Library Methods
+    const addBook = async (book: Omit<Book, "id">) => {
+        const res = await fetch('/api/library', { method: 'POST', body: JSON.stringify(book) })
+        if (res.ok) {
+            const newBook = await res.json()
+            setBooks(prev => [newBook, ...prev])
+        }
+    }
+
+    const updateBook = async (id: string, updates: Partial<Book>) => {
+        setBooks(prev => prev.map(b => b.id === id ? { ...b, ...updates } : b))
+        await fetch('/api/library', { method: 'PUT', body: JSON.stringify({ id, ...updates }) })
+    }
+
+    const deleteBook = async (id: string) => {
+        setBooks(prev => prev.filter(b => b.id !== id))
+        await fetch(`/api/library?id=${id}`, { method: 'DELETE' })
+    }
+
+    // Idea Methods
+    const addIdea = async (idea: Omit<Idea, "id">) => {
+        const res = await fetch('/api/ideas', { method: 'POST', body: JSON.stringify(idea) })
+        if (res.ok) {
+            const newIdea = await res.json()
+            setIdeas(prev => [newIdea, ...prev])
+        }
+    }
+
+    const updateIdea = async (id: string, updates: Partial<Idea>) => {
+        setIdeas(prev => prev.map(i => i.id === id ? { ...i, ...updates } : i))
+        await fetch('/api/ideas', { method: 'PUT', body: JSON.stringify({ id, ...updates }) })
+    }
+
+    const deleteIdea = async (id: string) => {
+        setIdeas(prev => prev.filter(i => i.id !== id))
+        await fetch(`/api/ideas?id=${id}`, { method: 'DELETE' })
+    }
+
+    // Snippet Methods
+    const addSnippet = async (snippet: Omit<Snippet, "id">) => {
+        const res = await fetch('/api/snippets', { method: 'POST', body: JSON.stringify(snippet) })
+        if (res.ok) {
+            const newSnippet = await res.json()
+            setSnippets(prev => [newSnippet, ...prev])
+        }
+    }
+
+    const deleteSnippet = async (id: string) => {
+        setSnippets(prev => prev.filter(s => s.id !== id))
+        await fetch(`/api/snippets?id=${id}`, { method: 'DELETE' })
     }
 
     return (
@@ -539,7 +653,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             schedule,
             resources,
             exams,
-            logs,
+            dailyLogs,
+            books,
+            ideas,
+            snippets,
             updateSettings,
             addSemester,
             updateSemester,
@@ -560,13 +677,22 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             addProject,
             updateProject,
             deleteProject,
+            updateProjectStatus,
             addScheduleEvent,
             deleteScheduleEvent,
             addResource,
             deleteResource,
             addExam,
             deleteExam,
-            addLog
+            addDailyLog,
+            addBook,
+            updateBook,
+            deleteBook,
+            addIdea,
+            updateIdea,
+            deleteIdea,
+            addSnippet,
+            deleteSnippet
         }}>
             {children}
         </StoreContext.Provider>

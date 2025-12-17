@@ -11,11 +11,13 @@ import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { useStore } from "@/components/providers/store-provider"
 import { AnimatePresence, motion } from "framer-motion"
+import { useXP } from "@/components/xp-widget"
 
 // --- WIDGETS ---
 
 function TodoWidget() {
     const { todos, addTodo, toggleTodo, deleteTodo } = useStore()
+    const { addXP } = useXP()
     const [newTodo, setNewTodo] = React.useState("")
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -23,6 +25,14 @@ function TodoWidget() {
         if (!newTodo.trim()) return
         addTodo({ text: newTodo, completed: false, category: "today" })
         setNewTodo("")
+    }
+
+    const handleToggle = (id: string, currentStatus: boolean) => {
+        toggleTodo(id, currentStatus)
+        // Award XP only when completing (not uncompleting)
+        if (!currentStatus) {
+            addXP(50) // +50 XP for completing a task!
+        }
     }
 
     const todayTodos = todos.filter(t => t.category === "today").slice(0, 5)
@@ -58,7 +68,7 @@ function TodoWidget() {
                                     <Checkbox
                                         id={`widget-${todo.id}`}
                                         checked={todo.completed}
-                                        onCheckedChange={() => toggleTodo(todo.id, todo.completed)}
+                                        onCheckedChange={() => handleToggle(todo.id, todo.completed)}
                                     />
                                     <label
                                         htmlFor={`widget-${todo.id}`}

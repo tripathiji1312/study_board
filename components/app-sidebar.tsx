@@ -14,116 +14,122 @@ import {
     IconBooks,
     IconSettings,
     IconLogout,
-    IconMenu2
+    IconMenu2,
+    IconTargetArrow,
+    IconCode,
+    IconNotes,
+    IconClipboardList,
+    IconFlame
 } from "@tabler/icons-react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ModeToggle } from "@/components/mode-toggle"
+import { XPWidget } from "@/components/xp-widget"
+import { useStore } from "@/components/providers/store-provider"
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> { }
+
+// Route Groups
+const mainRoutes = [
+    { label: "Dashboard", icon: IconLayoutDashboard, href: "/" },
+    { label: "Laser Mode", icon: IconTargetArrow, href: "/focus", highlight: true },
+]
+
+const productivityRoutes = [
+    { label: "To-Do List", icon: IconChecklist, href: "/todos" },
+    { label: "Assignments", icon: IconClipboardList, href: "/assignments" },
+    { label: "Projects", icon: IconBulb, href: "/projects" },
+    { label: "Schedule", icon: IconCalendarEvent, href: "/schedule" },
+]
+
+const academicRoutes = [
+    { label: "Academics", icon: IconSchool, href: "/academics" },
+    { label: "Exams", icon: IconFlame, href: "/academics/exams" },
+    { label: "Resources", icon: IconBooks, href: "/resources" },
+]
+
+const toolRoutes = [
+    { label: "Library", icon: IconBook2, href: "/library" },
+    { label: "Ideas", icon: IconNotes, href: "/ideas" },
+    { label: "Snippets", icon: IconCode, href: "/snippets" },
+]
 
 export function AppSidebar({ className }: SidebarProps) {
     const pathname = usePathname()
     const [isOpen, setIsOpen] = React.useState(false)
+    const { settings } = useStore()
 
-    const routes = [
-        {
-            label: "Dashboard",
-            icon: IconLayoutDashboard,
-            href: "/",
-        },
-        {
-            label: "Assignments",
-            icon: IconSchool,
-            href: "/assignments",
-        },
-        {
-            label: "To-Do List",
-            icon: IconChecklist,
-            href: "/todos",
-        },
-        {
-            label: "Projects",
-            icon: IconBulb,
-            href: "/projects",
-        },
-        {
-            label: "Schedule",
-            icon: IconCalendarEvent,
-            href: "/schedule",
-        },
-        {
-            label: "Resources",
-            icon: IconBooks,
-            href: "/resources",
-        },
-        {
-            label: "Academics",
-            icon: IconSchool,
-            href: "/academics",
-        },
-        {
-            label: "Settings",
-            href: "/settings",
-            icon: IconSettings,
-        },
-    ]
+    const NavItem = ({ route }: { route: typeof mainRoutes[0] & { highlight?: boolean } }) => (
+        <Button
+            variant={pathname === route.href ? "secondary" : "ghost"}
+            className={cn(
+                "w-full justify-start gap-3 h-9",
+                pathname === route.href && "font-semibold bg-primary/10 text-primary",
+                route.highlight && pathname !== route.href && "text-primary/80 hover:text-primary hover:bg-primary/5"
+            )}
+            asChild
+            onClick={() => setIsOpen(false)}
+        >
+            <Link href={route.href}>
+                <route.icon className={cn("h-4 w-4", pathname === route.href && "text-primary")} />
+                {route.label}
+            </Link>
+        </Button>
+    )
+
+    const NavGroup = ({ label, routes }: { label: string, routes: typeof mainRoutes }) => (
+        <div className="space-y-1">
+            <p className="px-3 py-2 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+                {label}
+            </p>
+            {routes.map((route) => <NavItem key={route.href} route={route} />)}
+        </div>
+    )
 
     const SidebarContent = () => (
-        <div className="flex h-full flex-col gap-4">
-            <div className="flex h-[60px] items-center justify-between border-b px-6">
-                <Link className="flex items-center gap-2 font-bold" href="/">
-                    <span className="text-xl">StudyManager</span>
+        <div className="flex h-full flex-col">
+            {/* Header */}
+            <div className="flex h-14 items-center justify-between border-b px-4">
+                <Link className="flex items-center gap-2 font-bold text-lg" href="/">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
+                        <IconSchool className="w-4 h-4 text-white" />
+                    </div>
+                    <span>StudyHub</span>
                 </Link>
                 <ModeToggle />
             </div>
-            <ScrollArea className="flex-1 px-3">
-                <div className="flex flex-col gap-2 py-4">
-                    <p className="px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                        Overview
-                    </p>
-                    {routes.map((route) => (
-                        <Button
-                            key={route.href}
-                            variant={pathname === route.href ? "secondary" : "ghost"}
-                            className={cn(
-                                "w-full justify-start gap-2",
-                                pathname === route.href && "font-semibold"
-                            )}
-                            asChild
-                            onClick={() => setIsOpen(false)}
-                        >
-                            <Link href={route.href}>
-                                <route.icon className="h-5 w-5" />
-                                {route.label}
-                            </Link>
-                        </Button>
-                    ))}
 
-                    <Separator className="my-4" />
-                    <p className="px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                        System
-                    </p>
-                    <Button variant="ghost" className="w-full justify-start gap-2">
-                        <IconSettings className="h-5 w-5" />
-                        Settings
-                    </Button>
+            {/* Navigation */}
+            <ScrollArea className="flex-1 py-4">
+                <div className="flex flex-col gap-4 px-3">
+                    <NavGroup label="Main" routes={mainRoutes} />
+                    <NavGroup label="Productivity" routes={productivityRoutes} />
+                    <NavGroup label="Academic" routes={academicRoutes} />
+                    <NavGroup label="Tools" routes={toolRoutes} />
                 </div>
             </ScrollArea>
-            <div className="mt-auto border-t p-4">
+
+            {/* Footer */}
+            <div className="border-t p-4 space-y-4">
+                {/* XP Widget */}
+                <XPWidget />
+
+                {/* User + Settings */}
                 <div className="flex items-center gap-3">
-                    <Avatar>
+                    <Avatar className="h-9 w-9">
                         <AvatarImage src="https://github.com/shadcn.png" />
-                        <AvatarFallback>CN</AvatarFallback>
+                        <AvatarFallback>{(settings?.displayName?.[0] || 'S').toUpperCase()}</AvatarFallback>
                     </Avatar>
-                    <div className="flex flex-col">
-                        <span className="text-sm font-medium">Student User</span>
-                        <span className="text-xs text-muted-foreground">CSE Dept</span>
+                    <div className="flex flex-col flex-1 min-w-0">
+                        <span className="text-sm font-medium truncate">{settings?.displayName || "Student"}</span>
+                        <span className="text-[10px] text-muted-foreground">CSE Dept</span>
                     </div>
-                    <Button variant="ghost" size="icon" className="ml-auto">
-                        <IconLogout className="h-4 w-4" />
+                    <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                        <Link href="/settings">
+                            <IconSettings className="h-4 w-4" />
+                        </Link>
                     </Button>
                 </div>
             </div>
@@ -135,23 +141,19 @@ export function AppSidebar({ className }: SidebarProps) {
             {/* Mobile Trigger */}
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
                 <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon" className="md:hidden fixed top-4 left-4 z-40">
-                        <IconMenu2 className="h-6 w-6" />
+                    <Button variant="outline" size="icon" className="md:hidden fixed top-4 left-4 z-40 shadow-lg">
+                        <IconMenu2 className="h-5 w-5" />
                     </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="p-0 w-72">
+                <SheetContent side="left" className="p-0 w-64">
                     <SidebarContent />
                 </SheetContent>
             </Sheet>
 
             {/* Desktop Sidebar */}
-            <div className={cn("hidden border-r bg-background md:block w-72 fixed inset-y-0 z-30", className)}>
+            <div className={cn("hidden border-r bg-card/50 backdrop-blur-sm md:block w-64 fixed inset-y-0 z-30", className)}>
                 <SidebarContent />
             </div>
         </>
     )
-}
-
-function Separator({ className }: { className?: string }) {
-    return <div className={cn("h-[1px] w-full bg-border", className)} />
 }

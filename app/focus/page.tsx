@@ -14,7 +14,8 @@ import { FocusTaskList } from "@/components/focus/task-list"
 import { ThemeSelector, ThemeKey, THEMES } from "@/components/focus/theme-selector"
 
 export default function FocusPage() {
-    const { logs, addLog, todos, toggleTodo, subjects } = useStore() // Get subjects
+    const { dailyLogs, addDailyLog, todos, toggleTodo, subjects } = useStore()
+    const logs = dailyLogs || []
 
     // Timer State
     const [seconds, setSeconds] = React.useState(0)
@@ -46,13 +47,13 @@ export default function FocusPage() {
     const todayMinutes = React.useMemo(() => {
         const today = new Date().toISOString().split('T')[0]
         return logs
-            .filter(log => log.date.startsWith(today))
-            .reduce((acc, log) => acc + (log.studyTime || 0), 0)
+            .filter(log => log.date?.toString().startsWith(today))
+            .reduce((acc, log) => acc + ((log as any).studyTime || 0), 0)
     }, [logs])
 
     // Calculate total study time from logs
     const totalMinutes = React.useMemo(() => {
-        return logs.reduce((acc, log) => acc + (log.studyTime || 0), 0)
+        return logs.reduce((acc, log) => acc + ((log as any).studyTime || 0), 0)
     }, [logs])
 
     // Timer Logic
@@ -105,12 +106,10 @@ export default function FocusPage() {
                 colors: ['#a78bfa', '#fb7185', '#34d399']
             })
 
-            await addLog({
-                date: new Date().toISOString(),
+            await addDailyLog({
                 mood: 3,
-                studyTime: minutes,
-                note: `Deep Work: ${selectedTaskText}`,
-                subjectId: selectedSubjectId === "none" ? undefined : selectedSubjectId // Pass subjectId
+                focusMinutes: minutes,
+                notes: `Deep Work: ${selectedTaskText}`
             })
 
             setTimeout(() => {

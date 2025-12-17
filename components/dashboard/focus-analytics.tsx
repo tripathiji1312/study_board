@@ -7,13 +7,14 @@ import { useStore } from "@/components/providers/store-provider"
 import { cn } from "@/lib/utils"
 
 export function FocusAnalytics() {
-    const { logs, subjects } = useStore()
+    const { dailyLogs, subjects } = useStore()
+    const logs = dailyLogs || []
 
     // --- Stats Calculation ---
     // 1. Today's Focus
     const today = new Date().toISOString().split('T')[0]
     const todayMinutes = logs
-        .filter(l => l.date.startsWith(today))
+        .filter(l => l.date?.startsWith(today))
         .reduce((acc, l) => acc + (l.studyTime || 0), 0)
 
     // 2. Highest Daily Focus (Record)

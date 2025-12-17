@@ -3,6 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { Shell } from "@/components/ui/shell"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -85,12 +86,12 @@ export default function DashboardPage() {
         } catch {
             return e.day === format(new Date(), "EEEE")
         }
-    }).sort((a, b) => a.time.localeCompare(b.time))
+    }).sort((a, b) => a.startTime.localeCompare(b.startTime))
 
     // Upcoming deadlines
     const upcomingDeadlines = assignments
         .filter(a => a.status !== "Completed")
-        .map(a => ({ ...a, daysLeft: differenceInDays(parseISO(a.due), new Date()) }))
+        .map(a => ({ ...a, daysLeft: differenceInDays(parseISO(a.dueDate), new Date()) }))
         .filter(a => a.daysLeft >= 0 && a.daysLeft <= 7)
         .sort((a, b) => a.daysLeft - b.daysLeft)
         .slice(0, 3)
@@ -104,6 +105,16 @@ export default function DashboardPage() {
         if (hour < 18) return "Good afternoon"
         return "Good evening"
     }
+
+    // Anti-Procrastination: Count overdue items
+    const overdueAssignments = assignments.filter(a =>
+        a.status !== "Completed" && differenceInDays(parseISO(a.dueDate), new Date()) < 0
+    )
+    const overdueTodos = todos.filter(t =>
+        !t.completed && t.dueDate && differenceInDays(parseISO(t.dueDate), new Date()) < 0
+    )
+    const totalOverdue = overdueAssignments.length + overdueTodos.length
+    const isCrisisMode = totalOverdue >= 3
 
     const handleQuickAdd = (e: React.FormEvent) => {
         e.preventDefault()
@@ -132,6 +143,31 @@ export default function DashboardPage() {
                         </Button>
                     </div>
                 </header>
+
+                {/* Crisis Banner - Anti-Procrastination Nudge */}
+                {totalOverdue > 0 && (
+                    <div className={`rounded-xl p-4 flex items-center justify-between ${isCrisisMode ? 'bg-red-600 text-white animate-shake' : 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200'}`}>
+                        <div className="flex items-center gap-3">
+                            <IconFlame className={`w-6 h-6 ${isCrisisMode ? 'animate-pulse' : ''}`} />
+                            <div>
+                                <p className="font-semibold">
+                                    {isCrisisMode ? '🚨 Crisis Mode!' : '⚠️ Overdue Items'}
+                                </p>
+                                <p className="text-sm opacity-90">
+                                    You have {totalOverdue} overdue item{totalOverdue > 1 ? 's' : ''}.
+                                    {isCrisisMode && ' Time to take action!'}
+                                </p>
+                            </div>
+                        </div>
+                        <Button
+                            variant={isCrisisMode ? "secondary" : "outline"}
+                            size="sm"
+                            asChild
+                        >
+                            <a href="#tasks">View Tasks</a>
+                        </Button>
+                    </div>
+                )}
 
                 {/* Focus Analytics Row */}
                 <FocusAnalytics />
@@ -222,7 +258,7 @@ export default function DashboardPage() {
                                 <div key={a.id} className="flex items-center justify-between">
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium truncate">{a.title}</p>
-                                        <p className="text-xs text-muted-foreground">{a.subject}</p>
+                                        <p className="text-xs text-muted-foreground">{a.course}</p>
                                     </div>
                                     <Badge variant={a.daysLeft <= 1 ? "destructive" : "secondary"} className="shrink-0">
                                         {a.daysLeft === 0 ? "Today" : a.daysLeft === 1 ? "Tomorrow" : `${a.daysLeft}d`}
@@ -240,35 +276,39 @@ export default function DashboardPage() {
                     <ExamWidget />
 
                     {/* Schedule */}
-                    <Card>
-                        <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                    <Card className="flex flex-col h-[220px]">
+                        <CardHeader className="pb-2 flex flex-row items-center justify-between flex-shrink-0">
                             <CardTitle className="text-sm font-medium">Today's Schedule</CardTitle>
                             <Button variant="ghost" size="sm" asChild className="h-8 text-xs">
                                 <Link href="/schedule">View All</Link>
                             </Button>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="flex-1 overflow-hidden">
                             {todayEvents.length > 0 ? (
-                                <div className="space-y-3">
-                                    {todayEvents.slice(0, 4).map(event => (
-                                        <div key={event.id} className="flex items-center gap-3">
-                                            <span className="text-xs font-mono text-muted-foreground w-12">{event.time}</span>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium truncate">{event.title}</p>
-                                                <p className="text-xs text-muted-foreground">{event.type}</p>
+                                <ScrollArea className="h-full pr-2">
+                                    <div className="space-y-3">
+                                        {todayEvents.map(event => (
+                                            <div key={event.id} className="flex items-center gap-3">
+                                                <span className="text-xs font-mono text-muted-foreground w-12">{event.startTime}</span>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-medium truncate">{event.title}</p>
+                                                    <p className="text-xs text-muted-foreground">{event.type}</p>
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
-                                </div>
+                                        ))}
+                                    </div>
+                                </ScrollArea>
                             ) : (
-                                <p className="text-sm text-muted-foreground py-4 text-center">No events today</p>
+                                <div className="h-full flex items-center justify-center">
+                                    <p className="text-sm text-muted-foreground">No events today</p>
+                                </div>
                             )}
                         </CardContent>
                     </Card>
 
                     {/* Tasks */}
-                    <Card>
-                        <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                    <Card className="flex flex-col h-[220px]">
+                        <CardHeader className="pb-2 flex flex-row items-center justify-between flex-shrink-0">
                             <CardTitle className="text-sm font-medium">
                                 Tasks
                                 {completedToday > 0 && <span className="text-muted-foreground ml-1">({completedToday} done)</span>}
@@ -277,18 +317,22 @@ export default function DashboardPage() {
                                 <Link href="/todos">View All</Link>
                             </Button>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="flex-1 overflow-hidden">
                             {todayTodos.length > 0 ? (
-                                <div className="space-y-3">
-                                    {todayTodos.slice(0, 4).map(todo => (
-                                        <div key={todo.id} className="flex items-center gap-3">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                                            <p className="text-sm truncate">{todo.text}</p>
-                                        </div>
-                                    ))}
-                                </div>
+                                <ScrollArea className="h-full pr-2">
+                                    <div className="space-y-3">
+                                        {todayTodos.map(todo => (
+                                            <div key={todo.id} className="flex items-center gap-3">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                                                <p className="text-sm truncate">{todo.text}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </ScrollArea>
                             ) : (
-                                <p className="text-sm text-muted-foreground py-4 text-center">All done!</p>
+                                <div className="h-full flex items-center justify-center">
+                                    <p className="text-sm text-muted-foreground">All done!</p>
+                                </div>
                             )}
                         </CardContent>
                     </Card>
@@ -296,8 +340,44 @@ export default function DashboardPage() {
                     {/* Mood Tracker */}
                     <MoodWidget />
 
-                    {/* Ambience */}
-                    <AmbienceWidget />
+                    {/* Assignments Widget */}
+                    <Card className="flex flex-col h-[220px]">
+                        <CardHeader className="pb-2 flex flex-row items-center justify-between flex-shrink-0">
+                            <CardTitle className="text-sm font-medium">Assignments</CardTitle>
+                            <Button variant="ghost" size="sm" asChild className="h-8 text-xs">
+                                <Link href="/assignments">View All</Link>
+                            </Button>
+                        </CardHeader>
+                        <CardContent className="flex-1 overflow-hidden">
+                            {assignments.filter(a => a.status !== "Completed").length > 0 ? (
+                                <ScrollArea className="h-full pr-2">
+                                    <div className="space-y-3">
+                                        {assignments
+                                            .filter(a => a.status !== "Completed")
+                                            .map(a => (
+                                                <div key={a.id} className="flex items-center gap-3">
+                                                    <div className={`w-2 h-2 rounded-full ${a.priority === "Urgent" ? "bg-red-500" :
+                                                        a.priority === "High" ? "bg-orange-500" :
+                                                            a.priority === "Medium" ? "bg-yellow-500" : "bg-green-500"
+                                                        }`} />
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-sm font-medium truncate">{a.title}</p>
+                                                        <p className="text-xs text-muted-foreground">{a.course}</p>
+                                                    </div>
+                                                    <Badge variant="secondary" className="text-xs shrink-0">
+                                                        {a.status}
+                                                    </Badge>
+                                                </div>
+                                            ))}
+                                    </div>
+                                </ScrollArea>
+                            ) : (
+                                <div className="h-full flex items-center justify-center">
+                                    <p className="text-sm text-muted-foreground">All done! 🎉</p>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
 
                     {/* Spotify */}
                     <SpotifyWidget />

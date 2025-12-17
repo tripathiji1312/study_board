@@ -15,11 +15,13 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-import { IconSchool, IconUser, IconPencil, IconTrophy, IconTarget, IconBook, IconTrash } from "@tabler/icons-react"
+import { IconSchool, IconUser, IconPencil, IconTrophy, IconTarget, IconBook, IconTrash, IconCalendarEvent } from "@tabler/icons-react"
 import { useStore } from "@/components/providers/store-provider"
 import { motion } from "framer-motion"
 import { SyllabusTracker } from "@/components/academics/syllabus-tracker"
+import { AcademicHeatmap } from "@/components/academics/heatmap"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import Link from "next/link"
 
 export default function AcademicsPage() {
     const { subjects, currentSemester, updateSubject, deleteSubject } = useStore()
@@ -127,7 +129,16 @@ export default function AcademicsPage() {
                             {currentSemester ? `${currentSemester.name} — VIT Evaluation` : "Set semester in Settings"}
                         </p>
                     </div>
+                    <Button asChild>
+                        <Link href="/academics/exams">
+                            <IconCalendarEvent className="w-4 h-4 mr-2" />
+                            Exam Manager
+                        </Link>
+                    </Button>
                 </div>
+
+                {/* Study Heatmap */}
+                <AcademicHeatmap />
 
                 {/* Legend */}
                 <div className="flex flex-wrap gap-2 p-3 bg-muted/50 rounded-lg text-sm">

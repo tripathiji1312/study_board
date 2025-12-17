@@ -17,27 +17,17 @@ const MOODS = [
 ]
 
 export function MoodWidget() {
-    const { logs, addLog } = useStore()
+    const { dailyLogs, addDailyLog } = useStore()
+    const logs = dailyLogs || []
     const today = new Date()
 
-    const todayLog = logs.find(l => isSameDay(new Date(l.date), today))
+    const todayLog = logs.find(l => l.date && isSameDay(new Date(l.date), today))
 
     const handleLog = async (level: number) => {
-        // Optimistic update would be good here, for now simple logic
-        // Ideally we check if we need to POST or PUT
-        // Since API is simple POST for new log, let's just allow appending for now to simplify
-        // Or if we want edit, we need backend support.
-        // For now, I'll allow "changing" mood by just adding another log entry for today 
-        // (and taking the latest one in the backend query or UI).
-        // Actually best to do nothing if already exists for phase 1, but user asked to MODIFY.
-        // So I'll just post a new one and let the UI pick the latest one (which it does via .find usually grabbing first match, 
-        // wait .find grabs first. Logs are ordered DESC. So first match is latest.
-        // So POSTing a new one should work if backend allows multiple per day.
-
-        await addLog({
-            date: new Date().toISOString(),
+        await addDailyLog({
             mood: level,
-            note: ""
+            focusMinutes: 0,
+            notes: ""
         })
     }
 
