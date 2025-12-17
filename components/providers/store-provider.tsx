@@ -15,6 +15,8 @@ export interface UserSettings {
     currentSemId?: number
     focusDuration: number
     breakDuration: number
+    emailNotifications?: boolean
+    notificationEmail?: string
 }
 
 export interface Semester {

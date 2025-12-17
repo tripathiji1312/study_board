@@ -130,5 +130,7 @@ model UserSettings {
   department     String  @default("CSE")
   currentSemId   Int?
   focusDuration  Int     @default(25) // Pomodoro focus minutes
-  breakDuration  Int     @default(5)  // Pomodoro break minutes
+  breakDuration     Int     @default(5)
+  emailNotifications Boolean @default(false)
+  notificationEmail String?  // Pomodoro break minutes
 }

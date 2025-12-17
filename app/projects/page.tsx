@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { Shell } from "@/components/ui/shell"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -35,7 +35,11 @@ import {
     IconPlayerPause,
     IconCheck,
     IconPackage,
-    IconFlame
+    IconFlame,
+    IconBrandGithub,
+    IconStar,
+    IconGitFork,
+    IconExternalLink
 } from "@tabler/icons-react"
 import { useStore, Project } from "@/components/providers/store-provider"
 import { motion, AnimatePresence } from "framer-motion"
@@ -47,11 +51,18 @@ const STATUS_CONFIG: Record<string, { icon: typeof IconTarget, color: string, bg
     "Completed": { icon: IconCheck, color: "text-green-500", bg: "bg-green-500/10 border-green-200" },
 }
 
+interface GitHubStats {
+    stars: number
+    forks: number
+    loading: boolean
+}
+
 export default function ProjectsPage() {
     const { projects, addProject, updateProject, deleteProject } = useStore()
     const [isDialogOpen, setIsDialogOpen] = React.useState(false)
     const [editingProject, setEditingProject] = React.useState<Project | null>(null)
     const [filter, setFilter] = React.useState<string>("all")
+    const [githubStats, setGithubStats] = React.useState<Record<number, GitHubStats>>({})
 
     // Form State
     const [title, setTitle] = React.useState("")
@@ -59,6 +70,7 @@ export default function ProjectsPage() {
     const [progress, setProgress] = React.useState(0)
     const [status, setStatus] = React.useState("Planning")
     const [tech, setTech] = React.useState("")
+    const [githubUrl, setGithubUrl] = React.useState("")
 
     const filteredProjects = filter === "all"
         ? projects
@@ -67,6 +79,42 @@ export default function ProjectsPage() {
     const inProgress = projects.filter(p => p.status === "In Progress").length
     const completed = projects.filter(p => p.status === "Completed").length
 
+    // Fetch GitHub stats for a repo
+    const fetchGitHubStats = React.useCallback(async (projectId: number, url: string) => {
+        if (!url) return
+
+        // Extract owner/repo from GitHub URL
+        const match = url.match(/github\.com\/([^/]+)\/([^/]+)/)
+        if (!match) return
+
+        const [, owner, repo] = match
+        setGithubStats(prev => ({ ...prev, [projectId]: { stars: 0, forks: 0, loading: true } }))
+
+        try {
+            const res = await fetch(`https://api.github.com/repos/${owner}/${repo.replace('.git', '')}`)
+            if (res.ok) {
+                const data = await res.json()
+                setGithubStats(prev => ({
+                    ...prev,
+                    [projectId]: { stars: data.stargazers_count, forks: data.forks_count, loading: false }
+                }))
+            } else {
+                setGithubStats(prev => ({ ...prev, [projectId]: { stars: 0, forks: 0, loading: false } }))
+            }
+        } catch {
+            setGithubStats(prev => ({ ...prev, [projectId]: { stars: 0, forks: 0, loading: false } }))
+        }
+    }, [])
+
+    // Fetch stats for all projects with GitHub URLs
+    React.useEffect(() => {
+        projects.forEach(p => {
+            if (p.githubUrl && !githubStats[p.id]) {
+                fetchGitHubStats(p.id, p.githubUrl)
+            }
+        })
+    }, [projects, fetchGitHubStats, githubStats])
+
     const openAddDialog = () => {
         setEditingProject(null)
         setTitle("")
@@ -74,6 +122,7 @@ export default function ProjectsPage() {
         setProgress(0)
         setStatus("Planning")
         setTech("")
+        setGithubUrl("")
         setIsDialogOpen(true)
     }
 
@@ -84,6 +133,7 @@ export default function ProjectsPage() {
         setProgress(project.progress)
         setStatus(project.status)
         setTech(project.tech.join(", "))
+        setGithubUrl(project.githubUrl || "")
         setIsDialogOpen(true)
     }
 
@@ -96,11 +146,16 @@ export default function ProjectsPage() {
             description,
             progress,
             status,
-            tech: tech.split(",").map(t => t.trim()).filter(Boolean)
+            tech: tech.split(",").map(t => t.trim()).filter(Boolean),
+            githubUrl: githubUrl || undefined
         }
 
         if (editingProject) {
             updateProject({ ...editingProject, ...projectData })
+            // Refresh GitHub stats if URL changed
+            if (githubUrl && githubUrl !== editingProject.githubUrl) {
+                fetchGitHubStats(editingProject.id, githubUrl)
+            }
         } else {
             addProject(projectData)
         }
@@ -189,6 +244,7 @@ export default function ProjectsPage() {
                             {filteredProjects.map((project, index) => {
                                 const config = STATUS_CONFIG[project.status] || STATUS_CONFIG["Planning"]
                                 const Icon = config.icon
+                                const stats = githubStats[project.id]
 
                                 return (
                                     <motion.div
@@ -224,6 +280,33 @@ export default function ProjectsPage() {
                                             <CardContent className="space-y-4">
                                                 {project.description && (
                                                     <p className="text-sm text-muted-foreground line-clamp-2">{project.description}</p>
+                                                )}
+
+                                                {/* GitHub Stats */}
+                                                {project.githubUrl && (
+                                                    <div className="flex items-center gap-3 p-2 rounded-lg bg-background/80 border">
+                                                        <IconBrandGithub className="w-4 h-4" />
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-xs font-medium truncate">
+                                                                {project.githubUrl.replace('https://github.com/', '')}
+                                                            </p>
+                                                        </div>
+                                                        {stats && !stats.loading && (
+                                                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                                                <span className="flex items-center gap-1">
+                                                                    <IconStar className="w-3 h-3" /> {stats.stars}
+                                                                </span>
+                                                                <span className="flex items-center gap-1">
+                                                                    <IconGitFork className="w-3 h-3" /> {stats.forks}
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                        <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" asChild>
+                                                            <a href={project.githubUrl} target="_blank" rel="noopener noreferrer">
+                                                                <IconExternalLink className="w-3 h-3" />
+                                                            </a>
+                                                        </Button>
+                                                    </div>
                                                 )}
 
                                                 {/* Progress Section */}
@@ -299,6 +382,19 @@ export default function ProjectsPage() {
                                     placeholder="Brief description..."
                                     rows={2}
                                 />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label className="flex items-center gap-2">
+                                    <IconBrandGithub className="w-4 h-4" />
+                                    GitHub Repository
+                                </Label>
+                                <Input
+                                    value={githubUrl}
+                                    onChange={e => setGithubUrl(e.target.value)}
+                                    placeholder="https://github.com/user/repo"
+                                />
+                                <p className="text-xs text-muted-foreground">Stars and forks will be fetched automatically</p>
                             </div>
 
                             <div className="space-y-2">

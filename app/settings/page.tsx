@@ -37,6 +37,7 @@ import {
     IconClock
 } from "@tabler/icons-react"
 import { useStore } from "@/components/providers/store-provider"
+import { toast } from "sonner"
 
 export default function SettingsPage() {
     const {
@@ -60,6 +61,8 @@ export default function SettingsPage() {
     const [department, setDepartment] = React.useState("")
     const [focusDuration, setFocusDuration] = React.useState(25)
     const [breakDuration, setBreakDuration] = React.useState(5)
+    const [emailNotifications, setEmailNotifications] = React.useState(false)
+    const [notificationEmail, setNotificationEmail] = React.useState("")
 
     // Semester Dialog
     const [semDialogOpen, setSemDialogOpen] = React.useState(false)
@@ -90,6 +93,8 @@ export default function SettingsPage() {
             setDepartment(settings.department || "")
             setFocusDuration(settings.focusDuration || 25)
             setBreakDuration(settings.breakDuration || 5)
+            setEmailNotifications(settings.emailNotifications || false)
+            setNotificationEmail(settings.notificationEmail || "")
         }
     }, [settings])
 
@@ -99,7 +104,9 @@ export default function SettingsPage() {
             email,
             department,
             focusDuration,
-            breakDuration
+            breakDuration,
+            emailNotifications,
+            notificationEmail
         })
     }
 
@@ -226,6 +233,61 @@ export default function SettingsPage() {
                                             <Label htmlFor="break">Break Duration (minutes)</Label>
                                             <Input id="break" type="number" value={breakDuration} onChange={e => setBreakDuration(Number(e.target.value))} min={1} max={60} />
                                         </div>
+                                    </div>
+                                </div>
+
+                                {/* Notification Settings */}
+                                <div className="border-t pt-6">
+                                    <h3 className="font-semibold mb-4 flex items-center gap-2">
+                                        <IconDeviceFloppy className="w-4 h-4" /> Email Notifications
+                                    </h3>
+                                    <div className="space-y-4">
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="checkbox"
+                                                id="notify"
+                                                checked={emailNotifications}
+                                                onChange={e => setEmailNotifications(e.target.checked)}
+                                                className="w-4 h-4"
+                                            />
+                                            <Label htmlFor="notify">Enable daily email reminders (Due Today/Tomorrow)</Label>
+                                        </div>
+                                        {emailNotifications && (
+                                            <div className="space-y-4 shadow-sm border p-4 rounded-md">
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="notifyEmail">Notification Email</Label>
+                                                    <div className="flex gap-2">
+                                                        <Input
+                                                            id="notifyEmail"
+                                                            type="email"
+                                                            value={notificationEmail}
+                                                            onChange={e => setNotificationEmail(e.target.value)}
+                                                            placeholder="Enter email for alerts..."
+                                                        />
+                                                        <Button
+                                                            variant="outline"
+                                                            onClick={async () => {
+                                                                if (!notificationEmail) return toast.error("Enter an email first!")
+                                                                toast.info("Sending test email...")
+                                                                try {
+                                                                    const res = await fetch('/api/notifications/test', {
+                                                                        method: 'POST',
+                                                                        body: JSON.stringify({ email: notificationEmail })
+                                                                    })
+                                                                    if (res.ok) toast.success("Test email sent!")
+                                                                    else toast.error("Failed to send.")
+                                                                } catch (e) { toast.error("Error sending email.") }
+                                                            }}
+                                                        >
+                                                            Test
+                                                        </Button>
+                                                    </div>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        We'll send reminders here. Make sure it's valid!
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 

@@ -30,7 +30,9 @@ export async function PUT(request: Request) {
                 department: body.department || "CSE",
                 currentSemId: body.currentSemId,
                 focusDuration: body.focusDuration || 25,
-                breakDuration: body.breakDuration || 5
+                breakDuration: body.breakDuration || 5,
+                emailNotifications: body.emailNotifications || false,
+                notificationEmail: body.notificationEmail,
             }
         })
     } else {
@@ -42,7 +44,9 @@ export async function PUT(request: Request) {
                 department: body.department,
                 currentSemId: body.currentSemId,
                 focusDuration: body.focusDuration,
-                breakDuration: body.breakDuration
+                breakDuration: body.breakDuration,
+                emailNotifications: body.emailNotifications,
+                notificationEmail: body.notificationEmail,
             }
         })
     }

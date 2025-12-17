@@ -1,395 +1,324 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { Shell } from "@/components/ui/shell"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { Checkbox } from "@/components/ui/checkbox"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { Input } from "@/components/ui/input"
 import {
-    IconTarget,
-    IconClockHour4,
-    IconTrophy,
+    IconClipboardList,
+    IconChecklist,
+    IconRocket,
     IconCalendarEvent,
     IconPlus,
-    IconPlayerPlay,
-    IconPlayerPause,
-    IconRefresh,
-    IconChecklist,
-    IconSchool,
-    IconBulb,
-    IconSparkles,
     IconFlame,
-    IconBolt
+    IconBrandSpotify,
+    IconArrowRight,
+    IconBook,
+    IconLink,
+    IconVideo,
+    IconFileText
 } from "@tabler/icons-react"
 import { useStore } from "@/components/providers/store-provider"
-import { format } from "date-fns"
-import Link from "next/link"
-import { AnimatePresence, motion } from "framer-motion"
+import { SpotifyWidget } from "@/components/spotify-widget"
+import { format, isToday, parseISO, differenceInDays } from "date-fns"
 
-export default function Page() {
-    const { assignments, projects, todos, schedule, toggleTodo, subjects } = useStore()
+const RESOURCE_ICONS: Record<string, typeof IconLink> = {
+    "Article": IconFileText,
+    "Video": IconVideo,
+    "Link": IconLink,
+    "Book": IconBook,
+}
 
-    // Time-based greeting
-    const currentHour = new Date().getHours()
-    const greeting = currentHour < 12 ? "Good morning" : currentHour < 18 ? "Good afternoon" : "Good evening"
-    const today = format(new Date(), "yyyy-MM-dd")
+export default function DashboardPage() {
+    const {
+        settings,
+        todos,
+        assignments,
+        projects,
+        schedule,
+        resources,
+        currentSemester,
+        addTodo
+    } = useStore()
+
+    const [quickTask, setQuickTask] = React.useState("")
+
+    // Check for email notifications on load
+    React.useEffect(() => {
+        const checkNotifications = async () => {
+            if (settings?.emailNotifications && settings?.notificationEmail) {
+                try {
+                    await fetch('/api/notifications/check', {
+                        method: 'POST',
+                        body: JSON.stringify({ email: settings.notificationEmail })
+                    })
+                } catch (e) {
+                    console.error("Failed to check notifications", e)
+                }
+            }
+        }
+
+        // Simple check: run once on mount if settings are loaded
+        if (settings) {
+            checkNotifications()
+        }
+    }, [settings?.emailNotifications, settings?.notificationEmail])
 
     // Stats
-    const pendingAssignments = assignments.filter(a => a.status !== "Completed").length
-    const completedProjects = projects.filter(p => p.status === "Completed").length
-    const todaysTodos = todos.filter(t => t.category === "today")
-    const completedTodaysTodos = todaysTodos.filter(t => t.completed).length
-    const todaysEvents = schedule.filter(s => s.day === today).sort((a, b) => a.time.localeCompare(b.time))
+    const pendingAssignments = assignments.filter(a => a.status === "Pending").length
+    const todayTodos = todos.filter(t => t.category === "today" && !t.completed)
+    const completedToday = todos.filter(t => t.category === "today" && t.completed).length
+    const activeProjects = projects.filter(p => p.status === "In Progress").length
+    const todayEvents = schedule.filter(e => {
+        try {
+            return isToday(parseISO(e.day))
+        } catch {
+            return e.day === format(new Date(), "EEEE")
+        }
+    }).sort((a, b) => a.time.localeCompare(b.time))
 
-    // Upcoming Deadlines (next 7 days)
+    // Upcoming deadlines
     const upcomingDeadlines = assignments
         .filter(a => a.status !== "Completed")
-        .sort((a, b) => a.due.localeCompare(b.due))
-        .slice(0, 5)
+        .map(a => ({ ...a, daysLeft: differenceInDays(parseISO(a.due), new Date()) }))
+        .filter(a => a.daysLeft >= 0 && a.daysLeft <= 7)
+        .sort((a, b) => a.daysLeft - b.daysLeft)
+        .slice(0, 3)
 
-    // Pomodoro Timer State
-    const [pomodoroTime, setPomodoroTime] = React.useState(25 * 60) // 25 minutes
-    const [isRunning, setIsRunning] = React.useState(false)
-    const [pomodoroMode, setPomodoroMode] = React.useState<"focus" | "break">("focus")
+    // Recent resources
+    const recentResources = resources.slice(0, 4)
 
-    React.useEffect(() => {
-        let interval: NodeJS.Timeout
-        if (isRunning && pomodoroTime > 0) {
-            interval = setInterval(() => {
-                setPomodoroTime(prev => prev - 1)
-            }, 1000)
-        } else if (pomodoroTime === 0) {
-            // Switch modes
-            if (pomodoroMode === "focus") {
-                setPomodoroMode("break")
-                setPomodoroTime(5 * 60) // 5 min break
-            } else {
-                setPomodoroMode("focus")
-                setPomodoroTime(25 * 60)
-            }
-            setIsRunning(false)
-        }
-        return () => clearInterval(interval)
-    }, [isRunning, pomodoroTime, pomodoroMode])
-
-    const formatTime = (seconds: number) => {
-        const mins = Math.floor(seconds / 60)
-        const secs = seconds % 60
-        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+    const getGreeting = () => {
+        const hour = new Date().getHours()
+        if (hour < 12) return "Good morning"
+        if (hour < 17) return "Good afternoon"
+        return "Good evening"
     }
 
-    const resetPomodoro = () => {
-        setIsRunning(false)
-        setPomodoroMode("focus")
-        setPomodoroTime(25 * 60)
-    }
-
-    // Calculate academic progress (mock CGPA calculation)
-    const calculateGPA = () => {
-        if (subjects.length === 0) return 0
-        let totalMarks = 0
-        let count = 0
-        subjects.forEach(sub => {
-            if (sub.marks.CAT1) { totalMarks += sub.marks.CAT1; count++ }
-            if (sub.marks.CAT2) { totalMarks += sub.marks.CAT2; count++ }
-        })
-        return count > 0 ? (totalMarks / count).toFixed(1) : "N/A"
+    const handleQuickAdd = (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!quickTask.trim()) return
+        addTodo({ text: quickTask, completed: false, category: "today" })
+        setQuickTask("")
     }
 
     return (
         <Shell>
-            <div className="flex flex-col gap-6">
-                {/* Welcome Section */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight">{greeting}, Student!</h1>
-                        <p className="text-muted-foreground">Here's what's happening in your academic life today.</p>
-                    </div>
-                    <div className="flex gap-2 items-center">
-                        <Badge variant="outline" className="gap-1 py-1.5 px-3">
-                            <IconCalendarEvent className="w-3.5 h-3.5" />
-                            {format(new Date(), "EEEE, MMM d")}
-                        </Badge>
-                        <Badge variant="secondary" className="gap-1 py-1.5 px-3">
-                            <IconFlame className="w-3.5 h-3.5 text-orange-500" />
-                            7 Day Streak
-                        </Badge>
-                    </div>
-                </div>
-
-                {/* Quick Actions */}
-                <div className="flex flex-wrap gap-2">
-                    <Button size="sm" asChild>
-                        <Link href="/assignments">
-                            <IconPlus className="w-4 h-4 mr-1" /> New Assignment
-                        </Link>
-                    </Button>
-                    <Button size="sm" variant="outline" asChild>
-                        <Link href="/todos">
-                            <IconChecklist className="w-4 h-4 mr-1" /> Add Todo
-                        </Link>
-                    </Button>
-                    <Button size="sm" variant="outline" asChild>
-                        <Link href="/projects">
-                            <IconBulb className="w-4 h-4 mr-1" /> New Project
-                        </Link>
-                    </Button>
-                    <Button size="sm" variant="outline" asChild>
-                        <Link href="/schedule">
-                            <IconCalendarEvent className="w-4 h-4 mr-1" /> Schedule Event
-                        </Link>
-                    </Button>
+            <div className="space-y-6">
+                {/* Header */}
+                <div className="space-y-1">
+                    <h1 className="text-2xl font-bold tracking-tight">
+                        {getGreeting()}, {settings?.displayName || "Student"}
+                    </h1>
+                    <p className="text-sm text-muted-foreground">
+                        {format(new Date(), "EEEE, MMMM d")} {currentSemester && `· ${currentSemester.name}`}
+                    </p>
                 </div>
 
                 {/* Stats Row */}
-                <div className="grid gap-4 md:grid-cols-4">
-                    <Card className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border-indigo-200/20 backdrop-blur-sm">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Pending Assignments</CardTitle>
-                            <IconTarget className="h-4 w-4 text-indigo-500" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{pendingAssignments}</div>
-                            <p className="text-xs text-muted-foreground">needs attention</p>
-                        </CardContent>
-                    </Card>
-                    <Card className="bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border-emerald-200/20 backdrop-blur-sm">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Today's Tasks</CardTitle>
-                            <IconChecklist className="h-4 w-4 text-emerald-500" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{completedTodaysTodos}/{todaysTodos.length}</div>
-                            <Progress value={todaysTodos.length > 0 ? (completedTodaysTodos / todaysTodos.length) * 100 : 0} className="h-1.5 mt-2" />
-                        </CardContent>
-                    </Card>
-                    <Card className="bg-gradient-to-br from-amber-500/10 to-orange-500/10 border-amber-200/20 backdrop-blur-sm">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Completed Projects</CardTitle>
-                            <IconTrophy className="h-4 w-4 text-amber-500" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{completedProjects}</div>
-                            <p className="text-xs text-muted-foreground">keep building!</p>
-                        </CardContent>
-                    </Card>
-                    <Card className="bg-gradient-to-br from-rose-500/10 to-pink-500/10 border-rose-200/20 backdrop-blur-sm">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Avg Score</CardTitle>
-                            <IconSchool className="h-4 w-4 text-rose-500" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{calculateGPA()}</div>
-                            <p className="text-xs text-muted-foreground">current average</p>
-                        </CardContent>
-                    </Card>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    <Link href="/assignments">
+                        <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
+                            <CardContent className="p-4 flex items-center gap-3">
+                                <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900/30">
+                                    <IconClipboardList className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                                </div>
+                                <div>
+                                    <p className="text-2xl font-bold">{pendingAssignments}</p>
+                                    <p className="text-xs text-muted-foreground">Pending</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </Link>
+                    <Link href="/todos">
+                        <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
+                            <CardContent className="p-4 flex items-center gap-3">
+                                <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                                    <IconChecklist className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                                </div>
+                                <div>
+                                    <p className="text-2xl font-bold">{todayTodos.length}</p>
+                                    <p className="text-xs text-muted-foreground">Tasks</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </Link>
+                    <Link href="/projects">
+                        <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
+                            <CardContent className="p-4 flex items-center gap-3">
+                                <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
+                                    <IconRocket className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                                </div>
+                                <div>
+                                    <p className="text-2xl font-bold">{activeProjects}</p>
+                                    <p className="text-xs text-muted-foreground">Projects</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </Link>
+                    <Link href="/schedule">
+                        <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
+                            <CardContent className="p-4 flex items-center gap-3">
+                                <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
+                                    <IconCalendarEvent className="w-5 h-5 text-green-600 dark:text-green-400" />
+                                </div>
+                                <div>
+                                    <p className="text-2xl font-bold">{todayEvents.length}</p>
+                                    <p className="text-xs text-muted-foreground">Today</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </Link>
                 </div>
 
-                {/* Main Widget Grid */}
-                <div className="grid gap-6 lg:grid-cols-3">
-                    {/* Today's Schedule */}
-                    <Card className="lg:col-span-1">
-                        <CardHeader className="pb-3">
-                            <CardTitle className="text-lg flex items-center gap-2">
-                                <IconCalendarEvent className="w-5 h-5 text-primary" />
-                                Today's Schedule
+                {/* Quick Add */}
+                <form onSubmit={handleQuickAdd} className="flex gap-2">
+                    <Input
+                        value={quickTask}
+                        onChange={e => setQuickTask(e.target.value)}
+                        placeholder="Quick add a task..."
+                        className="flex-1"
+                    />
+                    <Button type="submit" size="icon">
+                        <IconPlus className="w-4 h-4" />
+                    </Button>
+                </form>
+
+                {/* Deadlines Alert */}
+                {upcomingDeadlines.length > 0 && (
+                    <Card className="border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/20">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-sm font-medium flex items-center gap-2 text-orange-700 dark:text-orange-300">
+                                <IconFlame className="w-4 h-4" />
+                                Due Soon
                             </CardTitle>
-                            <CardDescription>{todaysEvents.length} events today</CardDescription>
                         </CardHeader>
-                        <CardContent>
-                            <ScrollArea className="h-[250px] pr-4">
-                                {todaysEvents.length > 0 ? (
-                                    <div className="space-y-4">
-                                        {todaysEvents.map(event => (
-                                            <div key={event.id} className="flex gap-3 items-start">
-                                                <div className="text-xs font-mono text-muted-foreground w-12 shrink-0 pt-0.5">
-                                                    {event.time}
-                                                </div>
-                                                <div className="flex-1 border-l-2 border-primary/30 pl-3">
-                                                    <p className="font-medium text-sm">{event.title}</p>
-                                                    <p className="text-xs text-muted-foreground">{event.duration} · {event.type}</p>
-                                                </div>
-                                            </div>
-                                        ))}
+                        <CardContent className="space-y-2">
+                            {upcomingDeadlines.map(a => (
+                                <div key={a.id} className="flex items-center justify-between">
+                                    <div className="min-w-0">
+                                        <p className="text-sm font-medium truncate">{a.title}</p>
+                                        <p className="text-xs text-muted-foreground">{a.subject}</p>
                                     </div>
-                                ) : (
-                                    <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
-                                        <IconSparkles className="w-8 h-8 mb-2 opacity-50" />
-                                        <p className="text-sm">No events today!</p>
-                                        <Button variant="link" size="sm" asChild>
-                                            <Link href="/schedule">Add an event</Link>
-                                        </Button>
-                                    </div>
-                                )}
-                            </ScrollArea>
+                                    <Badge variant={a.daysLeft <= 1 ? "destructive" : "secondary"} className="shrink-0">
+                                        {a.daysLeft === 0 ? "Today" : a.daysLeft === 1 ? "Tomorrow" : `${a.daysLeft}d`}
+                                    </Badge>
+                                </div>
+                            ))}
                         </CardContent>
                     </Card>
+                )}
 
-                    {/* Today's Todos */}
-                    <Card className="lg:col-span-1">
-                        <CardHeader className="pb-3">
-                            <CardTitle className="text-lg flex items-center gap-2">
-                                <IconChecklist className="w-5 h-5 text-primary" />
-                                Today's Todos
-                            </CardTitle>
-                            <CardDescription>{completedTodaysTodos} of {todaysTodos.length} complete</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <ScrollArea className="h-[250px] pr-4">
-                                {todaysTodos.length > 0 ? (
-                                    <div className="space-y-3">
-                                        <AnimatePresence>
-                                            {todaysTodos.map(todo => (
-                                                <motion.div
-                                                    key={todo.id}
-                                                    layout
-                                                    initial={{ opacity: 0, y: -10 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    exit={{ opacity: 0, x: -20 }}
-                                                    className="flex items-center gap-3 group"
-                                                >
-                                                    <Checkbox
-                                                        id={`dash-${todo.id}`}
-                                                        checked={todo.completed}
-                                                        onCheckedChange={() => toggleTodo(todo.id, todo.completed)}
-                                                    />
-                                                    <label
-                                                        htmlFor={`dash-${todo.id}`}
-                                                        className={`text-sm flex-1 cursor-pointer ${todo.completed ? 'line-through text-muted-foreground' : ''}`}
-                                                    >
-                                                        {todo.text}
-                                                    </label>
-                                                </motion.div>
-                                            ))}
-                                        </AnimatePresence>
-                                    </div>
-                                ) : (
-                                    <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
-                                        <IconSparkles className="w-8 h-8 mb-2 opacity-50" />
-                                        <p className="text-sm">No todos for today</p>
-                                        <Button variant="link" size="sm" asChild>
-                                            <Link href="/todos">Add a todo</Link>
-                                        </Button>
-                                    </div>
-                                )}
-                            </ScrollArea>
-                        </CardContent>
-                    </Card>
-
-                    {/* Pomodoro Timer */}
-                    <Card className="lg:col-span-1 bg-gradient-to-br from-violet-500/5 to-fuchsia-500/5">
-                        <CardHeader className="pb-3">
-                            <CardTitle className="text-lg flex items-center gap-2">
-                                <IconBolt className="w-5 h-5 text-violet-500" />
-                                Focus Timer
-                            </CardTitle>
-                            <CardDescription>{pomodoroMode === "focus" ? "Stay focused!" : "Take a break"}</CardDescription>
-                        </CardHeader>
-                        <CardContent className="flex flex-col items-center justify-center gap-4 py-4">
-                            <div className={`text-6xl font-mono font-bold tracking-tight ${pomodoroMode === 'focus' ? 'text-violet-600 dark:text-violet-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
-                                {formatTime(pomodoroTime)}
-                            </div>
-                            <Badge variant={pomodoroMode === "focus" ? "default" : "secondary"} className="text-xs">
-                                {pomodoroMode === "focus" ? "Focus Session" : "Break Time"}
-                            </Badge>
-                            <div className="flex gap-2 mt-2">
-                                <Button
-                                    size="lg"
-                                    variant={isRunning ? "secondary" : "default"}
-                                    onClick={() => setIsRunning(!isRunning)}
-                                    className="gap-2"
-                                >
-                                    {isRunning ? <IconPlayerPause className="w-5 h-5" /> : <IconPlayerPlay className="w-5 h-5" />}
-                                    {isRunning ? "Pause" : "Start"}
-                                </Button>
-                                <Button size="lg" variant="outline" onClick={resetPomodoro}>
-                                    <IconRefresh className="w-5 h-5" />
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                {/* Upcoming Deadlines & Projects Row */}
-                <div className="grid gap-6 lg:grid-cols-2">
-                    {/* Upcoming Deadlines */}
+                {/* Main Grid */}
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {/* Schedule */}
                     <Card>
-                        <CardHeader className="pb-3">
-                            <CardTitle className="text-lg flex items-center gap-2">
-                                <IconTarget className="w-5 h-5 text-primary" />
-                                Upcoming Deadlines
-                            </CardTitle>
+                        <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                            <CardTitle className="text-sm font-medium">Today's Schedule</CardTitle>
+                            <Button variant="ghost" size="sm" asChild className="h-8 text-xs">
+                                <Link href="/schedule">View All</Link>
+                            </Button>
                         </CardHeader>
                         <CardContent>
-                            <ScrollArea className="h-[200px] pr-4">
-                                {upcomingDeadlines.length > 0 ? (
-                                    <div className="space-y-3">
-                                        {upcomingDeadlines.map(assignment => (
-                                            <div key={assignment.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
-                                                <div>
-                                                    <p className="font-medium text-sm">{assignment.title}</p>
-                                                    <p className="text-xs text-muted-foreground">{assignment.subject}</p>
-                                                </div>
-                                                <div className="text-right">
-                                                    <Badge variant="outline" className={
-                                                        assignment.priority === "Urgent" ? "border-red-500 text-red-500" :
-                                                            assignment.priority === "High" ? "border-orange-500 text-orange-500" :
-                                                                "border-muted-foreground"
-                                                    }>
-                                                        {assignment.due}
-                                                    </Badge>
-                                                </div>
+                            {todayEvents.length > 0 ? (
+                                <div className="space-y-3">
+                                    {todayEvents.slice(0, 4).map(event => (
+                                        <div key={event.id} className="flex items-center gap-3">
+                                            <span className="text-xs font-mono text-muted-foreground w-12">{event.time}</span>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium truncate">{event.title}</p>
+                                                <p className="text-xs text-muted-foreground">{event.type}</p>
                                             </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="h-full flex flex-col items-center justify-center text-muted-foreground py-8">
-                                        <IconTrophy className="w-8 h-8 mb-2 opacity-50" />
-                                        <p className="text-sm">All caught up!</p>
-                                    </div>
-                                )}
-                            </ScrollArea>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-sm text-muted-foreground py-4 text-center">No events today</p>
+                            )}
                         </CardContent>
                     </Card>
 
-                    {/* Active Projects */}
+                    {/* Tasks */}
                     <Card>
-                        <CardHeader className="pb-3">
-                            <CardTitle className="text-lg flex items-center gap-2">
-                                <IconBulb className="w-5 h-5 text-primary" />
-                                Active Projects
+                        <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                            <CardTitle className="text-sm font-medium">
+                                Tasks
+                                {completedToday > 0 && <span className="text-muted-foreground ml-1">({completedToday} done)</span>}
                             </CardTitle>
+                            <Button variant="ghost" size="sm" asChild className="h-8 text-xs">
+                                <Link href="/todos">View All</Link>
+                            </Button>
                         </CardHeader>
                         <CardContent>
-                            <ScrollArea className="h-[200px] pr-4">
-                                {projects.filter(p => p.status !== "Completed").slice(0, 4).length > 0 ? (
-                                    <div className="space-y-3">
-                                        {projects.filter(p => p.status !== "Completed").slice(0, 4).map(project => (
-                                            <div key={project.id} className="p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <p className="font-medium text-sm">{project.title}</p>
-                                                    <span className="text-xs text-muted-foreground">{project.progress}%</span>
-                                                </div>
-                                                <Progress value={project.progress} className="h-1.5" />
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="h-full flex flex-col items-center justify-center text-muted-foreground py-8">
-                                        <IconBulb className="w-8 h-8 mb-2 opacity-50" />
-                                        <p className="text-sm">No active projects</p>
-                                        <Button variant="link" size="sm" asChild>
-                                            <Link href="/projects">Start a project</Link>
-                                        </Button>
-                                    </div>
-                                )}
-                            </ScrollArea>
+                            {todayTodos.length > 0 ? (
+                                <div className="space-y-3">
+                                    {todayTodos.slice(0, 4).map(todo => (
+                                        <div key={todo.id} className="flex items-center gap-3">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                                            <p className="text-sm truncate">{todo.text}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-sm text-muted-foreground py-4 text-center">All done!</p>
+                            )}
                         </CardContent>
                     </Card>
+
+                    {/* Spotify */}
+                    <SpotifyWidget />
                 </div>
+                {/* Resources Section */}
+                <Card>
+                    <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                        <CardTitle className="text-sm font-medium flex items-center gap-2">
+                            <IconBook className="w-4 h-4" />
+                            Recent Resources
+                        </CardTitle>
+                        <Button variant="ghost" size="sm" asChild className="h-8 text-xs">
+                            <Link href="/resources">
+                                View All <IconArrowRight className="w-3 h-3 ml-1" />
+                            </Link>
+                        </Button>
+                    </CardHeader>
+                    <CardContent>
+                        {recentResources.length > 0 ? (
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                {recentResources.map(r => {
+                                    const Icon = RESOURCE_ICONS[r.type] || IconLink
+                                    return (
+                                        <a
+                                            key={r.id}
+                                            href={r.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors group"
+                                        >
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <Icon className="w-4 h-4 text-muted-foreground" />
+                                                <Badge variant="outline" className="text-xs">{r.type}</Badge>
+                                            </div>
+                                            <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">{r.title}</p>
+                                            <p className="text-xs text-muted-foreground truncate">{r.category}</p>
+                                        </a>
+                                    )
+                                })}
+                            </div>
+                        ) : (
+                            <div className="text-center py-6">
+                                <p className="text-sm text-muted-foreground mb-2">No resources yet</p>
+                                <Button variant="outline" size="sm" asChild>
+                                    <Link href="/resources">
+                                        <IconPlus className="w-4 h-4 mr-1" /> Add Resource
+                                    </Link>
+                                </Button>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
             </div>
         </Shell>
     )
