@@ -11,6 +11,7 @@ import { useStore } from "@/components/providers/store-provider"
 import { format, isSameDay, addDays, parseISO } from "date-fns"
 import confetti from "canvas-confetti"
 import { toast } from "sonner"
+import { useSession, signIn, signOut } from "next-auth/react"
 import {
     IconCalendar,
     IconCalendarEvent,
@@ -19,14 +20,15 @@ import {
     IconAlertTriangle,
     IconCheck,
     IconPlus,
-    IconClock
+    IconClock,
+    IconBrandGoogle
 } from "@tabler/icons-react"
 import { cn } from "@/lib/utils"
 
 // Unified Event Type
 type TimelineItem = {
     id: string | number
-    type: "Class" | "Assignment" | "Exam" | "Todo"
+    type: "Class" | "Assignment" | "Exam" | "Todo" | "Google"
     title: string
     time?: string // HH:mm
     subtitle?: string
@@ -37,10 +39,26 @@ type TimelineItem = {
 
 export function SmartScheduleWidget() {
     const { schedule, assignments, exams, todos, toggleTodo } = useStore()
+    const { data: session } = useSession()
     const [activeTab, setActiveTab] = React.useState("today")
+    const [googleEvents, setGoogleEvents] = React.useState<any[]>([])
 
     const today = React.useMemo(() => new Date(), [])
     const tomorrow = React.useMemo(() => addDays(today, 1), [today])
+
+    // Fetch Google Calendar Events
+    React.useEffect(() => {
+        if (session) {
+            fetch('/api/gcal/sync')
+                .then(res => res.json())
+                .then(data => {
+                    if (Array.isArray(data)) {
+                        setGoogleEvents(data)
+                    }
+                })
+                .catch(err => console.error("Failed to fetch GCal", err))
+        }
+    }, [session])
 
     // Memoize the data processing to prevent lag
     const getItemsForDate = React.useCallback((date: Date) => {
@@ -94,9 +112,24 @@ export function SmartScheduleWidget() {
             }
         })
 
-        // 4. Todos (Tasks for today)
+         // 4. Google Events
+         googleEvents.forEach(g => {
+            const gDate = new Date(g.start)
+            if (isSameDay(gDate, date)) {
+                items.push({
+                    id: `g-${g.id}`,
+                    type: "Google",
+                    title: g.title,
+                    time: format(gDate, "HH:mm"),
+                    subtitle: "Google Calendar",
+                    original: g
+                })
+            }
+        })
+
+        // 5. Todos (Tasks for today)
         if (isSameDay(date, today)) {
-            todos.filter(t => t.category === "today").forEach(t => {
+             todos.filter(t => t.category === "today").forEach(t => {
                 items.push({
                     id: `td-${t.id}`,
                     type: "Todo",
@@ -114,32 +147,32 @@ export function SmartScheduleWidget() {
             const timeB = b.time || "23:59"
             return timeA.localeCompare(timeB)
         })
-    }, [schedule, assignments, exams, todos, today])
+    }, [schedule, assignments, exams, todos, today, googleEvents])
 
     const todayItems = React.useMemo(() => getItemsForDate(today), [getItemsForDate, today])
     const tomorrowItems = React.useMemo(() => getItemsForDate(tomorrow), [getItemsForDate, tomorrow])
-
+    
     // Quick Add Mock
     const handleAdd = () => {
-        window.location.href = "/schedule"
+         window.location.href = "/schedule"
     }
 
     const handleToggle = (id: string | number, type: string, currentStatus?: boolean) => {
         if (type === "Todo") {
-            const todoId = String(id).replace("td-", "")
-            const newStatus = !currentStatus
-
-            toggleTodo(todoId, newStatus)
-
-            if (newStatus) {
-                confetti({
+             const todoId = String(id).replace("td-", "")
+             const newStatus = !currentStatus
+             
+             toggleTodo(todoId, newStatus) 
+             
+             if (newStatus) {
+                 confetti({
                     particleCount: 50,
                     spread: 60,
                     origin: { y: 0.7 },
                     colors: ['#3b82f6', '#10b981', '#f59e0b']
                 })
                 toast.success("Task Completed! +20 XP 🌟")
-            }
+             }
         }
     }
 
@@ -159,8 +192,8 @@ export function SmartScheduleWidget() {
                     const isCompleted = item.type === "Todo" && item.original?.completed
 
                     return (
-                        <div
-                            key={item.id}
+                        <div 
+                            key={item.id} 
                             className={cn(
                                 "group flex items-center gap-3 p-2 rounded-lg transition-colors border border-transparent",
                                 item.type === "Todo" ? "hover:bg-accent/50 cursor-pointer" : "hover:bg-accent/50",
@@ -171,8 +204,8 @@ export function SmartScheduleWidget() {
                             {/* Icon / Action Column */}
                             <div className="shrink-0">
                                 {item.type === "Todo" ? (
-                                    <Checkbox
-                                        checked={isCompleted}
+                                    <Checkbox 
+                                        checked={isCompleted} 
                                         className="w-4 h-4 rounded-full border-2"
                                         onCheckedChange={(checked) => handleToggle(item.id, item.type, !checked)}
                                     />
@@ -180,12 +213,14 @@ export function SmartScheduleWidget() {
                                     <div className={cn(
                                         "w-8 h-8 rounded-full flex items-center justify-center border text-xs shadow-sm",
                                         item.type === "Exam" ? "bg-red-100 border-red-200 text-red-600 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400" :
-                                            item.type === "Assignment" ? "bg-orange-100 border-orange-200 text-orange-600 dark:bg-orange-900/20 dark:border-orange-800 dark:text-orange-400" :
-                                                "bg-blue-100 border-blue-200 text-blue-600 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-400"
+                                        item.type === "Assignment" ? "bg-orange-100 border-orange-200 text-orange-600 dark:bg-orange-900/20 dark:border-orange-800 dark:text-orange-400" :
+                                        item.type === "Google" ? "bg-white border-slate-200 text-slate-700 dark:bg-white/10 dark:border-white/10 dark:text-white" :
+                                        "bg-blue-100 border-blue-200 text-blue-600 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-400"
                                     )}>
                                         {item.type === "Exam" && <IconAlertTriangle className="w-4 h-4" />}
                                         {item.type === "Assignment" && <IconFlag className="w-4 h-4" />}
                                         {item.type === "Class" && <IconSchool className="w-4 h-4" />}
+                                        {item.type === "Google" && <IconBrandGoogle className="w-4 h-4" />}
                                     </div>
                                 )}
                             </div>
@@ -219,47 +254,59 @@ export function SmartScheduleWidget() {
     return (
         <Card className="h-[460px] flex flex-col shadow-sm">
             <CardHeader className="p-4 pb-2 space-y-0 flex flex-row items-center justify-between border-b bg-card shrink-0">
-                <div className="flex items-center gap-2">
+                 <div className="flex items-center gap-2">
                     <CardTitle className="text-sm font-medium">Smart Agenda</CardTitle>
                     <Badge variant="secondary" className="text-[10px] h-5 px-1.5 font-normal text-muted-foreground">
-                        {activeTab === "today" ? format(today, "MMM d") : format(tomorrow, "MMM d")}
+                         {activeTab === "today" ? format(today, "MMM d") : format(tomorrow, "MMM d")}
                     </Badge>
-                </div>
-
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="h-7 w-auto">
-                    <TabsList className="h-7 p-0 bg-muted/50 gap-1 rounded-sm">
-                        <TabsTrigger
-                            value="today"
-                            className="h-6 text-[10px] px-2.5 rounded-sm data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+                 </div>
+                 
+                 <div className="flex items-center gap-2">
+                    {!session && (
+                        <Button 
+                            variant="outline" 
+                            size="icon" 
+                            className="h-7 w-7 rounded-sm" 
+                            onClick={() => signIn("google")}
+                            title="Connect Google Calendar"
                         >
-                            Today
-                        </TabsTrigger>
-                        <TabsTrigger
-                            value="tomorrow"
-                            className="h-6 text-[10px] px-2.5 rounded-sm data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
-                        >
-                            Tmrw
-                        </TabsTrigger>
-                    </TabsList>
-                </Tabs>
+                            <IconBrandGoogle className="w-3.5 h-3.5" />
+                        </Button>
+                    )}
+                    <Tabs value={activeTab} onValueChange={setActiveTab} className="h-7 w-auto">
+                        <TabsList className="h-7 p-0 bg-muted/50 gap-1 rounded-sm">
+                            <TabsTrigger 
+                                value="today" 
+                                className="h-6 text-[10px] px-2.5 rounded-sm data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+                            >
+                                Today
+                            </TabsTrigger>
+                            <TabsTrigger 
+                                value="tomorrow" 
+                                className="h-6 text-[10px] px-2.5 rounded-sm data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+                            >
+                                Tmrw
+                            </TabsTrigger>
+                        </TabsList>
+                    </Tabs>
+                 </div>
             </CardHeader>
-
+           
             <CardContent className="flex-1 p-0 overflow-hidden relative bg-card/50">
-                <ScrollArea className="h-full p-2">
-                    {activeTab === "today" ? renderList(todayItems) : renderList(tomorrowItems)}
-                </ScrollArea>
-
-                {/* Floating Add Button (Subtle) */}
-                <div className="absolute bottom-3 right-3">
-                    <Button
-                        size="icon"
-                        variant="default"
-                        className="h-8 w-8 rounded-full shadow-md opacity-0 scale-90 transition-all group-hover:opacity-100 group-hover:scale-100"
-                        onClick={handleAdd}
-                    >
-                        <IconPlus className="w-4 h-4" />
-                    </Button>
-                </div>
+              <ScrollArea className="h-full p-2">
+                  {activeTab === "today" ? renderList(todayItems) : renderList(tomorrowItems)}
+              </ScrollArea>
+              
+              <div className="absolute bottom-3 right-3">
+                  <Button 
+                    size="icon" 
+                    variant="default"
+                    className="h-8 w-8 rounded-full shadow-md opacity-0 scale-90 transition-all group-hover:opacity-100 group-hover:scale-100" 
+                    onClick={handleAdd}
+                  >
+                      <IconPlus className="w-4 h-4" />
+                  </Button>
+              </div>
             </CardContent>
         </Card>
     )
