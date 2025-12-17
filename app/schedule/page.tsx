@@ -2,12 +2,24 @@
 
 import * as React from "react"
 import { Shell } from "@/components/ui/shell"
-import { Calendar } from "@/components/ui/calendar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useStore } from "@/components/providers/store-provider"
-import { format, isSameDay, parseISO, startOfDay } from "date-fns"
+import { useStore, ScheduleEvent } from "@/components/providers/store-provider"
 import {
-    IconCalendar,
+    format,
+    startOfMonth,
+    endOfMonth,
+    startOfWeek,
+    endOfWeek,
+    eachDayOfInterval,
+    isSameDay,
+    isSameMonth,
+    addMonths,
+    subMonths,
+    parseISO
+} from "date-fns"
+import {
+    IconChevronLeft,
+    IconChevronRight,
     IconClock,
     IconSchool,
     IconFlag,
@@ -21,229 +33,336 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Checkbox } from "@/components/ui/checkbox"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { toast } from "sonner"
 
 export default function SchedulePage() {
-    const { schedule, assignments, exams, todos, toggleTodo } = useStore()
-    const [date, setDate] = React.useState<Date | undefined>(new Date())
+    const { schedule, assignments, exams, todos, toggleTodo, addScheduleEvent } = useStore()
+    const [currentMonth, setCurrentMonth] = React.useState(new Date())
+    const [selectedDate, setSelectedDate] = React.useState(new Date())
 
-    // Helper: Is a date "busy"? (Has any event)
-    const isDayBusy = (day: Date) => {
-        const dayName = format(day, "EEEE")
-        const dateStr = format(day, "yyyy-MM-dd")
+    // Dialog State
+    const [isAddOpen, setIsAddOpen] = React.useState(false)
+    const [newEventTitle, setNewEventTitle] = React.useState("")
+    const [newEventType, setNewEventType] = React.useState<"Lecture" | "Lab" | "Study" | "Personal">("Personal")
+    const [newEventTime, setNewEventTime] = React.useState("09:00")
+    const [newEventEndTime, setNewEventEndTime] = React.useState("10:00")
+    const [newEventLocation, setNewEventLocation] = React.useState("")
 
-        const hasClass = schedule.some(ev => ev.day === dayName || ev.day === dateStr)
-        const hasAssignment = assignments.some(a => a.dueDate && isSameDay(parseISO(a.dueDate), day))
-        const hasExam = exams.some(e => isSameDay(new Date(e.date), day))
-        const hasTodo = todos.some(t => t.category === "today" && isSameDay(day, new Date())) // Simple todo logic for now
+    // --- Calendar Logic ---
+    const monthStart = startOfMonth(currentMonth)
+    const monthEnd = endOfMonth(monthStart)
+    const startDate = startOfWeek(monthStart)
+    const endDate = endOfWeek(monthEnd)
 
-        return hasClass || hasAssignment || hasExam || hasTodo
+    const calendarDays = eachDayOfInterval({ start: startDate, end: endDate })
+    const weeks = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+
+    const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1))
+    const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1))
+    const jumpToToday = () => {
+        const today = new Date()
+        setCurrentMonth(today)
+        setSelectedDate(today)
     }
 
-    // Helper: Does day have exam? (For heavy styling)
-    const isExamDay = (day: Date) => {
-        return exams.some(e => isSameDay(new Date(e.date), day))
+    const handleAddEvent = () => {
+        if (!newEventTitle) return
+
+        // Schedule events mostly use 'day' as "Monday" for recurring, or YYYY-MM-DD for one-off.
+        // For this visual calendar, we will save as YYYY-MM-DD to be specific to this date.
+        const dateStr = format(selectedDate, "yyyy-MM-dd")
+
+        addScheduleEvent({
+            title: newEventTitle,
+            type: newEventType,
+            day: dateStr,
+            startTime: newEventTime,
+            endTime: newEventEndTime,
+            location: newEventLocation
+        })
+
+        setIsAddOpen(false)
+        setNewEventTitle("")
+        setNewEventLocation("")
+        toast.success("Event added to schedule")
     }
 
-    const selectedDate = date || new Date()
-
-    // Get Items for Selected Date
-    const getItemsForDate = (viewDate: Date) => {
+    // --- Data Aggregation Helper ---
+    const getDayEvents = React.useCallback((date: Date) => {
         const items = []
+        const dayName = format(date, "EEEE")
+        const dateStr = format(date, "yyyy-MM-dd")
 
-        const dayName = format(viewDate, "EEEE")
-        const dateStr = format(viewDate, "yyyy-MM-dd")
-
-        // 1. Classes
+        // Classes
         schedule.forEach(ev => {
             if (ev.day === dayName || ev.day === dateStr) {
-                items.push({
-                    id: `ev-${ev.id}`,
-                    type: "Class",
-                    title: ev.title,
-                    time: ev.startTime,
-                    endTime: ev.endTime,
-                    subtitle: ev.location,
-                    original: ev
-                })
+                items.push({ type: "Class", title: ev.title, color: "bg-blue-500" })
             }
         })
-
-        // 2. Assignments
+        // Assignments
         assignments.forEach(a => {
-            if (a.dueDate && isSameDay(parseISO(a.dueDate), viewDate)) {
-                items.push({
-                    id: `as-${a.id}`,
-                    type: "Assignment",
-                    title: a.title,
-                    time: "23:59",
-                    subtitle: a.course,
-                    priority: a.priority,
-                    status: a.status,
-                    original: a
-                })
+            if (a.dueDate && isSameDay(parseISO(a.dueDate), date)) {
+                items.push({ type: "Assignment", title: a.title, color: "bg-orange-500" })
             }
         })
-
-        // 3. Exams
+        // Exams
         exams.forEach(e => {
-            if (isSameDay(new Date(e.date), viewDate)) {
-                items.push({
-                    id: `ex-${e.id}`,
-                    type: "Exam",
-                    title: e.title,
-                    time: format(new Date(e.date), "HH:mm"),
-                    subtitle: e.subjectId,
-                    original: e
-                })
+            if (isSameDay(new Date(e.date), date)) {
+                items.push({ type: "Exam", title: e.title, color: "bg-red-500" })
             }
         })
+        return items
+    }, [schedule, assignments, exams])
 
-        // 4. Todos (Only if selected date is TODAY, or maybe implement date-based todos later)
-        if (isSameDay(viewDate, new Date())) {
-            todos.filter(t => t.category === "today").forEach(t => {
-                items.push({
-                    id: `td-${t.id}`,
-                    type: "Todo",
-                    title: t.text,
-                    subtitle: "Task",
-                    original: t
-                })
-            })
+    // --- Selected Day Details Helper ---
+    const getDetailedEvents = React.useCallback((date: Date) => {
+        const items = []
+        const dayName = format(date, "EEEE")
+        const dateStr = format(date, "yyyy-MM-dd")
+
+        schedule.forEach(ev => items.push({ ...ev, type: "Class", time: ev.startTime }))
+        assignments.forEach(a => {
+            if (a.dueDate && isSameDay(parseISO(a.dueDate), date)) items.push({ ...a, type: "Assignment", time: "23:59" })
+        })
+        exams.forEach(e => {
+            if (isSameDay(new Date(e.date), date)) items.push({ ...e, type: "Exam", time: format(new Date(e.date), "HH:mm") })
+        })
+        if (isSameDay(date, new Date())) {
+            todos.filter(t => t.category === "today").forEach(t => items.push({ ...t, type: "Todo", title: t.text }))
         }
 
-        return items.sort((a, b) => (a.time || "23:59").localeCompare(b.time || "23:59"))
-    }
+        const validItems = items.filter(item => {
+            if (item.type === "Class") {
+                return (item as any).day === dayName || (item as any).day === dateStr
+            }
+            return true
+        })
 
-    const events = getItemsForDate(selectedDate)
+        return validItems.sort((a, b) => (a.time || "").localeCompare(b.time || ""))
+    }, [schedule, assignments, exams, todos])
+
+    const selectedDayEvents = getDetailedEvents(selectedDate)
 
     return (
         <Shell>
-            <div className="max-w-6xl mx-auto h-[calc(100vh-8rem)] flex flex-col md:flex-row gap-6">
+            <div className="max-w-[1400px] mx-auto h-[calc(100vh-6rem)] flex flex-col md:flex-row gap-6 p-2">
 
-                {/* LEFT: Calendar */}
-                <Card className="w-full md:w-[380px] flex flex-col shadow-md">
-                    <CardHeader>
-                        <CardTitle>Calendar</CardTitle>
+                {/* BIG CALENDAR AREA */}
+                <div className="flex-1 flex flex-col gap-4">
+                    {/* Header */}
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <h2 className="text-3xl font-bold tracking-tight">{format(currentMonth, "MMMM yyyy")}</h2>
+                            <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-0.5">
+                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={prevMonth}>
+                                    <IconChevronLeft className="w-4 h-4" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={nextMonth}>
+                                    <IconChevronRight className="w-4 h-4" />
+                                </Button>
+                            </div>
+                        </div>
+                        <Button variant="outline" onClick={jumpToToday}>Today</Button>
+                    </div>
+
+                    {/* Calendar Grid */}
+                    <Card className="flex-1 flex flex-col shadow-sm border-muted overflow-hidden">
+                        <div className="grid grid-cols-7 border-b bg-muted/40 text-center py-2">
+                            {weeks.map(day => (
+                                <div key={day} className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                    {day}
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="grid grid-cols-7 flex-1 auto-rows-fr bg-muted/20 gap-[1px]">
+                            {calendarDays.map((date, i) => {
+                                const isSelected = isSameDay(date, selectedDate)
+                                const isCurrentMonth = isSameMonth(date, currentMonth)
+                                const isToday = isSameDay(date, new Date())
+                                const dayEvents = getDayEvents(date)
+
+                                return (
+                                    <div
+                                        key={date.toString()}
+                                        onClick={() => setSelectedDate(date)}
+                                        className={cn(
+                                            "relative bg-card p-2 flex flex-col gap-1 transition-colors hover:bg-muted/50 cursor-pointer min-h-[100px]",
+                                            !isCurrentMonth && "bg-muted/10 text-muted-foreground/50",
+                                            isSelected && "ring-2 ring-primary ring-inset z-10"
+                                        )}
+                                    >
+                                        <div className="flex justify-between items-start">
+                                            <span className={cn(
+                                                "text-sm font-medium w-7 h-7 flex items-center justify-center rounded-full",
+                                                isToday && "bg-primary text-primary-foreground"
+                                            )}>
+                                                {format(date, "d")}
+                                            </span>
+                                            {dayEvents.length > 0 && <span className="text-[10px] text-muted-foreground font-mono">{dayEvents.length} items</span>}
+                                        </div>
+
+                                        <div className="flex-1 flex flex-col justify-end gap-1 overflow-hidden">
+                                            {dayEvents.slice(0, 3).map((ev, idx) => (
+                                                <div key={idx} className="flex items-center gap-1.5 px-1.5 py-0.5 rounded-sm bg-muted/50 border border-transparent hover:border-border transition-colors truncate">
+                                                    <div className={cn("w-1.5 h-1.5 rounded-full shrink-0", ev.color)} />
+                                                    <span className="text-[10px] truncate font-medium leading-tight">{ev.title}</span>
+                                                </div>
+                                            ))}
+                                            {dayEvents.length > 3 && (
+                                                <div className="text-[10px] text-muted-foreground pl-1">
+                                                    + {dayEvents.length - 3} more
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </Card>
+                </div>
+
+                {/* RIGHT: Selected Day Agenda */}
+                <Card className="w-full md:w-[350px] flex flex-col shadow-lg border-l-4 border-l-primary/20 h-full">
+                    <CardHeader className="py-4 border-b bg-muted/10">
+                        <div className="flex justify-between items-center">
+                            <div>
+                                <CardTitle>{format(selectedDate, "EEEE")}</CardTitle>
+                                <p className="text-sm text-muted-foreground">{format(selectedDate, "MMMM do")}</p>
+                            </div>
+
+                            <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+                                <DialogTrigger asChild>
+                                    <Button size="icon" className="h-8 w-8 rounded-full shadow-sm">
+                                        <IconPlus className="w-4 h-4" />
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Add to Schedule ({format(selectedDate, "MMM d")})</DialogTitle>
+                                    </DialogHeader>
+                                    <div className="grid gap-4 py-4">
+                                        <div className="grid gap-2">
+                                            <Label>Title</Label>
+                                            <Input
+                                                placeholder="Study Session, Gym, etc."
+                                                value={newEventTitle}
+                                                onChange={(e) => setNewEventTitle(e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="grid gap-2">
+                                                <Label>Type</Label>
+                                                <Select value={newEventType} onValueChange={(v: any) => setNewEventType(v)}>
+                                                    <SelectTrigger>
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="Personal">Personal</SelectItem>
+                                                        <SelectItem value="Study">Study Block</SelectItem>
+                                                        <SelectItem value="Lecture">Lecture</SelectItem>
+                                                        <SelectItem value="Lab">Lab</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="grid gap-2">
+                                                <Label>Location</Label>
+                                                <Input
+                                                    placeholder="Room / Online"
+                                                    value={newEventLocation}
+                                                    onChange={(e) => setNewEventLocation(e.target.value)}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="grid gap-2">
+                                                <Label>Start Time</Label>
+                                                <Input
+                                                    type="time"
+                                                    value={newEventTime}
+                                                    onChange={(e) => setNewEventTime(e.target.value)}
+                                                />
+                                            </div>
+                                            <div className="grid gap-2">
+                                                <Label>End Time</Label>
+                                                <Input
+                                                    type="time"
+                                                    value={newEventEndTime}
+                                                    onChange={(e) => setNewEventEndTime(e.target.value)}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
+                                            <p>This will add a <b>Schedule Event</b> for this specific date.</p>
+                                            <p className="mt-1">For <b>Assignments</b>/<b>Exams</b>, please use their respective pages.</p>
+                                        </div>
+                                    </div>
+                                    <DialogFooter>
+                                        <Button variant="outline" onClick={() => setIsAddOpen(false)}>Cancel</Button>
+                                        <Button onClick={handleAddEvent}>Add Event</Button>
+                                    </DialogFooter>
+                                </DialogContent>
+                            </Dialog>
+                        </div>
                     </CardHeader>
-                    <CardContent className="flex-1 flex justify-center p-0">
-                        <Calendar
-                            mode="single"
-                            selected={date}
-                            onSelect={setDate}
-                            className="rounded-md border-0"
-                            modifiers={{
-                                busy: (day) => isDayBusy(day),
-                                exam: (day) => isExamDay(day)
-                            }}
-                            modifiersStyles={{
-                                busy: { fontWeight: "bold", textDecoration: "underline", textDecorationColor: "hsl(var(--primary))" },
-                                exam: { color: "hsl(var(--destructive))", fontWeight: "bold" }
-                            }}
-                        />
-                    </CardContent>
-                    <div className="p-4 border-t bg-muted/20 space-y-2">
-                        <h4 className="font-medium text-sm">Key</h4>
-                        <div className="flex gap-4 text-xs text-muted-foreground">
-                            <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-primary" /> Busy</div>
-                            <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-red-500" /> Exam</div>
-                        </div>
-                    </div>
-                </Card>
 
-                {/* RIGHT: Agenda Details */}
-                <Card className="flex-1 flex flex-col shadow-md overflow-hidden">
-                    <div className="p-6 border-b flex justify-between items-center bg-card">
-                        <div>
-                            <h2 className="text-2xl font-bold">{format(selectedDate, "EEEE")}</h2>
-                            <p className="text-muted-foreground">{format(selectedDate, "MMMM do, yyyy")}</p>
-                        </div>
-                        <Button>
-                            <IconPlus className="w-4 h-4 mr-2" /> Add Event
-                        </Button>
-                    </div>
+                    <CardContent className="flex-1 p-0 overflow-hidden relative">
+                        <ScrollArea className="h-full">
+                            <div className="p-4 space-y-4">
+                                {selectedDayEvents.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center h-[300px] text-muted-foreground opacity-50">
+                                        <IconClock className="w-12 h-12 mb-3" />
+                                        <p>No events</p>
+                                    </div>
+                                ) : (
+                                    selectedDayEvents.map((item: any, i) => {
+                                        const isCompleted = item.type === "Todo" && item.completed
+                                        return (
+                                            <div key={i} className="group relative flex gap-3 pb-4 last:pb-0">
+                                                <div className="flex flex-col items-center">
+                                                    <div className={cn(
+                                                        "w-2.5 h-2.5 rounded-full ring-4 ring-background z-10",
+                                                        item.type === "Exam" ? "bg-red-500" :
+                                                            item.type === "Assignment" ? "bg-orange-500" :
+                                                                item.type === "Class" ? "bg-blue-500" : "bg-slate-400"
+                                                    )} />
+                                                    <div className="w-[1px] bg-border h-full absolute top-2.5" />
+                                                </div>
 
-                    <ScrollArea className="flex-1 bg-muted/5 p-6">
-                        {events.length > 0 ? (
-                            <div className="space-y-6 max-w-3xl">
-                                {events.map((item, i) => {
-                                    const isCompleted = item.type === "Todo" && item.original.completed
-
-                                    return (
-                                        <div key={item.id} className="flex gap-4 group">
-                                            {/* Time Column */}
-                                            <div className="w-16 flex flex-col items-end pt-1">
-                                                <span className="font-mono text-sm font-semibold text-foreground/80">
-                                                    {item.time || "All Day"}
-                                                </span>
-                                                {item.endTime && (
-                                                    <span className="text-xs text-muted-foreground">{item.endTime}</span>
-                                                )}
-                                            </div>
-
-                                            {/* Visual Line */}
-                                            <div className="relative flex flex-col items-center">
-                                                <div className={cn(
-                                                    "w-3 h-3 rounded-full border-2 z-10 bg-background transition-colors",
-                                                    item.type === "Exam" ? "border-red-500 bg-red-500" :
-                                                        item.type === "Assignment" ? "border-orange-500 bg-orange-500" :
-                                                            item.type === "Class" ? "border-primary bg-primary" :
-                                                                "border-slate-400 bg-slate-400"
-                                                )} />
-                                                {i !== events.length - 1 && (
-                                                    <div className="w-0.5 bg-border flex-1 my-1" />
-                                                )}
-                                            </div>
-
-                                            {/* Card Content */}
-                                            <div className="flex-1 pb-6">
-                                                <div className={cn(
-                                                    "rounded-xl border bg-card p-4 shadow-sm transition-all hover:shadow-md",
-                                                    item.type === "Exam" && "border-l-4 border-l-red-500 bg-red-50/50 dark:bg-red-900/10",
-                                                    item.type === "Assignment" && "border-l-4 border-l-orange-500 bg-orange-50/50 dark:bg-orange-900/10",
-                                                    isCompleted && "opacity-60 grayscale"
-                                                )}>
-                                                    <div className="flex justify-between items-start">
-                                                        <div>
-                                                            <div className="flex items-center gap-2 mb-1">
-                                                                <Badge variant="outline" className="text-[10px] h-5">
-                                                                    {item.type}
-                                                                </Badge>
-                                                                {item.subtitle && (
-                                                                    <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                                                        {item.type === "Class" && <IconMapPin className="w-3 h-3" />}
-                                                                        {item.subtitle}
-                                                                    </span>
-                                                                )}
+                                                <div className="flex-1 min-w-0 pb-2">
+                                                    <div className={cn(
+                                                        "p-3 rounded-lg border bg-card transition-all hover:bg-accent/40",
+                                                        isCompleted && "opacity-60 grayscale"
+                                                    )}>
+                                                        <div className="flex justify-between items-start mb-1">
+                                                            <div className="flex items-center gap-2">
+                                                                <Badge variant="secondary" className="text-[10px] h-4 px-1">{item.time || "All Day"}</Badge>
+                                                                <span className="text-xs text-muted-foreground font-medium uppercase tracking-tight">{item.type}</span>
                                                             </div>
-                                                            <h3 className={cn("text-lg font-semibold", isCompleted && "line-through")}>
-                                                                {item.title}
-                                                            </h3>
+                                                            {item.type === "Todo" && (
+                                                                <Checkbox
+                                                                    checked={isCompleted}
+                                                                    className="w-4 h-4 rounded-full"
+                                                                    onCheckedChange={(c) => toggleTodo(item.id.toString(), !!c)}
+                                                                />
+                                                            )}
                                                         </div>
-
-                                                        {item.type === "Todo" && (
-                                                            <Checkbox
-                                                                checked={isCompleted}
-                                                                onCheckedChange={(checked) => {
-                                                                    const todoId = String(item.id).replace("td-", "")
-                                                                    toggleTodo(todoId, !!checked)
-                                                                }}
-                                                            />
-                                                        )}
+                                                        <h4 className={cn("font-semibold text-sm truncate", isCompleted && "line-through")}>{item.title || item.text}</h4>
+                                                        {item.location && <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1"><IconMapPin className="w-3 h-3" /> {item.location}</p>}
+                                                        {item.course && <p className="text-xs text-muted-foreground mt-1">{item.course}</p>}
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    )
-                                })}
+                                        )
+                                    })
+                                )}
                             </div>
-                        ) : (
-                            <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
-                                <IconCalendar className="w-16 h-16 mb-4 opacity-20" />
-                                <h3 className="text-xl font-medium">Clear Schedule</h3>
-                                <p>No events planned for this day.</p>
-                            </div>
-                        )}
-                    </ScrollArea>
+                        </ScrollArea>
+                    </CardContent>
                 </Card>
             </div>
         </Shell>

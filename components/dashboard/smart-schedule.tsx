@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useStore } from "@/components/providers/store-provider"
 import { format, isSameDay, addDays, parseISO } from "date-fns"
+import confetti from "canvas-confetti"
+import { toast } from "sonner"
 import {
     IconCalendar,
     IconCalendarEvent,
@@ -37,8 +39,8 @@ export function SmartScheduleWidget() {
     const { schedule, assignments, exams, todos, toggleTodo } = useStore()
     const [activeTab, setActiveTab] = React.useState("today")
 
-    const today = new React.useMemo(() => new Date(), [])
-    const tomorrow = new React.useMemo(() => addDays(today, 1), [today])
+    const today = React.useMemo(() => new Date(), [])
+    const tomorrow = React.useMemo(() => addDays(today, 1), [today])
 
     // Memoize the data processing to prevent lag
     const getItemsForDate = React.useCallback((date: Date) => {
@@ -125,7 +127,19 @@ export function SmartScheduleWidget() {
     const handleToggle = (id: string | number, type: string, currentStatus?: boolean) => {
         if (type === "Todo") {
             const todoId = String(id).replace("td-", "")
-            toggleTodo(todoId, !!currentStatus) // Toggle
+            const newStatus = !currentStatus
+
+            toggleTodo(todoId, newStatus)
+
+            if (newStatus) {
+                confetti({
+                    particleCount: 50,
+                    spread: 60,
+                    origin: { y: 0.7 },
+                    colors: ['#3b82f6', '#10b981', '#f59e0b']
+                })
+                toast.success("Task Completed! +20 XP 🌟")
+            }
         }
     }
 
@@ -165,9 +179,9 @@ export function SmartScheduleWidget() {
                                 ) : (
                                     <div className={cn(
                                         "w-8 h-8 rounded-full flex items-center justify-center border text-xs shadow-sm",
-                                        item.type === "Exam" && "bg-red-100 border-red-200 text-red-600 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400",
-                                        item.type === "Assignment" && "bg-orange-100 border-orange-200 text-orange-600 dark:bg-orange-900/20 dark:border-orange-800 dark:text-orange-400",
-                                        item.type === "Class" && "bg-blue-100 border-blue-200 text-blue-600 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-400"
+                                        item.type === "Exam" ? "bg-red-100 border-red-200 text-red-600 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400" :
+                                            item.type === "Assignment" ? "bg-orange-100 border-orange-200 text-orange-600 dark:bg-orange-900/20 dark:border-orange-800 dark:text-orange-400" :
+                                                "bg-blue-100 border-blue-200 text-blue-600 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-400"
                                     )}>
                                         {item.type === "Exam" && <IconAlertTriangle className="w-4 h-4" />}
                                         {item.type === "Assignment" && <IconFlag className="w-4 h-4" />}
@@ -203,8 +217,8 @@ export function SmartScheduleWidget() {
     }
 
     return (
-        <Card className="h-full flex flex-col shadow-sm">
-            <CardHeader className="p-4 pb-2 space-y-0 flex flex-row items-center justify-between border-b bg-card">
+        <Card className="h-[460px] flex flex-col shadow-sm">
+            <CardHeader className="p-4 pb-2 space-y-0 flex flex-row items-center justify-between border-b bg-card shrink-0">
                 <div className="flex items-center gap-2">
                     <CardTitle className="text-sm font-medium">Smart Agenda</CardTitle>
                     <Badge variant="secondary" className="text-[10px] h-5 px-1.5 font-normal text-muted-foreground">
