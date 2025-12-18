@@ -59,13 +59,27 @@ export interface Module {
     status: "Pending" | "In Progress" | "Completed" | "Revised"
 }
 
+// ========== TAG (Site-wide) ==========
+export interface Tag {
+    id: string
+    name: string
+    color: string
+    usageCount?: number
+}
+
+// ========== TODO (Enhanced - Todoist Style) ==========
 export interface Todo {
     id: string
     text: string
+    description?: string
     completed: boolean
-    category: "today" | "upcoming" | "backlog"
-    dueDate?: string
+    dueDate?: string      // "2024-12-25"
+    dueTime?: string      // "14:30"
+    priority: 1 | 2 | 3 | 4
     subjectId?: string
+    parentId?: string     // For subtasks
+    subtasks?: Todo[]
+    tags?: Tag[]
 }
 
 // Added missing interfaces
@@ -91,6 +105,7 @@ export interface Snippet {
     content: string
     type: "text" | "code"
     language: string
+    tags?: Tag[]
 }
 
 export interface Assignment {
@@ -108,14 +123,17 @@ export interface Project {
     description: string
     tech: string[]
     status: Status
+    progress: number
     dueDate: string
     updated?: string
+    githubUrl?: string
+    tags?: Tag[]
 }
 
 export interface ScheduleEvent {
     id: number
     title: string
-    type: "Lecture" | "Lab" | "Study" | "Personal"
+    type: "Lecture" | "Lab" | "Study" | "Personal" | "Exam"
     day: string
     startTime: string
     endTime: string
@@ -145,8 +163,9 @@ export interface DailyLog {
     id: number
     date: string
     mood: number
-    focusMinutes: number
-    notes?: string
+    studyTime: number
+    note?: string
+    sleep?: number
 }
 
 interface StoreContextType {
@@ -168,6 +187,9 @@ interface StoreContextType {
     ideas: Idea[]
     snippets: Snippet[]
 
+    // Tags (site-wide)
+    tags: Tag[]
+
     // Settings
     updateSettings: (settings: Partial<UserSettings>) => void
 
@@ -188,9 +210,17 @@ interface StoreContextType {
     deleteModule: (subjectId: string, moduleId: string) => void
 
     // Todos
-    addTodo: (todo: Omit<Todo, "id">) => void
+    addTodo: (todo: Omit<Todo, "id" | "subtasks" | "tags"> & { tagIds?: string[] }) => void
+    updateTodo: (id: string, updates: Partial<Todo> & { tagIds?: string[] }) => void
     toggleTodo: (id: string, completed: boolean) => void
     deleteTodo: (id: string) => void
+    addSubtask: (parentId: string, text: string) => void
+
+    // Tags
+    fetchTags: () => void
+    addTag: (tag: Omit<Tag, "id">) => Promise<Tag>
+    updateTag: (id: string, updates: Partial<Tag>) => void
+    deleteTag: (id: string) => void
 
     // Assignments
     addAssignment: (assignment: any) => void
@@ -213,7 +243,7 @@ interface StoreContextType {
 
     addExam: (exam: any) => void
     deleteExam: (id: number) => void
-    addDailyLog: (log: Omit<DailyLog, "id" | "date">) => void
+    addDailyLog: (log: Omit<DailyLog, "id">) => void
 
     // New Features
     addBook: (book: Omit<Book, "id">) => void
@@ -246,6 +276,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const [books, setBooks] = useState<Book[]>([])
     const [ideas, setIdeas] = useState<Idea[]>([])
     const [snippets, setSnippets] = useState<Snippet[]>([])
+    const [tags, setTags] = useState<Tag[]>([])
 
     const currentSemester = semesters.find(s => s.isCurrent) || null
 
@@ -325,6 +356,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             if (booksRes.ok) setBooks(await booksRes.json())
             if (ideasRes.ok) setIdeas(await ideasRes.json())
             if (snippetsRes.ok) setSnippets(await snippetsRes.json())
+
+            // Fetch tags
+            const tagsRes = await fetch('/api/tags')
+            if (tagsRes.ok) setTags(await tagsRes.json())
 
         } catch (error) {
             console.error("Failed to fetch data:", error)
@@ -436,15 +471,22 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }
 
     // === TODOS ===
-    const addTodo = async (todo: Omit<Todo, "id">) => {
+    const addTodo = async (todo: Omit<Todo, "id" | "subtasks" | "tags"> & { tagIds?: string[] }) => {
         const tempId = Date.now().toString()
-        setTodos([{ ...todo, id: tempId }, ...todos])
+        const newTodo: Todo = { ...todo, id: tempId, priority: todo.priority || 4, subtasks: [], tags: [] }
+        setTodos([newTodo, ...todos])
         const res = await fetch('/api/todos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(todo) })
         if (res.ok) {
             const saved = await res.json()
             setTodos(prev => prev.map(t => t.id === tempId ? saved : t))
-            toast.success("Todo added")
+            toast.success("Task added")
         }
+    }
+
+    const updateTodo = async (id: string, updates: Partial<Todo> & { tagIds?: string[] }) => {
+        setTodos(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t))
+        await fetch('/api/todos', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, ...updates }) })
+        toast.success("Task updated")
     }
 
     const toggleTodo = async (id: string, currentStatus: boolean) => {
@@ -455,7 +497,53 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const deleteTodo = async (id: string) => {
         setTodos(todos.filter(t => t.id !== id))
         await fetch(`/api/todos?id=${id}`, { method: 'DELETE' })
-        toast.info("Todo deleted")
+        toast.info("Task deleted")
+    }
+
+    const addSubtask = async (parentId: string, text: string) => {
+        const res = await fetch('/api/todos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text, parentId, priority: 4 })
+        })
+        if (res.ok) {
+            const saved = await res.json()
+            setTodos(prev => prev.map(t =>
+                t.id === parentId
+                    ? { ...t, subtasks: [...(t.subtasks || []), saved] }
+                    : t
+            ))
+            toast.success("Subtask added")
+        }
+    }
+
+    // === TAGS ===
+    const fetchTags = async () => {
+        const res = await fetch('/api/tags')
+        if (res.ok) {
+            const data = await res.json()
+            setTags(data)
+        }
+    }
+
+    const addTag = async (tag: Omit<Tag, "id">): Promise<Tag> => {
+        const res = await fetch('/api/tags', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(tag) })
+        const saved = await res.json()
+        setTags(prev => [...prev, saved])
+        toast.success("Tag created")
+        return saved
+    }
+
+    const updateTag = async (id: string, updates: Partial<Tag>) => {
+        setTags(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t))
+        await fetch('/api/tags', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, ...updates }) })
+        toast.success("Tag updated")
+    }
+
+    const deleteTag = async (id: string) => {
+        setTags(prev => prev.filter(t => t.id !== id))
+        await fetch(`/api/tags?id=${id}`, { method: 'DELETE' })
+        toast.info("Tag deleted")
     }
 
     // === ASSIGNMENTS ===
@@ -682,6 +770,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             books,
             ideas,
             snippets,
+            tags,
             updateSettings,
             addSemester,
             updateSemester,
@@ -694,8 +783,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             updateModule,
             deleteModule,
             addTodo,
+            updateTodo,
             toggleTodo,
             deleteTodo,
+            addSubtask,
+            fetchTags,
+            addTag,
+            updateTag,
+            deleteTag,
             addAssignment,
             updateAssignment,
             deleteAssignment,

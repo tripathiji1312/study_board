@@ -26,8 +26,9 @@ export function MoodWidget() {
     const handleLog = async (level: number) => {
         await addDailyLog({
             mood: level,
-            focusMinutes: 0,
-            notes: ""
+            studyTime: 0,
+            note: "",
+            date: new Date().toISOString()
         })
     }
 

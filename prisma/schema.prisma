@@ -69,30 +69,119 @@ model Assignment {
   updatedAt   DateTime @updatedAt
 }
 
-// ========== TODO ==========
+// ========== TODO (Enhanced - Todoist Style) ==========
 model Todo {
-  id        String   @id @default(uuid())
-  text      String
-  completed Boolean  @default(false)
-  category  String   // "today", "upcoming", "backlog"
-  dueDate   String?  // Optional due date
-  subjectId String?  // Optional link to Subject
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String    @id @default(uuid())
+  text        String
+  description String?   // Optional longer description
+  completed   Boolean   @default(false)
+  
+  // Scheduling
+  dueDate     String?   // Date: "2024-12-25"
+  dueTime     String?   // Time: "14:30"
+  
+  // Organization
+  priority    Int       @default(4) // 1-4 (P1 = highest priority)
+  subjectId   String?   // Link to Subject
+  
+  // Subtasks (self-referential relation)
+  parentId    String?
+  parent      Todo?     @relation("Subtasks", fields: [parentId], references: [id], onDelete: Cascade)
+  subtasks    Todo[]    @relation("Subtasks")
+  
+  // Tags relation
+  tags        TodoTag[]
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
+
+// ========== TAG (Site-wide) ==========
+model Tag {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  color     String    @default("#6366f1") // Hex color
+  
+  // Relations to various entities
+  todos      TodoTag[]
+  projects   ProjectTag[]
+  ideas      IdeaTag[]
+  snippets   SnippetTag[]
+  resources  ResourceTag[]
+  
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+// ========== TODO-TAG (Junction) ==========
+model TodoTag {
+  id      String @id @default(uuid())
+  todoId  String
+  tagId   String
+  todo    Todo   @relation(fields: [todoId], references: [id], onDelete: Cascade)
+  tag     Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  
+  @@unique([todoId, tagId])
+}
+
+// ========== PROJECT-TAG (Junction) ==========
+model ProjectTag {
+  id        String  @id @default(uuid())
+  projectId Int
+  tagId     String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  
+  @@unique([projectId, tagId])
+}
+
+// ========== IDEA-TAG (Junction) ==========
+model IdeaTag {
+  id      String @id @default(uuid())
+  ideaId  String
+  tagId   String
+  idea    Idea   @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+  tag     Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  
+  @@unique([ideaId, tagId])
+}
+
+// ========== SNIPPET-TAG (Junction) ==========
+model SnippetTag {
+  id        String  @id @default(uuid())
+  snippetId String
+  tagId     String
+  snippet   Snippet @relation(fields: [snippetId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  
+  @@unique([snippetId, tagId])
+}
+
+// ========== RESOURCE-TAG (Junction) ==========
+model ResourceTag {
+  id         String   @id @default(uuid())
+  resourceId Int
+  tagId      String
+  resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  
+  @@unique([resourceId, tagId])
+}
+
 
 // ========== PROJECT ==========
 model Project {
-  id          Int      @id @default(autoincrement())
+  id          Int          @id @default(autoincrement())
   title       String
   description String
-  progress    Int      @default(0)
+  progress    Int          @default(0)
   status      String
-  tech        String   // Stored as comma separated string
-  githubUrl   String?  // GitHub repository URL
+  tech        String       // Stored as comma separated string
+  githubUrl   String?      // GitHub repository URL
   updated     String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  tags        ProjectTag[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 }
 
 // ========== SCHEDULE EVENT ==========
@@ -111,15 +200,16 @@ model ScheduleEvent {
 
 // ========== RESOURCE ==========
 model Resource {
-  id        Int      @id @default(autoincrement())
+  id        Int           @id @default(autoincrement())
   title     String
-  type      String   // "pdf", "video", "link"
+  type      String        // "pdf", "video", "link"
   url       String?
   category  String
-  meta      String?  // size, duration, etc.
-  subjectId String?  // Optional: link to subject
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  meta      String?       // size, duration, etc.
+  subjectId String?       // Optional: link to subject
+  tags      ResourceTag[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 }
 
 // ========== USER SETTINGS ==========
@@ -170,23 +260,25 @@ model Book {
 
 // ========== IDEA BOARD ==========
 model Idea {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   content   String
-  status    String   @default("brainstorm") // "brainstorm", "planned", "done"
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  status    String    @default("brainstorm") // "brainstorm", "planned", "done"
+  tags      IdeaTag[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 // ========== SNIPPET LIBRARY ==========
 model Snippet {
-  id        String   @id @default(uuid())
-  title     String
-  content   String
-  language  String   @default("text") // "text", "javascript", "python", etc.
-  type      String   @default("text") // "code", "text"
-  tags      String?  // JSON string or comma-separated
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String       @id @default(uuid())
+  title        String
+  content      String
+  language     String       @default("text") // "text", "javascript", "python", etc.
+  type         String       @default("text") // "code", "text"
+  legacyTags   String?      // JSON string or comma-separated (deprecated)
+  tags         SnippetTag[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 }
 
 // ========== NEXT AUTH ==========

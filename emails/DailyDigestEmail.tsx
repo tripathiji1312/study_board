@@ -31,7 +31,6 @@ interface Todo {
     id: string
     text: string
     dueDate?: string
-    category: string
 }
 
 interface DailyDigestEmailProps {

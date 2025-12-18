@@ -41,7 +41,7 @@ import {
     IconGitFork,
     IconExternalLink
 } from "@tabler/icons-react"
-import { useStore, Project } from "@/components/providers/store-provider"
+import { useStore, Project, Status } from "@/components/providers/store-provider"
 import { motion, AnimatePresence } from "framer-motion"
 
 const STATUS_CONFIG: Record<string, { icon: typeof IconTarget, color: string, bg: string }> = {
@@ -145,7 +145,7 @@ export default function ProjectsPage() {
             title,
             description,
             progress,
-            status,
+            status: status as Status,
             tech: tech.split(",").map(t => t.trim()).filter(Boolean),
             githubUrl: githubUrl || undefined
         }
@@ -166,7 +166,7 @@ export default function ProjectsPage() {
         updateProject({
             ...project,
             progress: newProgress,
-            status: newProgress >= 100 ? "Completed" : project.status === "Completed" ? "In Progress" : project.status
+            status: (newProgress >= 100 ? "Completed" : project.status === "Completed" ? "In Progress" : project.status) as Status
         })
     }
 

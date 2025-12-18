@@ -19,7 +19,9 @@ import {
     IconCode,
     IconNotes,
     IconClipboardList,
-    IconFlame
+    IconFlame,
+    IconSparkles,
+    IconUserBolt
 } from "@tabler/icons-react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -27,6 +29,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ModeToggle } from "@/components/mode-toggle"
 import { XPWidget } from "@/components/xp-widget"
+import { GlobalSearch } from "@/components/global-search"
 import { useStore } from "@/components/providers/store-provider"
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> { }
@@ -93,13 +96,20 @@ export function AppSidebar({ className }: SidebarProps) {
             {/* Header */}
             <div className="flex h-14 items-center justify-between border-b px-4">
                 <Link className="flex items-center gap-2 font-bold text-lg" href="/">
-                    <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-primary to-purple-600 flex items-center justify-center shadow-lg shadow-primary/20 ring-1 ring-white/10 group-hover:scale-105 transition-transform">
-                        <IconSchool className="w-5 h-5 text-white" />
+                    <div className="relative w-8 h-8 flex items-center justify-center mr-2">
+                        <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full opacity-50" />
+                        <div className="relative w-8 h-8 rounded-lg bg-gradient-to-br from-orange-400 to-amber-600 flex items-center justify-center shadow-lg shadow-orange-500/20 ring-1 ring-white/20 group-hover:scale-110 transition-all duration-300">
+                            <IconSparkles className="w-5 h-5 text-white drop-shadow-md" strokeWidth={2.5} />
+                        </div>
                     </div>
-                    <span className="text-xl tracking-tight">
-                        <span className="font-bold text-foreground">Study</span>
-                        <span className="font-light text-muted-foreground">Board</span>
-                    </span>
+                    <div className="flex flex-col gap-0.5 leading-none">
+                        <span className="font-bold text-lg tracking-tight text-foreground">
+                            Study<span className="text-primary font-extrabold">Board</span>
+                        </span>
+                        <span className="text-[10px] text-muted-foreground font-medium tracking-widest uppercase opacity-80">
+                            Premium
+                        </span>
+                    </div>
                 </Link>
                 <ModeToggle />
             </div>
@@ -107,6 +117,9 @@ export function AppSidebar({ className }: SidebarProps) {
             {/* Navigation */}
             <ScrollArea className="flex-1 py-4">
                 <div className="flex flex-col gap-4 px-3">
+                    {/* Global Search */}
+                    <GlobalSearch />
+
                     <NavGroup label="Main" routes={mainRoutes} />
                     <NavGroup label="Productivity" routes={productivityRoutes} />
                     <NavGroup label="Academic" routes={academicRoutes} />
@@ -121,10 +134,9 @@ export function AppSidebar({ className }: SidebarProps) {
 
                 {/* User + Settings */}
                 <div className="flex items-center gap-3">
-                    <Avatar className="h-9 w-9">
-                        <AvatarImage src="https://github.com/shadcn.png" />
-                        <AvatarFallback>{(settings?.displayName?.[0] || 'S').toUpperCase()}</AvatarFallback>
-                    </Avatar>
+                    <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-sky-400 to-blue-600 flex items-center justify-center shadow-md ring-2 ring-white/10">
+                        <IconUserBolt className="h-5 w-5 text-white" strokeWidth={2} />
+                    </div>
                     <div className="flex flex-col flex-1 min-w-0">
                         <span className="text-sm font-medium truncate">{settings?.displayName || "Student"}</span>
                         <span className="text-[10px] text-muted-foreground">CSE Dept</span>

@@ -20,7 +20,7 @@ export function StudyGraph() {
 
         // Log data
         const log = logs.find(l => l.date && isSameDay(new Date(l.date), date))
-        const studyMinutes = log?.focusMinutes || 0
+        const studyMinutes = log?.studyTime || 0
 
         // Assignment data (completed on this due date, or just completed and match due date for existing data)
         const completedAssigns = (assignments || []).filter(a =>

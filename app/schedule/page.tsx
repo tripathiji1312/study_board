@@ -93,7 +93,7 @@ export default function SchedulePage() {
 
     // --- Data Aggregation Helper ---
     const getDayEvents = React.useCallback((date: Date) => {
-        const items = []
+        const items: { type: string, title: string, color: string }[] = []
         const dayName = format(date, "EEEE")
         const dateStr = format(date, "yyyy-MM-dd")
 
@@ -120,7 +120,7 @@ export default function SchedulePage() {
 
     // --- Selected Day Details Helper ---
     const getDetailedEvents = React.useCallback((date: Date) => {
-        const items = []
+        const items: any[] = []
         const dayName = format(date, "EEEE")
         const dateStr = format(date, "yyyy-MM-dd")
 
@@ -132,7 +132,7 @@ export default function SchedulePage() {
             if (isSameDay(new Date(e.date), date)) items.push({ ...e, type: "Exam", time: format(new Date(e.date), "HH:mm") })
         })
         if (isSameDay(date, new Date())) {
-            todos.filter(t => t.category === "today").forEach(t => items.push({ ...t, type: "Todo", title: t.text }))
+            todos.filter(t => t.dueDate && isSameDay(parseISO(t.dueDate), date)).forEach(t => items.push({ ...t, type: "Todo", title: t.text }))
         }
 
         const validItems = items.filter(item => {

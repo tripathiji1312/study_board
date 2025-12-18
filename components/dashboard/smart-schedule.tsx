@@ -127,19 +127,17 @@ export function SmartScheduleWidget() {
             }
         })
 
-        // 5. Todos (Tasks for today)
-        if (isSameDay(date, today)) {
-            todos.filter(t => t.category === "today").forEach(t => {
-                items.push({
-                    id: `td-${t.id}`,
-                    type: "Todo",
-                    title: t.text,
-                    time: undefined,
-                    subtitle: "Task",
-                    original: t
-                })
+        // 5. Todos (Tasks for date)
+        todos.filter(t => t.dueDate && isSameDay(parseISO(t.dueDate), date)).forEach(t => {
+            items.push({
+                id: `td-${t.id}`,
+                type: "Todo",
+                title: t.text,
+                time: undefined,
+                subtitle: t.description || "Task",
+                original: t
             })
-        }
+        })
 
         // Sort by time
         return items.sort((a, b) => {

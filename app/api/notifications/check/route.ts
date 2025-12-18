@@ -157,8 +157,7 @@ export async function POST(req: Request) {
         const pendingTodos = todos.map(t => ({
             id: t.id,
             text: t.text,
-            dueDate: t.dueDate ? format(parseISO(t.dueDate), 'MMM d') : undefined,
-            category: t.category
+            dueDate: t.dueDate ? format(parseISO(t.dueDate), 'MMM d') : undefined
         }))
 
         // ============ CHECK IF WE HAVE ANYTHING TO SEND ============

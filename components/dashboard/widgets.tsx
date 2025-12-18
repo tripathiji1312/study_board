@@ -10,6 +10,8 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { useStore } from "@/components/providers/store-provider"
+import { format, isSameDay, parseISO } from "date-fns"
+
 import { AnimatePresence, motion } from "framer-motion"
 import { useXP } from "@/components/xp-widget"
 
@@ -23,7 +25,12 @@ function TodoWidget() {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
         if (!newTodo.trim()) return
-        addTodo({ text: newTodo, completed: false, category: "today" })
+        addTodo({
+            text: newTodo,
+            completed: false,
+            dueDate: format(new Date(), "yyyy-MM-dd"),
+            priority: 4
+        })
         setNewTodo("")
     }
 
@@ -35,7 +42,7 @@ function TodoWidget() {
         }
     }
 
-    const todayTodos = todos.filter(t => t.category === "today").slice(0, 5)
+    const todayTodos = todos.filter(t => t.dueDate && isSameDay(parseISO(t.dueDate), new Date())).slice(0, 5)
 
     return (
         <Card className="h-full flex flex-col">
@@ -124,10 +131,10 @@ function AssignmentWidget() {
                                         <Badge variant="destructive" className="h-5 px-1.5 text-[10px]">Urgent</Badge>
                                     )}
                                 </div>
-                                <span className="text-xs text-muted-foreground">{assignment.subject}</span>
+                                <span className="text-xs text-muted-foreground">{assignment.course}</span>
                                 <div className="flex items-center gap-1.5 mt-2 text-xs font-medium">
                                     <IconClock className="w-3.5 h-3.5 text-primary" />
-                                    <span className="text-muted-foreground">Due {assignment.due}</span>
+                                    <span className="text-muted-foreground">Due {assignment.dueDate}</span>
                                 </div>
                             </div>
                         ))}

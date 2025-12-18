@@ -64,7 +64,11 @@ export default function DashboardPage() {
 
     // --- Stats Calculations ---
     const pendingAssignments = assignments.filter(a => a.status === "Pending").length
-    const todayTodos = todos.filter(t => t.category === "today" && !t.completed).length
+    const todayTodos = todos.filter(t => {
+        if (t.completed) return false
+        if (!t.dueDate) return false
+        return isToday(parseISO(t.dueDate))
+    }).length
     const activeProjects = projects.filter(p => p.status === "In Progress").length
     const todayEvents = schedule.filter(e => {
         try {
@@ -88,7 +92,12 @@ export default function DashboardPage() {
     const handleQuickAdd = (e: React.FormEvent) => {
         e.preventDefault()
         if (!quickTask.trim()) return
-        addTodo({ text: quickTask.trim(), completed: false, category: "today" })
+        addTodo({
+            text: quickTask.trim(),
+            completed: false,
+            dueDate: format(new Date(), 'yyyy-MM-dd'),
+            priority: 4
+        })
         setQuickTask("")
     }
 
