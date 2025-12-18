@@ -4,7 +4,8 @@ import DailyDigestEmail from '@/emails/DailyDigestEmail'
 import prisma from '@/lib/prisma'
 import { startOfDay, endOfDay, addDays } from 'date-fns'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+const resendInfo = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+// Use a safe access pattern later
 
 export async function GET(req: Request) {
     // Basic authorization using a secret query param to prevent unauthorized triggers
@@ -68,7 +69,13 @@ export async function GET(req: Request) {
             }
 
             // 3. Send Email
-            const { data, error } = await resend.emails.send({
+            if (!resendInfo) {
+                console.error("Resend API Key missing")
+                results.push({ email: setting.notificationEmail, status: 'skipped_no_key' })
+                continue
+            }
+
+            const { data, error } = await resendInfo.emails.send({
                 from: 'Study Board <digest@resend.dev>', // Update domain
                 to: [setting.notificationEmail],
                 subject: `Your Daily Briefing for ${today.toLocaleDateString()}`,
