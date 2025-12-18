@@ -90,6 +90,7 @@ export async function POST(request: Request) {
             text: body.text,
             description: body.description,
             completed: body.completed ?? false,
+            completedAt: body.completed ? new Date() : null,
             dueDate: body.dueDate,
             dueTime: body.dueTime,
             priority: body.priority ?? 4,
@@ -136,12 +137,28 @@ export async function PUT(request: Request) {
         return NextResponse.json({ error: 'ID required' }, { status: 400 })
     }
 
+    const existingTodo = await prisma.todo.findUnique({
+        where: { id: body.id }
+    })
+
+    if (!existingTodo) {
+        return NextResponse.json({ error: 'Todo not found' }, { status: 404 })
+    }
+
+    let completionUpdate = {}
+    if (body.completed !== undefined && body.completed !== existingTodo.completed) {
+        completionUpdate = {
+            completedAt: body.completed ? new Date() : null
+        }
+    }
+
     const todo = await prisma.todo.update({
         where: { id: body.id },
         data: {
             text: body.text,
             description: body.description,
             completed: body.completed,
+            ...completionUpdate,
             dueDate: body.dueDate,
             dueTime: body.dueTime,
             priority: body.priority,

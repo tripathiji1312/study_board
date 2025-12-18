@@ -3,7 +3,7 @@
 import * as React from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useStore } from "@/components/providers/store-provider"
-import { format, subDays, isSameDay, startOfWeek } from "date-fns"
+import { format, subDays, isSameDay, startOfWeek, parseISO } from "date-fns"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useGamification } from "@/components/providers/gamification-provider"
 
@@ -35,10 +35,24 @@ export function StudyGraph() {
         // For past dates, we can check if we have a way to know, but for now we'll rely on 'dueDate' if available causing a match? 
         // Simpler: If date is TODAY, count all currently completed tasks (regardless of category).
         // This gives immediate gratification for any work done.
-        let completedTodosCount = 0
-        if (isSameDay(date, new Date())) {
-            completedTodosCount = (todos || []).filter(t => t.completed).length
-        }
+        const completedTodosCount = (todos || []).filter(t => {
+            if (!t.completed) return false
+
+            // 1. Accurate Time (Post-Fix)
+            if (t.completedAt) {
+                return isSameDay(parseISO(t.completedAt), date)
+            }
+
+            // 2. Legacy Fallback (Last Update = Likely Completion)
+            if (t.updatedAt) {
+                return isSameDay(parseISO(t.updatedAt), date)
+            }
+
+            // 3. Fallback for immediate UI updates without refetch
+            if (isSameDay(date, new Date())) return true
+
+            return false
+        }).length
 
         // Calculating score with lower thresholds to ensure "5 mins" shows up green
         // Score 1 => Light Green.

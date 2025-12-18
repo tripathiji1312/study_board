@@ -73,6 +73,7 @@ export interface Todo {
     text: string
     description?: string
     completed: boolean
+    completedAt?: string // ISO string
     dueDate?: string      // "2024-12-25"
     dueTime?: string      // "14:30"
     priority: 1 | 2 | 3 | 4
@@ -80,6 +81,7 @@ export interface Todo {
     parentId?: string     // For subtasks
     subtasks?: Todo[]
     tags?: Tag[]
+    updatedAt?: string
 }
 
 // Added missing interfaces

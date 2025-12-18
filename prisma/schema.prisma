@@ -76,6 +76,7 @@ model Todo {
   text        String
   description String?   // Optional longer description
   completed   Boolean   @default(false)
+  completedAt DateTime?
   
   // Scheduling
   dueDate     String?   // Date: "2024-12-25"
