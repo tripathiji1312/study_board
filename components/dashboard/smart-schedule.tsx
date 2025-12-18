@@ -38,7 +38,7 @@ type TimelineItem = {
 }
 
 export function SmartScheduleWidget() {
-    const { schedule, assignments, exams, todos, toggleTodo } = useStore()
+    const { schedule, assignments, exams, todos, toggleTodo, subjects } = useStore()
     const { data: session } = useSession()
     const [activeTab, setActiveTab] = React.useState("today")
     const [googleEvents, setGoogleEvents] = React.useState<any[]>([])
@@ -100,12 +100,13 @@ export function SmartScheduleWidget() {
         // 3. Exams
         exams.forEach(e => {
             if (isSameDay(new Date(e.date), date)) {
+                const subject = subjects.find(s => s.id === e.subjectId)
                 items.push({
                     id: `ex-${e.id}`,
                     type: "Exam",
                     title: e.title,
                     time: format(new Date(e.date), "HH:mm"),
-                    subtitle: e.subjectId || "Exam",
+                    subtitle: subject?.name || "Exam",
                     priority: "Urgent",
                     original: e
                 })

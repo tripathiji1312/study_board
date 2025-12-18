@@ -71,8 +71,8 @@ export default function ExamsPage() {
         )
     })
 
-    const upcomingExams = filteredExams.filter(e => isAfter(parseISO(e.date), new Date()) || new Date(e.date).toDateString() === new Date().toDateString())
-    const pastExams = filteredExams.filter(e => !isAfter(parseISO(e.date), new Date()) && new Date(e.date).toDateString() !== new Date().toDateString())
+    const upcomingExams = filteredExams.filter(e => e.date && (isAfter(parseISO(e.date), new Date()) || new Date(e.date).toDateString() === new Date().toDateString()))
+    const pastExams = filteredExams.filter(e => e.date && (!isAfter(parseISO(e.date), new Date()) && new Date(e.date).toDateString() !== new Date().toDateString()))
 
     return (
         <Shell>

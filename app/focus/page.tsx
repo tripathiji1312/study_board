@@ -7,7 +7,6 @@ import { useStore } from "@/components/providers/store-provider"
 import { cn } from "@/lib/utils"
 import confetti from "canvas-confetti"
 import { AmbienceWidget } from "@/components/dashboard/ambience-widget"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { FocusQuote } from "@/components/focus/focus-quote"
 import { GamificationWidget } from "@/components/focus/gamification"
 import { FocusTaskList } from "@/components/focus/task-list"
@@ -39,6 +38,9 @@ export default function FocusPage() {
         setTheme(newTheme)
         localStorage.setItem("focus_theme", newTheme)
     }
+
+    // Ambience state
+    const [showAmbience, setShowAmbience] = React.useState(false)
 
     // Fullscreen state
     const [isFullscreen, setIsFullscreen] = React.useState(false)
@@ -138,61 +140,81 @@ export default function FocusPage() {
 
     return (
         <div className={cn("min-h-screen text-foreground flex flex-col relative overflow-hidden font-sans selection:bg-purple-500/30", currentTheme.bg)}>
-            {/* Dynamic Background */}
+            {/* Dynamic Background - Refined for "Less Distracting" */}
             <div className="absolute inset-0 pointer-events-none transition-all duration-1000">
-                {/* Spotlight/Aurora Gradient */}
                 <div className={cn(
-                    "absolute top-[-50%] left-[-50%] w-[200%] h-[200%] transition-opacity duration-[2000ms]",
-                    isActive ? "opacity-40" : "opacity-20"
+                    "absolute inset-0 transition-opacity duration-[2000ms]",
+                    isActive ? "opacity-30" : "opacity-20"
                 )}
                     style={{
                         background: currentTheme.gradient,
-                        filter: "blur(100px)",
-                        animation: isActive ? "pulse 8s infinite" : "none"
+                        filter: "blur(80px)",
                     }}
                 />
-                {currentTheme.grain && <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay"></div>}
+                {currentTheme.grain && <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 brightness-100 contrast-150 mix-blend-overlay"></div>}
             </div>
 
-            {/* Top Bar - ADDED SUBJECT SELECTOR */}
-            <div className="flex items-center justify-between p-6 z-20">
-                <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-white hover:bg-white/10 transition-colors">
-                        <a href="/"><IconArrowLeft className="w-4 h-4 mr-2" /> Dashboard</a>
+            {/* Top Bar - Refined Subject Selector */}
+            <div className="flex items-center justify-between p-8 z-20">
+                <div className="flex items-center gap-6">
+                    <Button variant="ghost" size="sm" asChild className="text-muted-foreground/60 hover:text-white hover:bg-white/5 transition-all text-xs tracking-widest uppercase">
+                        <a href="/"><IconArrowLeft className="w-3 h-3 mr-2" /> Dashboard</a>
                     </Button>
+                    <div className="h-4 w-[1px] bg-white/5" />
                     <ThemeSelector currentTheme={theme} onThemeChange={handleThemeChange} />
 
-                    {/* Subject Selector */}
-                    <div className="relative">
+                    {/* Subject Selector - Fixed Interactivity */}
+                    <div className="relative group z-30">
                         <select
                             className={cn(
-                                "bg-white/5 border border-white/10 rounded-md text-xs px-3 py-1.5 outline-none focus:border-white/20 transition-colors appearance-none cursor-pointer",
-                                isActive ? "text-white/40 pointer-events-none" : "text-white/80"
+                                "bg-transparent border border-transparent hover:border-white/10 rounded-full text-[10px] tracking-widest uppercase px-4 py-2 outline-none focus:border-white/20 transition-all appearance-none cursor-pointer pr-8",
+                                isActive ? "text-white/30 pointer-events-none" : "text-white/50 hover:text-white"
                             )}
                             value={selectedSubjectId}
                             onChange={(e) => setSelectedSubjectId(e.target.value)}
                         >
-                            <option value="none" className="bg-black text-white/50">Select Subject (Optional)</option>
+                            <option value="none" className="bg-black text-white/50">Subject</option>
                             {subjects.map(sub => (
-                                <option key={sub.id} value={sub.id} className="bg-black text-white">{sub.code} - {sub.name}</option>
+                                <option key={sub.id} value={sub.id} className="bg-black text-white">{sub.code}</option>
                             ))}
                         </select>
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none opacity-20 group-hover:opacity-100 transition-opacity">
+                            <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M1 3L4 6L7 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                        </div>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                    <Dialog>
-                        <DialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-white hover:bg-white/10"><IconVolume className="w-4 h-4" /></Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-md bg-black/90 border-white/10 backdrop-blur-xl text-white">
-                            <DialogHeader><DialogTitle>Ambience Mixer</DialogTitle></DialogHeader>
-                            <div className="py-4">
-                                <AmbienceWidget />
+                <div className="flex items-center gap-4 relative">
+                    {/* Ambience Toggle */}
+                    <div className="relative">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className={cn(
+                                "rounded-full transition-colors",
+                                showAmbience ? "text-white bg-white/10" : "text-white/30 hover:text-white hover:bg-white/5"
+                            )}
+                            onClick={() => setShowAmbience(!showAmbience)}
+                        >
+                            <IconVolume className="w-4 h-4" />
+                        </Button>
+
+                        {/* Persistent Ambience Mixer (Always mounted, just hidden) */}
+                        <div className={cn(
+                            "absolute top-full right-0 mt-4 w-80 bg-black/90 border border-white/10 backdrop-blur-xl text-white p-4 rounded-xl shadow-2xl z-50 transition-all duration-200 origin-top-right",
+                            showAmbience ? "opacity-100 scale-100 visible" : "opacity-0 scale-95 invisible pointer-events-none"
+                        )}>
+                            <div className="flex items-center justify-between mb-4">
+                                <h4 className="text-sm font-light tracking-widest uppercase opacity-60">Ambience Mixer</h4>
+                                <Button variant="ghost" size="icon" className="h-6 w-6 text-white/40 hover:text-white" onClick={() => setShowAmbience(false)}>
+                                    <IconMinimize className="w-3 h-3" />
+                                </Button>
                             </div>
-                        </DialogContent>
-                    </Dialog>
-                    <Button variant="ghost" size="icon" onClick={toggleFullscreen} className="text-muted-foreground hover:text-white hover:bg-white/10">
+                            <AmbienceWidget />
+                        </div>
+                    </div>
+
+                    <Button variant="ghost" size="icon" onClick={toggleFullscreen} className="text-white/30 hover:text-white hover:bg-white/5 rounded-full">
                         {isFullscreen ? <IconMinimize className="w-4 h-4" /> : <IconMaximize className="w-4 h-4" />}
                     </Button>
                 </div>
@@ -204,7 +226,7 @@ export default function FocusPage() {
                 {/* Left: Task List */}
                 <div className="hidden md:flex flex-col items-start w-[250px] lg:w-[300px] h-full justify-center pt-20">
                     <FocusTaskList
-                        todos={todos.filter(t => !t.completed || selectedTaskId === String(t.id))}
+                        todos={todos.filter(t => t.dueDate === new Date().toISOString().split('T')[0])}
                         activeTaskId={selectedTaskId}
                         onSelectTask={handleTaskSelect}
                         onToggleTodo={toggleTodo}
@@ -239,13 +261,6 @@ export default function FocusPage() {
                         >
                             {formatTime(seconds)}
                         </div>
-
-                        {/* Subtle play hint on hover/inactive */}
-                        {!isActive && (
-                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                <IconPlayerPlay className="w-12 h-12 text-white/10" />
-                            </div>
-                        )}
                     </div>
 
                     {/* Minimal Controls */}

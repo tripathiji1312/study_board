@@ -15,10 +15,23 @@ export async function GET() {
 export async function POST(req: Request) {
     try {
         const body = await req.json()
+
+        // Fix: Use type as title since schema requires title
+        const title = body.title || body.type || "Exam"
+
+        // Fix: Combine date and time if keys exist
+        let dateObj = new Date(body.date)
+        if (body.time) {
+            const [hours, minutes] = body.time.split(':').map(Number)
+            if (!isNaN(hours) && !isNaN(minutes)) {
+                dateObj.setHours(hours, minutes)
+            }
+        }
+
         const exam = await prisma.exam.create({
             data: {
-                title: body.title,
-                date: new Date(body.date),
+                title: title,
+                date: dateObj,
                 subjectId: body.subjectId,
                 syllabus: body.syllabus,
                 room: body.room,
@@ -27,6 +40,7 @@ export async function POST(req: Request) {
         })
         return NextResponse.json(exam)
     } catch (e) {
+        console.error("Exam API Error:", e)
         return NextResponse.json({ error: "Failed to create exam" }, { status: 500 })
     }
 }

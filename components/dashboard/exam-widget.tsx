@@ -27,7 +27,8 @@ export function ExamWidget() {
                 id: `sched-${e.id}`, // specific prefix to avoid collision
                 title: e.title,
                 date: e.day, // Schedule uses 'day' (YYYY-MM-DD or DayName)
-                source: 'schedule'
+                source: 'schedule',
+                subjectId: e.subjectId
             }))
             // Filter out non-date schedule items (e.g. "Monday") if any
             .filter(e => isValid(new Date(e.date)))
@@ -40,6 +41,7 @@ export function ExamWidget() {
     }, [exams, schedule])
 
     const nextExam = allExams[0]
+    const nextExamSubject = subjects.find(s => s.id === nextExam?.subjectId)
 
     const handleAdd = () => {
         addExam({
@@ -81,14 +83,37 @@ export function ExamWidget() {
                         <DialogHeader><DialogTitle>Add Exam</DialogTitle></DialogHeader>
                         <div className="space-y-4 py-4">
                             <div className="space-y-2">
+                                <Label>Subject</Label>
+                                <Select value={subjectId} onValueChange={setSubjectId}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select subject..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {subjects.map(s => (
+                                            <SelectItem key={s.id} value={s.id}>{s.name} ({s.code})</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
                                 <Label>Title</Label>
-                                <Input placeholder="CAT 1" value={title} onChange={e => setTitle(e.target.value)} />
+                                <Select value={title} onValueChange={setTitle}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Exam Type" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="CAT 1">CAT 1</SelectItem>
+                                        <SelectItem value="CAT 2">CAT 2</SelectItem>
+                                        <SelectItem value="FAT">FAT</SelectItem>
+                                        <SelectItem value="Lab">Lab Exam</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
                             <div className="space-y-2">
                                 <Label>Date</Label>
                                 <Input type="date" value={date} onChange={e => setDate(e.target.value)} />
                             </div>
-                            <Button onClick={handleAdd}>Add Exam</Button>
+                            <Button onClick={handleAdd} disabled={!date}>Add Exam</Button>
                         </div>
                     </DialogContent>
                 </Dialog>
@@ -102,9 +127,11 @@ export function ExamWidget() {
                         <h3 className="text-4xl font-black tracking-tighter mb-1">
                             {getDaysLeft(nextExam.date)}
                         </h3>
-                        <p className="text-sm font-bold opacity-90 uppercase tracking-widest">{nextExam.title}</p>
+                        <p className="text-sm font-bold opacity-90 uppercase tracking-widest truncate max-w-full px-2">
+                            {nextExamSubject?.name || "Unknown Subject"}
+                        </p>
                         <p className="text-xs opacity-75 mt-1">
-                            {format(new Date(nextExam.date), "EEEE, MMM d")}
+                            {nextExam.title} &bull; {format(new Date(nextExam.date), "MMM d")}
                         </p>
                     </div>
                 ) : (
@@ -116,26 +143,32 @@ export function ExamWidget() {
                 )}
 
                 {allExams.length > 1 && (
-                    <div className="space-y-2 max-h-[150px] overflow-y-auto pr-1">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pl-1">Up Next</p>
-                        {allExams.slice(1).map((exam: any) => (
-                            <div key={exam.id} className="flex items-center justify-between text-xs p-2 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
-                                <span className="font-medium">{exam.title}</span>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-muted-foreground bg-muted px-1.5 py-0.5 rounded text-[10px]">
-                                        {format(new Date(exam.date), "MMM d")}
-                                    </span>
-                                    {exam.source === 'manual' && (
-                                        <button
-                                            onClick={() => deleteExam(Number(exam.id.replace('manual-', '')))}
-                                            className="text-muted-foreground hover:text-destructive transition-colors"
-                                        >
-                                            <IconTrash className="w-3 h-3" />
-                                        </button>
-                                    )}
+                    <div className="space-y-1.5 max-h-[150px] overflow-y-auto pr-1">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pl-1 mb-1">Up Next</p>
+                        {allExams.slice(1).map((exam: any) => {
+                            const sub = subjects.find(s => s.id === exam.subjectId)
+                            return (
+                                <div key={exam.id} className="flex items-center justify-between gap-3 text-xs p-2.5 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
+                                    <div className="flex flex-col min-w-0 flex-1">
+                                        <span className="font-medium truncate leading-tight">{sub?.name || exam.title}</span>
+                                        <span className="text-[10px] text-muted-foreground leading-tight">{exam.title}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <span className="text-muted-foreground bg-muted px-1.5 py-0.5 rounded text-[10px]">
+                                            {format(new Date(exam.date), "MMM d")}
+                                        </span>
+                                        {exam.source === 'manual' && (
+                                            <button
+                                                onClick={() => deleteExam(Number(exam.id.replace('manual-', '')))}
+                                                className="text-muted-foreground hover:text-destructive transition-colors"
+                                            >
+                                                <IconTrash className="w-3 h-3" />
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            )
+                        })}
                     </div>
                 )}
             </CardContent>

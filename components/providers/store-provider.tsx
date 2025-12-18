@@ -138,6 +138,7 @@ export interface ScheduleEvent {
     startTime: string
     endTime: string
     location?: string
+    subjectId?: string
 }
 
 export interface Resource {
@@ -664,10 +665,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(exam)
             })
+
+            if (!res.ok) throw new Error("Failed to add exam")
+
             const data = await res.json()
             setExams(prev => [...prev, data])
             toast.success("Exam added")
         } catch (error) {
+            console.error(error)
             toast.error("Failed to add exam")
         }
     }
