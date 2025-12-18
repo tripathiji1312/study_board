@@ -2,21 +2,21 @@
 
 import * as React from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Slider } from "@/components/ui/slider"
-import { IconMusic, IconVolume, IconVolumeOff, IconCloudRain, IconCampfire, IconCoffee } from "@tabler/icons-react"
+import { IconMusic, IconCloudRain, IconCampfire, IconCoffee, IconSun } from "@tabler/icons-react"
 import { cn } from "@/lib/utils"
 
 const SOUNDS = [
-    { id: "rain", name: "Rain", icon: IconCloudRain, url: "https://www.soundjay.com/nature/sounds/rain-01.mp3" },
-    { id: "fire", name: "Fire", icon: IconCampfire, url: "https://www.soundjay.com/nature/sounds/camp-fire-1.mp3" },
-    { id: "cafe", name: "Cafe", icon: IconCoffee, url: "https://www.soundjay.com/human/sounds/restaurant-ambience-1.mp3" }
+    { id: "rain", name: "Rain", icon: IconCloudRain, url: "https://www.soundjay.com/nature/sounds/rain-03.mp3" },
+    { id: "fire", name: "Campfire", icon: IconCampfire, url: "https://www.soundjay.com/nature/sounds/campfire-1.mp3" },
+    { id: "spring", name: "Spring", icon: IconSun, url: "https://www.soundjay.com/ambient/sounds/spring-weather-1.mp3" },
+    { id: "cafe", name: "Cafe", icon: IconCoffee, url: "/sounds/cafe.mp3" }
 ]
 
 export function AmbienceWidget() {
     const [volumes, setVolumes] = React.useState<Record<string, number>>({
         rain: 0,
         fire: 0,
+        spring: 0,
         cafe: 0
     })
     const audioRefs = React.useRef<Record<string, HTMLAudioElement>>({})
@@ -27,15 +27,14 @@ export function AmbienceWidget() {
             if (!audioRefs.current[s.id]) {
                 const audio = new Audio(s.url)
                 audio.loop = true
+                audio.preload = "none" // Don't preload to avoid errors
                 audioRefs.current[s.id] = audio
             }
         })
 
         return () => {
-            // Cleanup
             Object.values(audioRefs.current).forEach(audio => {
                 audio.pause()
-                audio.src = ""
             })
         }
     }, [])
@@ -48,15 +47,15 @@ export function AmbienceWidget() {
         if (audio) {
             audio.volume = value / 100
             if (value > 0 && audio.paused) {
-                audio.play().catch(e => console.error("Play failed", e))
+                audio.play().catch(e => {
+                    if (e.name !== "AbortError") {
+                        console.error(`Play failed for ${id}:`, e)
+                    }
+                })
             } else if (value === 0 && !audio.paused) {
                 audio.pause()
             }
         }
-    }
-
-    const toggleMute = () => {
-        // Quick mute logic if needed
     }
 
     return (
@@ -76,7 +75,7 @@ export function AmbienceWidget() {
                             </div>
                             <span className="text-muted-foreground">{volumes[sound.id]}%</span>
                         </div>
-                        <div className="h-4"> {/* Container for slider height */}
+                        <div className="h-4">
                             <input
                                 type="range"
                                 min="0"
