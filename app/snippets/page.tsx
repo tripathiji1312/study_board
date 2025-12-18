@@ -15,7 +15,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-import { IconCode, IconFileText, IconTrash, IconCopy, IconPlus, IconSearch, IconCheck, IconEye, IconEdit } from "@tabler/icons-react"
+import { IconCode, IconFileText, IconTrash, IconCopy, IconPlus, IconSearch, IconCheck, IconEye, IconEdit, IconArrowLeft } from "@tabler/icons-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import ReactMarkdown from "react-markdown"
@@ -162,7 +162,10 @@ export default function SnippetsPage() {
         <Shell className="p-0 md:p-0">
             <div className="flex h-[calc(100vh-2rem)] md:h-[calc(100vh-4rem)] overflow-hidden">
                 {/* Left Panel - List */}
-                <div className="w-72 lg:w-80 flex-shrink-0 border-r flex flex-col bg-card">
+                <div className={cn(
+                    "flex-col border-r bg-card flex-shrink-0 transition-all duration-300",
+                    (selectedId || isCreating) ? "hidden md:flex w-72 lg:w-80" : "flex w-full md:w-72 lg:w-80"
+                )}>
                     {/* Header */}
                     <div className="p-4 border-b space-y-4">
                         <div className="flex items-center justify-between">
@@ -247,29 +250,41 @@ export default function SnippetsPage() {
                 </div>
 
                 {/* Right Panel - Detail / Editor */}
-                <div className="flex-1 flex flex-col bg-background min-w-0">
+                <div className={cn(
+                    "flex-col bg-background min-w-0 transition-all duration-300",
+                    (selectedId || isCreating) ? "flex flex-1" : "hidden md:flex flex-1"
+                )}>
                     {isCreating ? (
                         // New Snippet Editor
                         <>
-                            <div className="h-14 px-6 border-b flex items-center justify-between flex-shrink-0">
-                                <Select value={newLanguage} onValueChange={setNewLanguage}>
-                                    <SelectTrigger className="w-44">
-                                        <div className="flex items-center gap-2">
-                                            <div className={cn("w-2 h-2 rounded-full", getLangConfig(newLanguage).color)} />
-                                            <SelectValue />
-                                        </div>
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {LANGUAGES.map(lang => (
-                                            <SelectItem key={lang.value} value={lang.value}>
-                                                <div className="flex items-center gap-2">
-                                                    <div className={cn("w-2 h-2 rounded-full", lang.color)} />
-                                                    {lang.label}
-                                                </div>
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                            <div className="h-14 px-4 md:px-6 border-b flex items-center justify-between flex-shrink-0">
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="md:hidden -ml-2"
+                                        onClick={() => setIsCreating(false)}
+                                    >
+                                        <IconArrowLeft className="w-5 h-5" />
+                                    </Button>
+                                    <Select value={newLanguage} onValueChange={setNewLanguage}>
+                                        <SelectTrigger className="w-32 md:w-44">
+                                            <div className="flex items-center gap-2">
+                                                <SelectValue />
+                                            </div>
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {LANGUAGES.map(lang => (
+                                                <SelectItem key={lang.value} value={lang.value}>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className={cn("w-2 h-2 rounded-full", lang.color)} />
+                                                        {lang.label}
+                                                    </div>
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                                 <div className="flex items-center gap-2">
                                     <Button variant="outline" size="sm" onClick={() => setIsCreating(false)}>
                                         Cancel
@@ -304,10 +319,18 @@ export default function SnippetsPage() {
                     ) : selectedSnippet ? (
                         // View Selected Snippet
                         <>
-                            <div className="h-14 px-6 border-b flex items-center justify-between flex-shrink-0">
-                                <div className="flex items-center gap-3">
-                                    <div className={cn("w-3 h-3 rounded-full", getLangConfig(selectedSnippet.language).color)} />
-                                    <span className="font-medium text-sm">{getLangConfig(selectedSnippet.language).label}</span>
+                            <div className="h-14 px-4 md:px-6 border-b flex items-center justify-between flex-shrink-0">
+                                <div className="flex items-center gap-2 md:gap-3">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="md:hidden -ml-2 shrink-0"
+                                        onClick={() => setSelectedId(null)}
+                                    >
+                                        <IconArrowLeft className="w-5 h-5" />
+                                    </Button>
+                                    <div className={cn("w-3 h-3 rounded-full shrink-0", getLangConfig(selectedSnippet.language).color)} />
+                                    <span className="font-medium text-sm hidden md:inline">{getLangConfig(selectedSnippet.language).label}</span>
                                     {selectedSnippet.language === "markdown" && (
                                         <div className="flex items-center border rounded-lg p-0.5 ml-2">
                                             <Button
@@ -316,7 +339,8 @@ export default function SnippetsPage() {
                                                 className="h-7 px-2"
                                                 onClick={() => setViewMode("preview")}
                                             >
-                                                <IconEye className="w-3 h-3 mr-1" /> Preview
+                                                <IconEye className="w-3 h-3 mr-1" />
+                                                <span className="hidden sm:inline">Preview</span>
                                             </Button>
                                             <Button
                                                 variant={viewMode === "raw" ? "secondary" : "ghost"}
@@ -324,7 +348,8 @@ export default function SnippetsPage() {
                                                 className="h-7 px-2"
                                                 onClick={() => setViewMode("raw")}
                                             >
-                                                <IconEdit className="w-3 h-3 mr-1" /> Raw
+                                                <IconEdit className="w-3 h-3 mr-1" />
+                                                <span className="hidden sm:inline">Raw</span>
                                             </Button>
                                         </div>
                                     )}
@@ -335,7 +360,8 @@ export default function SnippetsPage() {
                                         size="sm"
                                         onClick={() => copyToClipboard(selectedSnippet.content)}
                                     >
-                                        <IconCopy className="w-4 h-4 mr-1" /> Copy
+                                        <IconCopy className="w-4 h-4 mr-1" />
+                                        <span className="hidden sm:inline">Copy</span>
                                     </Button>
                                     <Button
                                         variant="ghost"

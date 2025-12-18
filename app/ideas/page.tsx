@@ -128,7 +128,7 @@ export default function IdeasPage() {
 
     return (
         <Shell>
-            <div className="flex flex-col h-[calc(100vh-140px)]">
+            <div className="flex flex-col h-auto md:h-[calc(100vh-140px)]">
                 <div className="flex items-center justify-between mb-8">
                     <div className="space-y-1">
                         <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
@@ -159,7 +159,7 @@ export default function IdeasPage() {
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
                 >
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-1 overflow-hidden">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-1 md:overflow-hidden">
                         <Column id="brainstorm" title="Brainstorm" ideas={brainstorm} onDelete={deleteIdea} activeId={activeId} />
                         <Column id="planned" title="Planned" ideas={planned} onDelete={deleteIdea} activeId={activeId} />
                         <Column id="done" title="Done" ideas={done} onDelete={deleteIdea} activeId={activeId} />

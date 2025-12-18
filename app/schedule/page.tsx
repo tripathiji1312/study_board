@@ -149,7 +149,7 @@ export default function SchedulePage() {
 
     return (
         <Shell>
-            <div className="max-w-[1400px] mx-auto h-[calc(100vh-6rem)] flex flex-col md:flex-row gap-6 p-2">
+            <div className="max-w-[1400px] mx-auto h-auto md:h-[calc(100vh-6rem)] flex flex-col md:flex-row gap-6 p-2">
 
                 {/* BIG CALENDAR AREA */}
                 <div className="flex-1 flex flex-col gap-4">
@@ -170,7 +170,7 @@ export default function SchedulePage() {
                     </div>
 
                     {/* Calendar Grid */}
-                    <Card className="flex-1 flex flex-col shadow-sm border-muted overflow-hidden">
+                    <Card className="flex-1 flex flex-col shadow-sm border-muted min-h-[500px] md:min-h-0 overflow-hidden">
                         <div className="grid grid-cols-7 border-b bg-muted/40 text-center py-2">
                             {weeks.map(day => (
                                 <div key={day} className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -227,7 +227,7 @@ export default function SchedulePage() {
                 </div>
 
                 {/* RIGHT: Selected Day Agenda */}
-                <Card className="w-full md:w-[350px] flex flex-col shadow-lg border-l-4 border-l-primary/20 h-full">
+                <Card className="w-full md:w-[350px] flex flex-col shadow-lg border-l-4 border-l-primary/20 h-auto md:h-full">
                     <CardHeader className="py-4 border-b bg-muted/10">
                         <div className="flex justify-between items-center">
                             <div>

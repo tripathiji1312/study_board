@@ -235,20 +235,20 @@ export default function DashboardPage() {
                 </motion.div>
 
                 {/* Main Grid Layout */}
-                <motion.div variants={item} className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                <motion.div variants={item} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     {isLoading ? (
                         <>
                             {/* Column 1 Skeleton */}
-                            <div className="flex flex-col gap-6 h-[500px]">
+                            <div className="flex flex-col gap-6 h-auto md:h-[500px]">
                                 <WidgetSkeleton className="flex-1" />
                                 <WidgetSkeleton className="h-[200px]" />
                             </div>
                             {/* Column 2 Skeleton */}
-                            <div className="h-[500px]">
+                            <div className="h-[500px] md:h-[500px]">
                                 <WidgetSkeleton className="h-full" />
                             </div>
                             {/* Column 3 Skeleton */}
-                            <div className="flex flex-col gap-6 h-[500px] md:col-span-2 xl:col-span-1">
+                            <div className="flex flex-col gap-6 h-auto md:h-[500px] md:col-span-2 xl:col-span-1">
                                 <WidgetSkeleton className="flex-1" />
                                 <WidgetSkeleton className="h-[200px]" />
                             </div>
@@ -256,19 +256,19 @@ export default function DashboardPage() {
                     ) : (
                         <>
                             {/* Column 1: Exams & Mood */}
-                            <div className="flex flex-col gap-6 h-[500px]">
-                                <div className="flex-1 min-h-0"><ExamWidget /></div>
+                            <div className="flex flex-col gap-6 h-auto md:h-[500px]">
+                                <div className="flex-1 min-h-[300px] md:min-h-0"><ExamWidget /></div>
                                 <div className="h-[200px] shrink-0"><MoodWidget /></div>
                             </div>
 
                             {/* Column 2: Schedule (Tall) */}
-                            <div className="h-[500px]">
+                            <div className="h-[500px] md:h-[500px]">
                                 <SmartScheduleWidget />
                             </div>
 
                             {/* Column 3: Assignments & Spotify */}
-                            <div className="flex flex-col gap-6 h-[500px] md:col-span-2 xl:col-span-1">
-                                <div className="flex-1 min-h-0"><AssignmentsWidget /></div>
+                            <div className="flex flex-col gap-6 h-auto md:h-[500px] md:col-span-2 xl:col-span-1">
+                                <div className="flex-1 min-h-[300px] md:min-h-0"><AssignmentsWidget /></div>
                                 <div className="h-[200px] shrink-0"><SpotifyWidget /></div>
                             </div>
                         </>

@@ -25,11 +25,12 @@ import {
 } from "@tabler/icons-react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ModeToggle } from "@/components/mode-toggle"
 import { XPWidget } from "@/components/xp-widget"
 import { GlobalSearch } from "@/components/global-search"
+import { Logo } from "@/components/ui/logo"
 import { useStore } from "@/components/providers/store-provider"
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> { }
@@ -95,21 +96,8 @@ export function AppSidebar({ className }: SidebarProps) {
         <div className="flex h-full flex-col">
             {/* Header */}
             <div className="flex h-14 items-center justify-between border-b px-4">
-                <Link className="flex items-center gap-2 font-bold text-lg" href="/">
-                    <div className="relative w-8 h-8 flex items-center justify-center mr-2">
-                        <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full opacity-50" />
-                        <div className="relative w-8 h-8 rounded-lg bg-gradient-to-br from-orange-400 to-amber-600 flex items-center justify-center shadow-lg shadow-orange-500/20 ring-1 ring-white/20 group-hover:scale-110 transition-all duration-300">
-                            <IconSparkles className="w-5 h-5 text-white drop-shadow-md" strokeWidth={2.5} />
-                        </div>
-                    </div>
-                    <div className="flex flex-col gap-0.5 leading-none">
-                        <span className="font-bold text-lg tracking-tight text-foreground">
-                            Study<span className="text-primary font-extrabold">Board</span>
-                        </span>
-                        <span className="text-[10px] text-muted-foreground font-medium tracking-widest uppercase opacity-80">
-                            Premium
-                        </span>
-                    </div>
+                <Link className="flex items-center gap-2 font-bold text-lg hover:opacity-80 transition-opacity" href="/">
+                    <Logo />
                 </Link>
                 <ModeToggle />
             </div>
@@ -156,11 +144,12 @@ export function AppSidebar({ className }: SidebarProps) {
             {/* Mobile Trigger */}
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
                 <SheetTrigger asChild>
-                    <Button variant="outline" size="icon" className="md:hidden fixed top-4 left-4 z-40 shadow-lg">
+                    <Button variant="ghost" size="icon" className="md:hidden fixed top-3 left-4 z-50 bg-background/80 backdrop-blur-md border shadow-sm rounded-full">
                         <IconMenu2 className="h-5 w-5" />
                     </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="p-0 w-64">
+                <SheetContent side="left" className="p-0 w-64 bg-card">
+                    <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
                     <SidebarContent />
                 </SheetContent>
             </Sheet>

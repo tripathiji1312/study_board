@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import { Calendar } from "@/components/ui/calendar"
 import {
     Dialog,
@@ -451,9 +451,64 @@ export default function TodosPage() {
 
     return (
         <Shell>
-            <div className="flex gap-6 h-[calc(100vh-8rem)]">
-                {/* Sidebar */}
-                <div className="w-64 flex-shrink-0">
+            <div className="flex flex-col md:flex-row gap-4 md:gap-6 h-[calc(100vh-8rem)]">
+                {/* Mobile Navigation */}
+                <div className="md:hidden flex flex-col gap-4 mb-4">
+                    <ScrollArea className="w-full whitespace-nowrap">
+                        <div className="flex w-max space-x-2 p-1">
+                            {views.map(view => (
+                                <button
+                                    key={view.id}
+                                    onClick={() => setActiveView(view.id)}
+                                    className={cn(
+                                        "flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors border",
+                                        activeView === view.id
+                                            ? "bg-primary text-primary-foreground border-primary"
+                                            : "bg-background text-muted-foreground border-border hover:bg-muted"
+                                    )}
+                                >
+                                    <view.icon className="w-3.5 h-3.5" />
+                                    {view.label}
+                                    {view.count !== undefined && view.count > 0 && (
+                                        <Badge variant="secondary" className="ml-1.5 h-4 text-[10px] px-1">
+                                            {view.count}
+                                        </Badge>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+                        <ScrollBar orientation="horizontal" />
+                    </ScrollArea>
+
+                    {tags.length > 0 && (
+                        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider shrink-0">
+                                Tags:
+                            </span>
+                            {tags.map(tag => (
+                                <button
+                                    key={tag.id}
+                                    onClick={() => setActiveView(`tag-${tag.id}`)}
+                                    className={cn(
+                                        "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors border shrink-0",
+                                        activeView === `tag-${tag.id}`
+                                            ? "bg-primary text-primary-foreground border-primary"
+                                            : "bg-background text-muted-foreground border-border hover:bg-muted"
+                                    )}
+                                >
+                                    <div
+                                        className="w-2 h-2 rounded-full"
+                                        style={{ backgroundColor: tag.color }}
+                                    />
+                                    #{tag.name}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Desktop Sidebar */}
+                <div className="hidden md:block w-64 flex-shrink-0">
                     <div className="sticky top-0 space-y-6">
                         {/* Search */}
                         <div className="relative">
@@ -535,9 +590,9 @@ export default function TodosPage() {
                 </div>
 
                 {/* Main Content */}
-                <div className="flex-1 min-w-0 space-y-4">
+                <div className="flex-1 min-w-0 flex flex-col gap-4 overflow-hidden">
                     {/* Header */}
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between flex-shrink-0">
                         <div>
                             <h1 className="text-2xl font-bold tracking-tight">
                                 {activeView === "inbox" && "Inbox"}
@@ -709,7 +764,7 @@ export default function TodosPage() {
 
                     {/* Progress (for Today view) */}
                     {activeView === "today" && totalToday > 0 && (
-                        <div className="space-y-2">
+                        <div className="space-y-2 flex-shrink-0">
                             <Progress value={progressPercent} className="h-2" />
                             <p className="text-xs text-center text-muted-foreground">
                                 {progressPercent === 100
@@ -721,7 +776,7 @@ export default function TodosPage() {
                     )}
 
                     {/* Quick Add */}
-                    <form onSubmit={handleQuickAdd} className="flex gap-2">
+                    <form onSubmit={handleQuickAdd} className="flex gap-2 flex-shrink-0">
                         <div className="relative flex-1">
                             <Input
                                 value={quickTask}
@@ -736,7 +791,7 @@ export default function TodosPage() {
                     </form>
 
                     {/* Task List */}
-                    <ScrollArea className="h-[calc(100vh-20rem)]">
+                    <ScrollArea className="flex-1">
                         <div className="space-y-2 pr-4">
                             <AnimatePresence mode="popLayout">
                                 {sortedTodos.length > 0 ? (
