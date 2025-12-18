@@ -167,6 +167,7 @@ export interface DailyLog {
     studyTime: number
     note?: string
     sleep?: number
+    subjectId?: string
 }
 
 interface StoreContextType {
@@ -182,6 +183,7 @@ interface StoreContextType {
     resources: Resource[]
     exams: Exam[]
     dailyLogs: DailyLog[]
+    isLoading: boolean // New state
 
     // Library
     books: Book[]
@@ -272,6 +274,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const [resources, setResources] = useState<Resource[]>([])
     const [exams, setExams] = useState<Exam[]>([])
     const [dailyLogs, setDailyLogs] = useState<DailyLog[]>([])
+    const [isLoading, setIsLoading] = useState(true)
 
     // NEW STATE
     const [books, setBooks] = useState<Book[]>([])
@@ -364,6 +367,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
         } catch (error) {
             console.error("Failed to fetch data:", error)
+        } finally {
+            setIsLoading(false)
         }
     }
 
@@ -772,6 +777,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             resources,
             exams,
             dailyLogs,
+            isLoading,
             books,
             ideas,
             snippets,

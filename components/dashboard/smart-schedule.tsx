@@ -25,6 +25,45 @@ import {
 } from "@tabler/icons-react"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    verticalListSortingStrategy,
+    useSortable
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+// --- Small Components ---
+function ProgressBadge({ progress }: { progress: number }) {
+    const isComplete = progress >= 100
+    return (
+        <div className={cn(
+            "flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold transition-all",
+            isComplete ? "bg-emerald-500/20 text-emerald-500" : "bg-primary/10 text-primary"
+        )}>
+            {isComplete ? (
+                <>
+                    <IconCheck className="w-3 h-3" />
+                    Done!
+                </>
+            ) : (
+                <>
+                    {Math.round(progress)}%
+                </>
+            )}
+        </div>
+    )
+}
 
 // Animation Variants
 const listVariants = {
@@ -54,8 +93,34 @@ type TimelineItem = {
     original: any
 }
 
+// --- Sortable Item Component ---
+function SortableItem({ id, children, disabled }: { id: string, children: React.ReactNode, disabled?: boolean }) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging
+    } = useSortable({ id, disabled });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+        zIndex: isDragging ? 50 : "auto",
+        position: 'relative' as 'relative', // Fix type
+    };
+
+    return (
+        <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+            {children}
+        </div>
+    );
+}
+
 export function SmartScheduleWidget() {
-    const { schedule, assignments, exams, todos, toggleTodo, subjects } = useStore()
+    const { schedule, assignments, exams, todos, toggleTodo, subjects, updateTodo, updateAssignment } = useStore()
     const { data: session } = useSession()
     const [activeTab, setActiveTab] = React.useState("today")
     const [googleEvents, setGoogleEvents] = React.useState<any[]>([])
@@ -180,19 +245,30 @@ export function SmartScheduleWidget() {
             itemsByDay[dateStr] = getItemsForDate(day)
         })
         return itemsByDay
+        return itemsByDay
     }, [weekDays, getItemsForDate])
+
+    // Progress Calculation (Actionable items only)
+    const progress = React.useMemo(() => {
+        const actionable = todayItems.filter(i => i.type === "Todo" || i.type === "Assignment")
+        if (actionable.length === 0) return 0
+        const completed = actionable.filter(i => i.status === "Completed" || i.original?.completed).length
+        return (completed / actionable.length) * 100
+    }, [todayItems])
 
     // Quick Add Mock
     const handleAdd = () => {
         window.location.href = "/schedule"
     }
 
-    const handleToggle = (id: string | number, type: string, currentStatus?: boolean) => {
+    const handleToggle = (id: string | number, type: string, isCurrentlyCompleted?: boolean) => {
         if (type === "Todo") {
             const todoId = String(id).replace("td-", "")
-            const newStatus = !currentStatus
+            const newStatus = !isCurrentlyCompleted
 
-            toggleTodo(todoId, newStatus)
+            // toggleTodo expects (id, currentStatus) and internally does !currentStatus
+            // So we pass isCurrentlyCompleted (the CURRENT status) and it will flip it
+            toggleTodo(todoId, isCurrentlyCompleted ?? false)
 
             if (newStatus) {
                 confetti({
@@ -203,6 +279,77 @@ export function SmartScheduleWidget() {
                 })
                 toast.success("Task Completed! +20 XP 🌟")
             }
+        }
+    }
+
+    // --- Drag and Drop Logic ---
+    const sensors = useSensors(
+        useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    )
+
+    const handleDragEnd = async (event: DragEndEvent) => {
+        const { active, over } = event
+        if (!over || active.id === over.id) return
+
+        const activeId = String(active.id)
+        const overId = String(over.id)
+
+        // Find current list
+        const currentList = activeTab === "today" ? todayItems : activeTab === "tomorrow" ? tomorrowItems : []
+        const oldIndex = currentList.findIndex(i => i.id === activeId)
+        const newIndex = currentList.findIndex(i => i.id === overId)
+
+        if (oldIndex === -1 || newIndex === -1) return
+
+        // 1. Identify Target Time
+        let newTime = "12:00" // Default
+
+        // Strategy: Take time of item AT newIndex (or before/after depending on direction)
+        // If moving down (old < new): Place AFTER newIndex item
+        // If moving up (old > new): Place BEFORE newIndex item
+
+        // Simpler: Just look at the neighbor at the target position
+        // If I drop at index 0, take index 1 time minus 30m?
+        // If I drop at index 5, take index 4 time plus 30m?
+
+        let targetNeighborIndex = newIndex
+        if (oldIndex < newIndex) {
+            // Moved down. We want to be after the item currently at newIndex (which shifts up)
+            // But visually, we are dropping "on" it.
+            // Let's look at the item *currently* at the drop position.
+            // If we want to be *after* it? No, standard sortable swaps them.
+            // Let's rely on arrayMove logic locally to find "neighbors".
+
+            // Actually, simpler heuristic:
+            // Get item at newIndex. Inherit its time?
+            // Or get time of item *before* the new slot. 
+            const prevItem = newIndex > 0 ? currentList[newIndex - 1] : null
+            const nextItem = currentList[newIndex]
+            // Logic is tricky because list is dynamic.
+
+            // Let's use the time of the item we swapped with.
+            const targetItem = currentList[newIndex]
+            if (targetItem.time) newTime = targetItem.time
+        } else {
+            const targetItem = currentList[newIndex]
+            if (targetItem.time) newTime = targetItem.time
+        }
+
+        // Apply Time Update
+        const type = activeId.split("-")[0]
+        const id = activeId.split("-")[1]
+
+        // Only allow updating Todos and Assignments for now
+        if (type === "td") {
+            updateTodo(id, { dueTime: newTime })
+            toast.success(`Rescheduled to ${newTime}`)
+        } else if (type === "as") {
+            // Assignments might not support dueTime update in same way, but let's try
+            // updateAssignment({ ...item.original, dueDate: ... }) -> Complex if date changes?
+            // Just time for now. Assignment interface has dueDate string (ISO?).
+            // Skip assignment rescheduling for safety for now.
+            toast("Assignment rescheduling not fully supported yet.")
         }
     }
 
@@ -232,31 +379,33 @@ export function SmartScheduleWidget() {
                 className="space-y-1 pr-3"
             >
                 <AnimatePresence mode="popLayout">
-                    {items.map((item, index) => {
+                    {items.map((item) => {
                         const isCompleted = item.type === "Todo" && item.original?.completed
+                        const isTodo = item.type === "Todo"
 
                         return (
                             <motion.div
                                 key={item.id}
                                 variants={itemVariants}
                                 layout
-                                exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+                                exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.15 } }}
+                                onClick={isTodo ? () => handleToggle(item.id, item.type, isCompleted) : undefined}
                                 className={cn(
-                                    "group/item flex items-center gap-3 p-2 rounded-lg transition-colors border border-transparent",
-                                    item.type === "Todo" ? "hover:bg-accent/50 cursor-pointer" : "hover:bg-accent/50",
-                                    isCompleted && "opacity-60 grayscale"
+                                    "group/item flex items-center gap-3 p-2.5 rounded-lg transition-all border border-transparent",
+                                    isTodo && "hover:bg-accent/50 cursor-pointer active:scale-[0.98]",
+                                    !isTodo && "hover:bg-accent/30",
+                                    isCompleted && "opacity-50"
                                 )}
-                                whileHover={{ scale: 1.01, backgroundColor: "var(--accent)" }}
-                                onClick={() => item.type === "Todo" && handleToggle(item.id, item.type, item.original?.completed)}
                             >
                                 {/* Icon / Action Column */}
                                 <div className="shrink-0">
-                                    {item.type === "Todo" ? (
-                                        <Checkbox
-                                            checked={isCompleted}
-                                            className="w-4 h-4 rounded-full border-2"
-                                            onCheckedChange={(checked) => handleToggle(item.id, item.type, !checked)}
-                                        />
+                                    {isTodo ? (
+                                        <div className={cn(
+                                            "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all",
+                                            isCompleted ? "bg-primary border-primary" : "border-muted-foreground/30 hover:border-primary/50"
+                                        )}>
+                                            {isCompleted && <IconCheck className="w-3 h-3 text-primary-foreground" />}
+                                        </div>
                                     ) : (
                                         <div className={cn(
                                             "w-8 h-8 rounded-full flex items-center justify-center border text-xs shadow-sm",
@@ -346,13 +495,14 @@ export function SmartScheduleWidget() {
     return (
         <Card className="h-full min-h-[500px] flex flex-col shadow-sm group">
             <CardHeader className="p-4 pb-2 space-y-0 flex flex-row items-center justify-between border-b bg-card shrink-0">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                     <CardTitle className="text-sm font-medium">Smart Agenda</CardTitle>
                     <Badge variant="secondary" className="text-[10px] h-5 px-1.5 font-normal text-muted-foreground">
                         {activeTab === "today" ? format(today, "MMM d") :
                             activeTab === "tomorrow" ? format(tomorrow, "MMM d") :
                                 "Next 7 Days"}
                     </Badge>
+                    {activeTab === "today" && <ProgressBadge progress={progress} />}
                 </div>
 
                 <div className="flex items-center gap-2">

@@ -15,6 +15,7 @@ import {
     IconTargetArrow,
     IconFlame
 } from "@tabler/icons-react"
+import { useRouter } from "next/navigation"
 import { useStore } from "@/components/providers/store-provider"
 import { SpotifyWidget } from "@/components/spotify-widget"
 import { StudyGraph } from "@/components/dashboard/study-graph"
@@ -25,6 +26,7 @@ import { AssignmentsWidget } from "@/components/dashboard/assignments-widget"
 import { ResourcesWidget } from "@/components/dashboard/resources-widget"
 import { FocusAnalytics } from "@/components/dashboard/focus-analytics"
 import { StreakWidget, BadgesWidget } from "@/components/dashboard/gamification-widgets"
+import { WidgetSkeleton, StatCardSkeleton, ChartSkeleton } from "@/components/ui/skeleton-loaders"
 import { isToday, parseISO, differenceInDays, format } from "date-fns"
 import { motion } from "framer-motion"
 
@@ -50,10 +52,33 @@ export default function DashboardPage() {
         assignments,
         projects,
         schedule,
-        addTodo
+        addTodo,
+        isLoading
     } = useStore()
 
     const [quickTask, setQuickTask] = React.useState("")
+    const quickAddRef = React.useRef<HTMLInputElement>(null)
+    const router = useRouter()
+
+    // Keyboard Shortcuts
+    React.useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Ignore if typing in input
+            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+
+            if (e.key.toLowerCase() === 'n') {
+                e.preventDefault()
+                quickAddRef.current?.focus()
+            }
+            if (e.key.toLowerCase() === 'f') {
+                e.preventDefault()
+                router.push("/focus")
+            }
+        }
+
+        window.addEventListener("keydown", handleKeyDown)
+        return () => window.removeEventListener("keydown", handleKeyDown)
+    }, [router])
 
     // Greeting Logic
     const getGreeting = () => {
@@ -162,35 +187,40 @@ export default function DashboardPage() {
 
                 {/* Key Metrics Row */}
                 <motion.div variants={item} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    {[
-                        { label: "Pending", val: pendingAssignments, icon: IconClipboardList, color: "text-orange-500", bg: "bg-orange-500/10", href: "/assignments" },
-                        { label: "Tasks", val: todayTodos, icon: IconChecklist, color: "text-blue-500", bg: "bg-blue-500/10", href: "/todos" },
-                        { label: "Projects", val: activeProjects, icon: IconRocket, color: "text-purple-500", bg: "bg-purple-500/10", href: "/projects" },
-                        { label: "Schedule", val: todayEvents, icon: IconCalendarEvent, color: "text-emerald-500", bg: "bg-emerald-500/10", href: "/schedule" },
-                    ].map((stat, i) => (
-                        <Link key={i} href={stat.href}>
-                            <Card className="hover:bg-muted/50 hover:border-primary/20 transition-all cursor-pointer group">
-                                <CardContent className="p-4 flex items-center gap-4">
-                                    <div className={`p-3 rounded-xl ${stat.bg} ${stat.color} group-hover:scale-110 transition-transform`}>
-                                        <stat.icon className="w-6 h-6" />
-                                    </div>
-                                    <div>
-                                        <p className="text-3xl font-bold tracking-tight text-foreground">{stat.val}</p>
-                                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{stat.label}</p>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </Link>
-                    ))}
+                    {isLoading ? (
+                        Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
+                    ) : (
+                        [
+                            { label: "Pending", val: pendingAssignments, icon: IconClipboardList, color: "text-orange-500", bg: "bg-orange-500/10", href: "/assignments" },
+                            { label: "Tasks", val: todayTodos, icon: IconChecklist, color: "text-blue-500", bg: "bg-blue-500/10", href: "/todos" },
+                            { label: "Projects", val: activeProjects, icon: IconRocket, color: "text-purple-500", bg: "bg-purple-500/10", href: "/projects" },
+                            { label: "Schedule", val: todayEvents, icon: IconCalendarEvent, color: "text-emerald-500", bg: "bg-emerald-500/10", href: "/schedule" },
+                        ].map((stat, i) => (
+                            <Link key={i} href={stat.href}>
+                                <Card className="hover:bg-muted/50 hover:border-primary/20 transition-all cursor-pointer group">
+                                    <CardContent className="p-4 flex items-center gap-4">
+                                        <div className={`p-3 rounded-xl ${stat.bg} ${stat.color} group-hover:scale-110 transition-transform`}>
+                                            <stat.icon className="w-6 h-6" />
+                                        </div>
+                                        <div>
+                                            <p className="text-3xl font-bold tracking-tight text-foreground">{stat.val}</p>
+                                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{stat.label}</p>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </Link>
+                        ))
+                    )}
                 </motion.div>
 
                 {/* Quick Add Input */}
                 <motion.div variants={item}>
                     <form onSubmit={handleQuickAdd} className="relative group">
                         <Input
+                            ref={quickAddRef}
                             value={quickTask}
                             onChange={e => setQuickTask(e.target.value)}
-                            placeholder="What needs to be done?"
+                            placeholder="What needs to be done? (Press 'N')"
                             className="h-12 pl-4 pr-12 bg-background/50 backdrop-blur-sm border-muted-foreground/20 focus:border-primary/50 shadow-sm rounded-xl transition-all"
                         />
                         <Button
@@ -206,29 +236,48 @@ export default function DashboardPage() {
 
                 {/* Main Grid Layout */}
                 <motion.div variants={item} className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                    {isLoading ? (
+                        <>
+                            {/* Column 1 Skeleton */}
+                            <div className="flex flex-col gap-6 h-[500px]">
+                                <WidgetSkeleton className="flex-1" />
+                                <WidgetSkeleton className="h-[200px]" />
+                            </div>
+                            {/* Column 2 Skeleton */}
+                            <div className="h-[500px]">
+                                <WidgetSkeleton className="h-full" />
+                            </div>
+                            {/* Column 3 Skeleton */}
+                            <div className="flex flex-col gap-6 h-[500px] md:col-span-2 xl:col-span-1">
+                                <WidgetSkeleton className="flex-1" />
+                                <WidgetSkeleton className="h-[200px]" />
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            {/* Column 1: Exams & Mood */}
+                            <div className="flex flex-col gap-6 h-[500px]">
+                                <div className="flex-1 min-h-0"><ExamWidget /></div>
+                                <div className="h-[200px] shrink-0"><MoodWidget /></div>
+                            </div>
 
-                    {/* Column 1: Exams & Mood */}
-                    <div className="flex flex-col gap-6 h-[500px]">
-                        <div className="flex-1 min-h-0"><ExamWidget /></div>
-                        <div className="h-[200px] shrink-0"><MoodWidget /></div>
-                    </div>
+                            {/* Column 2: Schedule (Tall) */}
+                            <div className="h-[500px]">
+                                <SmartScheduleWidget />
+                            </div>
 
-                    {/* Column 2: Schedule (Tall) */}
-                    <div className="h-[500px]">
-                        <SmartScheduleWidget />
-                    </div>
-
-                    {/* Column 3: Assignments & Spotify */}
-                    <div className="flex flex-col gap-6 h-[500px] md:col-span-2 xl:col-span-1">
-                        <div className="flex-1 min-h-0"><AssignmentsWidget /></div>
-                        <div className="h-[200px] shrink-0"><SpotifyWidget /></div>
-                    </div>
-
+                            {/* Column 3: Assignments & Spotify */}
+                            <div className="flex flex-col gap-6 h-[500px] md:col-span-2 xl:col-span-1">
+                                <div className="flex-1 min-h-0"><AssignmentsWidget /></div>
+                                <div className="h-[200px] shrink-0"><SpotifyWidget /></div>
+                            </div>
+                        </>
+                    )}
                 </motion.div>
 
                 {/* Study Graph */}
                 <motion.div variants={item}>
-                    <StudyGraph />
+                    {isLoading ? <ChartSkeleton /> : <StudyGraph />}
                 </motion.div>
 
                 {/* Resources */}

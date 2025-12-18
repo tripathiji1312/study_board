@@ -121,17 +121,17 @@ export function ExamWidget() {
             <CardContent className="flex-1 flex flex-col gap-4">
                 {nextExam ? (
                     <div className={cn(
-                        "rounded-xl p-4 flex flex-col items-center justify-center text-center shadow-lg transition-all",
+                        "rounded-xl p-4 flex flex-col items-center justify-center text-center shadow-lg transition-all overflow-hidden",
                         getUrgencyColor(nextExam.date)
                     )}>
-                        <h3 className="text-4xl font-black tracking-tighter mb-1">
+                        <h3 className="text-3xl font-black tracking-tighter mb-1 leading-none">
                             {getDaysLeft(nextExam.date)}
                         </h3>
-                        <p className="text-sm font-bold opacity-90 uppercase tracking-widest truncate max-w-full px-2">
-                            {nextExamSubject?.name || "Unknown Subject"}
+                        <p className="text-xs font-bold opacity-90 uppercase tracking-wider truncate max-w-full px-2 leading-tight">
+                            {nextExamSubject?.name || "Exam"}
                         </p>
-                        <p className="text-xs opacity-75 mt-1">
-                            {nextExam.title} &bull; {format(new Date(nextExam.date), "MMM d")}
+                        <p className="text-[10px] opacity-70 mt-1 truncate max-w-full px-2">
+                            {nextExam.title} • {format(new Date(nextExam.date), "MMM d")}
                         </p>
                     </div>
                 ) : (
@@ -143,7 +143,7 @@ export function ExamWidget() {
                 )}
 
                 {allExams.length > 1 && (
-                    <div className="space-y-1.5 max-h-[150px] overflow-y-auto pr-1">
+                    <div className="space-y-1.5 flex-1 min-h-0 overflow-hidden">
                         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pl-1 mb-1">Up Next</p>
                         {allExams.slice(1).map((exam: any) => {
                             const sub = subjects.find(s => s.id === exam.subjectId)

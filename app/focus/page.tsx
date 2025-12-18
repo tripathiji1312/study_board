@@ -9,8 +9,12 @@ import confetti from "canvas-confetti"
 import { AmbienceWidget } from "@/components/dashboard/ambience-widget"
 import { FocusQuote } from "@/components/focus/focus-quote"
 import { GamificationWidget } from "@/components/focus/gamification"
-import { FocusTaskList } from "@/components/focus/task-list"
 import { ThemeSelector, ThemeKey, THEMES } from "@/components/focus/theme-selector"
+import { FocusTaskList } from "@/components/focus/task-list"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { FocusHistory } from "@/components/dashboard/focus-history"
+import { IconChartBar, IconShieldLock } from "@tabler/icons-react"
+import { DistractionBlocker } from "@/components/focus/distraction-blocker"
 
 export default function FocusPage() {
     const { dailyLogs, addDailyLog, todos, toggleTodo, subjects } = useStore()
@@ -41,6 +45,7 @@ export default function FocusPage() {
 
     // Ambience state
     const [showAmbience, setShowAmbience] = React.useState(false)
+    const [showBlocker, setShowBlocker] = React.useState(false)
 
     // Fullscreen state
     const [isFullscreen, setIsFullscreen] = React.useState(false)
@@ -112,7 +117,8 @@ export default function FocusPage() {
                 mood: 3,
                 studyTime: minutes,
                 note: `Deep Work: ${selectedTaskText}`,
-                date: new Date().toISOString()
+                date: new Date().toISOString(),
+                subjectId: selectedSubjectId === "none" ? undefined : selectedSubjectId
             })
 
             setTimeout(() => {
@@ -161,7 +167,25 @@ export default function FocusPage() {
                         <a href="/"><IconArrowLeft className="w-3 h-3 mr-2" /> Dashboard</a>
                     </Button>
                     <div className="h-4 w-[1px] bg-white/5" />
+                    <div className="h-4 w-[1px] bg-white/5" />
                     <ThemeSelector currentTheme={theme} onThemeChange={handleThemeChange} />
+
+                    {/* History Sheet */}
+                    <Sheet>
+                        <SheetTrigger asChild>
+                            <Button variant="ghost" size="sm" className="text-muted-foreground/60 hover:text-white hover:bg-white/5 transition-all text-xs tracking-widest uppercase">
+                                <IconChartBar className="w-3 h-3 mr-2" /> History
+                            </Button>
+                        </SheetTrigger>
+                        <SheetContent className="w-[400px] sm:w-[540px] border-l border-white/10 bg-black/90 backdrop-blur-xl text-white">
+                            <SheetHeader>
+                                <SheetTitle className="text-white uppercase tracking-widest font-light text-sm">Session History</SheetTitle>
+                            </SheetHeader>
+                            <div className="mt-8">
+                                <FocusHistory />
+                            </div>
+                        </SheetContent>
+                    </Sheet>
 
                     {/* Subject Selector - Fixed Interactivity */}
                     <div className="relative group z-30">
@@ -185,6 +209,31 @@ export default function FocusPage() {
                 </div>
 
                 <div className="flex items-center gap-4 relative">
+                    {/* Blocker Toggle */}
+                    <div className="relative">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className={cn(
+                                "rounded-full transition-colors",
+                                showBlocker ? "text-red-400 bg-red-400/10" : "text-white/30 hover:text-white hover:bg-white/5"
+                            )}
+                            onClick={() => {
+                                setShowBlocker(!showBlocker)
+                                setShowAmbience(false) // Close others
+                            }}
+                        >
+                            <IconShieldLock className="w-4 h-4" />
+                        </Button>
+
+                        <div className={cn(
+                            "absolute top-full right-0 mt-4 origin-top-right transition-all duration-200 z-50",
+                            showBlocker ? "opacity-100 scale-100 visible" : "opacity-0 scale-95 invisible pointer-events-none"
+                        )}>
+                            <DistractionBlocker />
+                        </div>
+                    </div>
+
                     {/* Ambience Toggle */}
                     <div className="relative">
                         <Button

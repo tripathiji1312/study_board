@@ -1,8 +1,9 @@
-import { Skeleton } from "@/components/ui/skeleton"
+import { Skeleton } from "./skeleton"
+import { cn } from "@/lib/utils"
 
-export function WidgetSkeleton() {
+export function WidgetSkeleton({ className }: { className?: string }) {
     return (
-        <div className="h-full w-full p-4 border rounded-xl space-y-4 bg-card/50">
+        <div className={cn("h-full w-full p-4 border rounded-xl space-y-4 bg-card/50", className)}>
             <div className="flex items-center justify-between">
                 <Skeleton className="h-4 w-[100px]" />
                 <Skeleton className="h-4 w-4 rounded-full" />

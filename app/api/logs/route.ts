@@ -22,7 +22,8 @@ export async function POST(req: Request) {
                 mood: body.mood,
                 note: body.note,
                 sleep: body.sleep,
-                studyTime: body.studyTime
+                studyTime: body.studyTime,
+                subjectId: body.subjectId
             }
         })
         return NextResponse.json(log)

@@ -169,6 +169,7 @@ export function GlobalSearch() {
             {/* Search Dialog */}
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent className="overflow-hidden p-0 shadow-lg sm:max-w-xl">
+                    <DialogTitle className="sr-only">Global Search</DialogTitle>
                     <Command className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground">
                         <div className="flex items-center border-b px-3">
                             <IconSearch className="mr-2 h-4 w-4 shrink-0 opacity-50" />

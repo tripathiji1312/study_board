@@ -243,6 +243,7 @@ model DailyLog {
   note      String? // "Brain dump"
   sleep     Int? // Hours of sleep
   studyTime Int? // Minutes studied
+  subjectId String?
 }
 
 // ========== LIBRARY TRACKER ==========
