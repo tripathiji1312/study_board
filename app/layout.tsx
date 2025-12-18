@@ -6,6 +6,7 @@ import { StoreProvider } from "@/components/providers/store-provider"
 import { XPProvider } from "@/components/xp-widget"
 import { Toaster } from "@/components/ui/sonner"
 import { AuthProvider } from "@/components/providers/auth-provider"
+import { GamificationProvider } from "@/components/providers/gamification-provider"
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -43,8 +44,10 @@ export default function RootLayout({
           >
             <XPProvider>
               <StoreProvider>
-                {children}
-                <Toaster />
+                <GamificationProvider>
+                  {children}
+                  <Toaster />
+                </GamificationProvider>
               </StoreProvider>
             </XPProvider>
           </ThemeProvider>

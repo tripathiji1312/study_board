@@ -5,9 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useStore } from "@/components/providers/store-provider"
 import { format, subDays, isSameDay, startOfWeek } from "date-fns"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { useGamification } from "@/components/providers/gamification-provider"
 
 export function StudyGraph() {
     const { dailyLogs, todos, assignments } = useStore()
+    const { streak } = useGamification()
     const logs = dailyLogs || []
 
     const today = new Date()
@@ -160,7 +162,7 @@ export function StudyGraph() {
                     {/* Stats Row */}
                     <div className="flex gap-6 text-right">
                         <div>
-                            <p className="text-2xl font-bold">{stats.currentStreak} <span className="text-base text-orange-500">🔥</span></p>
+                            <p className="text-2xl font-bold">{streak} <span className="text-base text-orange-500">🔥</span></p>
                             <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Streak</p>
                         </div>
                         <div>

@@ -24,6 +24,23 @@ import {
     IconBrandGoogle
 } from "@tabler/icons-react"
 import { cn } from "@/lib/utils"
+import { motion, AnimatePresence } from "framer-motion"
+
+// Animation Variants
+const listVariants = {
+    hidden: { opacity: 0 },
+    show: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.1
+        }
+    }
+}
+
+const itemVariants = {
+    hidden: { opacity: 0, x: -20 },
+    show: { opacity: 1, x: 0 }
+}
 
 // Unified Event Type
 type TimelineItem = {
@@ -151,6 +168,20 @@ export function SmartScheduleWidget() {
     const todayItems = React.useMemo(() => getItemsForDate(today), [getItemsForDate, today])
     const tomorrowItems = React.useMemo(() => getItemsForDate(tomorrow), [getItemsForDate, tomorrow])
 
+    // Week View Data
+    const weekDays = React.useMemo(() => {
+        return Array.from({ length: 7 }).map((_, i) => addDays(today, i))
+    }, [today])
+
+    const weekItems = React.useMemo(() => {
+        const itemsByDay: Record<string, TimelineItem[]> = {}
+        weekDays.forEach(day => {
+            const dateStr = format(day, "yyyy-MM-dd")
+            itemsByDay[dateStr] = getItemsForDate(day)
+        })
+        return itemsByDay
+    }, [weekDays, getItemsForDate])
+
     // Quick Add Mock
     const handleAdd = () => {
         window.location.href = "/schedule"
@@ -179,70 +210,132 @@ export function SmartScheduleWidget() {
         if (items.length === 0) {
             return (
                 <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-60">
-                    <IconCalendar className="w-8 h-8 mb-2" />
-                    <p className="text-sm">Nothing scheduled</p>
+                    <motion.div
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                        className="bg-accent/50 p-6 rounded-full mb-4"
+                    >
+                        <IconCalendar className="w-10 h-10" />
+                    </motion.div>
+                    <p className="font-medium">No plans yet</p>
+                    <p className="text-xs">Enjoy your free time!</p>
                 </div>
             )
         }
 
         return (
-            <div className="space-y-1 pr-3">
-                {items.map((item, index) => {
-                    const isCompleted = item.type === "Todo" && item.original?.completed
+            <motion.div
+                variants={listVariants}
+                initial="hidden"
+                animate="show"
+                className="space-y-1 pr-3"
+            >
+                <AnimatePresence mode="popLayout">
+                    {items.map((item, index) => {
+                        const isCompleted = item.type === "Todo" && item.original?.completed
 
-                    return (
-                        <div
-                            key={item.id}
-                            className={cn(
-                                "group flex items-center gap-3 p-2 rounded-lg transition-colors border border-transparent",
-                                item.type === "Todo" ? "hover:bg-accent/50 cursor-pointer" : "hover:bg-accent/50",
-                                isCompleted && "opacity-60 grayscale"
-                            )}
-                            onClick={() => item.type === "Todo" && handleToggle(item.id, item.type, item.original?.completed)}
-                        >
-                            {/* Icon / Action Column */}
-                            <div className="shrink-0">
-                                {item.type === "Todo" ? (
-                                    <Checkbox
-                                        checked={isCompleted}
-                                        className="w-4 h-4 rounded-full border-2"
-                                        onCheckedChange={(checked) => handleToggle(item.id, item.type, !checked)}
-                                    />
-                                ) : (
-                                    <div className={cn(
-                                        "w-8 h-8 rounded-full flex items-center justify-center border text-xs shadow-sm",
-                                        item.type === "Exam" ? "bg-red-100 border-red-200 text-red-600 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400" :
-                                            item.type === "Assignment" ? "bg-orange-100 border-orange-200 text-orange-600 dark:bg-orange-900/20 dark:border-orange-800 dark:text-orange-400" :
-                                                item.type === "Google" ? "bg-white border-slate-200 text-slate-700 dark:bg-white/10 dark:border-white/10 dark:text-white" :
-                                                    "bg-blue-100 border-blue-200 text-blue-600 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-400"
-                                    )}>
-                                        {item.type === "Exam" && <IconAlertTriangle className="w-4 h-4" />}
-                                        {item.type === "Assignment" && <IconFlag className="w-4 h-4" />}
-                                        {item.type === "Class" && <IconSchool className="w-4 h-4" />}
-                                        {item.type === "Google" && <IconBrandGoogle className="w-4 h-4" />}
-                                    </div>
+                        return (
+                            <motion.div
+                                key={item.id}
+                                variants={itemVariants}
+                                layout
+                                exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+                                className={cn(
+                                    "group/item flex items-center gap-3 p-2 rounded-lg transition-colors border border-transparent",
+                                    item.type === "Todo" ? "hover:bg-accent/50 cursor-pointer" : "hover:bg-accent/50",
+                                    isCompleted && "opacity-60 grayscale"
                                 )}
-                            </div>
-
-                            {/* Content Column */}
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between gap-2">
-                                    <span className={cn(
-                                        "font-medium truncate text-sm",
-                                        isCompleted && "line-through text-muted-foreground"
-                                    )}>
-                                        {item.title}
-                                    </span>
-                                    {item.time && (
-                                        <Badge variant="outline" className="text-[10px] h-5 font-mono text-muted-foreground border-border/50 bg-background/50">
-                                            {item.time}
-                                        </Badge>
+                                whileHover={{ scale: 1.01, backgroundColor: "var(--accent)" }}
+                                onClick={() => item.type === "Todo" && handleToggle(item.id, item.type, item.original?.completed)}
+                            >
+                                {/* Icon / Action Column */}
+                                <div className="shrink-0">
+                                    {item.type === "Todo" ? (
+                                        <Checkbox
+                                            checked={isCompleted}
+                                            className="w-4 h-4 rounded-full border-2"
+                                            onCheckedChange={(checked) => handleToggle(item.id, item.type, !checked)}
+                                        />
+                                    ) : (
+                                        <div className={cn(
+                                            "w-8 h-8 rounded-full flex items-center justify-center border text-xs shadow-sm",
+                                            item.type === "Exam" ? "bg-red-100 border-red-200 text-red-600 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400" :
+                                                item.type === "Assignment" ? "bg-orange-100 border-orange-200 text-orange-600 dark:bg-orange-900/20 dark:border-orange-800 dark:text-orange-400" :
+                                                    item.type === "Google" ? "bg-white border-slate-200 text-slate-700 dark:bg-white/10 dark:border-white/10 dark:text-white" :
+                                                        "bg-blue-100 border-blue-200 text-blue-600 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-400"
+                                        )}>
+                                            {item.type === "Exam" && <IconAlertTriangle className="w-4 h-4" />}
+                                            {item.type === "Assignment" && <IconFlag className="w-4 h-4" />}
+                                            {item.type === "Class" && <IconSchool className="w-4 h-4" />}
+                                            {item.type === "Google" && <IconBrandGoogle className="w-4 h-4" />}
+                                        </div>
                                     )}
                                 </div>
-                                <div className="flex items-center text-xs text-muted-foreground">
-                                    <span className="truncate">{item.subtitle}</span>
+
+                                {/* Content Column */}
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between gap-2">
+                                        <span className={cn(
+                                            "font-medium truncate text-sm",
+                                            isCompleted && "line-through text-muted-foreground"
+                                        )}>
+                                            {item.title}
+                                        </span>
+                                        {item.time && (
+                                            <Badge variant="outline" className="text-[10px] h-5 font-mono text-muted-foreground border-border/50 bg-background/50">
+                                                {item.time}
+                                            </Badge>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center text-xs text-muted-foreground">
+                                        <span className="truncate">{item.subtitle}</span>
+                                    </div>
                                 </div>
-                            </div>
+                            </motion.div>
+                        )
+                    })}
+                </AnimatePresence>
+            </motion.div>
+        )
+    }
+
+    const renderWeekList = () => {
+        const hasAnyItems = weekDays.some(day => {
+            const dateStr = format(day, "yyyy-MM-dd")
+            return weekItems[dateStr]?.length > 0
+        })
+
+        if (!hasAnyItems) {
+            return (
+                <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-60">
+                    <motion.div
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                        className="bg-accent/50 p-6 rounded-full mb-4"
+                    >
+                        <IconCalendar className="w-10 h-10" />
+                    </motion.div>
+                    <p className="font-medium">No plans for the week</p>
+                    <p className="text-xs">Time to relax!</p>
+                </div>
+            )
+        }
+
+        return (
+            <div className="space-y-6 pb-4">
+                {weekDays.map(day => {
+                    const dateStr = format(day, "yyyy-MM-dd")
+                    const items = weekItems[dateStr] || []
+                    if (items.length === 0) return null
+
+                    return (
+                        <div key={dateStr} className="space-y-2">
+                            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground sticky top-0 bg-card/95 backdrop-blur py-2 z-10 border-b w-full">
+                                {format(day, "EEEE, MMM d")}
+                            </h4>
+                            {renderList(items)}
                         </div>
                     )
                 })}
@@ -251,12 +344,14 @@ export function SmartScheduleWidget() {
     }
 
     return (
-        <Card className="h-full min-h-[500px] flex flex-col shadow-sm">
+        <Card className="h-full min-h-[500px] flex flex-col shadow-sm group">
             <CardHeader className="p-4 pb-2 space-y-0 flex flex-row items-center justify-between border-b bg-card shrink-0">
                 <div className="flex items-center gap-2">
                     <CardTitle className="text-sm font-medium">Smart Agenda</CardTitle>
                     <Badge variant="secondary" className="text-[10px] h-5 px-1.5 font-normal text-muted-foreground">
-                        {activeTab === "today" ? format(today, "MMM d") : format(tomorrow, "MMM d")}
+                        {activeTab === "today" ? format(today, "MMM d") :
+                            activeTab === "tomorrow" ? format(tomorrow, "MMM d") :
+                                "Next 7 Days"}
                     </Badge>
                 </div>
 
@@ -286,6 +381,12 @@ export function SmartScheduleWidget() {
                             >
                                 Tmrw
                             </TabsTrigger>
+                            <TabsTrigger
+                                value="week"
+                                className="h-6 text-[10px] px-2.5 rounded-sm data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+                            >
+                                Week
+                            </TabsTrigger>
                         </TabsList>
                     </Tabs>
                 </div>
@@ -293,7 +394,9 @@ export function SmartScheduleWidget() {
 
             <CardContent className="flex-1 p-0 overflow-hidden relative bg-card/50">
                 <ScrollArea className="h-full p-2">
-                    {activeTab === "today" ? renderList(todayItems) : renderList(tomorrowItems)}
+                    {activeTab === "today" && renderList(todayItems)}
+                    {activeTab === "tomorrow" && renderList(tomorrowItems)}
+                    {activeTab === "week" && renderWeekList()}
                 </ScrollArea>
 
                 <div className="absolute bottom-3 right-3">

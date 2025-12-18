@@ -24,6 +24,7 @@ import { SmartScheduleWidget } from "@/components/dashboard/smart-schedule"
 import { AssignmentsWidget } from "@/components/dashboard/assignments-widget"
 import { ResourcesWidget } from "@/components/dashboard/resources-widget"
 import { FocusAnalytics } from "@/components/dashboard/focus-analytics"
+import { StreakWidget, BadgesWidget } from "@/components/dashboard/gamification-widgets"
 import { isToday, parseISO, differenceInDays, format } from "date-fns"
 import { motion } from "framer-motion"
 
@@ -118,6 +119,8 @@ export default function DashboardPage() {
                         <p className="text-muted-foreground mt-1">Here is your daily briefing.</p>
                     </div>
                     <div className="flex items-center gap-3">
+                        <StreakWidget />
+                        <BadgesWidget />
                         <Button variant="default" size="lg" className="rounded-full px-6 transition-all" asChild>
                             <Link href="/focus">
                                 <IconTargetArrow className="w-5 h-5 mr-2" />
