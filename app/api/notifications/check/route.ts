@@ -5,7 +5,7 @@ import { differenceInDays, parseISO, format, isBefore, startOfDay, addDays, endO
 import { render } from '@react-email/components'
 import { DailyDigestEmail } from '@/emails/DailyDigestEmail'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 const prisma = new PrismaClient()
 
 // Store sent notifications in memory to avoid spamming 
@@ -201,6 +201,9 @@ export async function POST(req: Request) {
         }
 
         // ============ SEND EMAIL ============
+        if (!resend) {
+            return NextResponse.json({ error: 'Email service not configured' }, { status: 503 })
+        }
         const { data, error } = await resend.emails.send({
             from: 'Study Board <onboarding@resend.dev>',
             to: [email],

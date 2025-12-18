@@ -4,7 +4,7 @@ import { PrismaClient } from '@prisma/client'
 import { render } from '@react-email/components'
 import { TestEmail } from '@/emails/TestEmail'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 const prisma = new PrismaClient()
 
 export async function POST(req: Request) {
@@ -21,6 +21,9 @@ export async function POST(req: Request) {
             TestEmail({ userName })
         )
 
+        if (!resend) {
+            return NextResponse.json({ error: 'Email service not configured' }, { status: 503 })
+        }
         const { data, error } = await resend.emails.send({
             from: 'Study Board <onboarding@resend.dev>',
             to: [email],
