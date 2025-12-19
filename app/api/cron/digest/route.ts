@@ -2,104 +2,209 @@ import { NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import DailyDigestEmail from '@/emails/DailyDigestEmail'
 import prisma from '@/lib/prisma'
-import { startOfDay, endOfDay, addDays } from 'date-fns'
+import { startOfDay, endOfDay, addDays, differenceInHours, differenceInDays, parseISO, format } from 'date-fns'
 
-const resendInfo = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
-// Use a safe access pattern later
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 
 export async function GET(req: Request) {
-    // Basic authorization using a secret query param to prevent unauthorized triggers
     const { searchParams } = new URL(req.url)
     const secret = searchParams.get('secret')
+    const emailType = searchParams.get('type') || 'morning'
 
-    if (secret !== process.env.CRON_SECRET && process.env.NODE_ENV === 'production') {
+    const expectedSecret = process.env.CRON_SECRET || 'studyboard_cron_secret_2024'
+    if (secret !== expectedSecret && process.env.NODE_ENV === 'production') {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     try {
-        // 1. Fetch users who have notifications enabled
         const settings = await prisma.userSettings.findMany({
             where: { emailNotifications: true, notificationEmail: { not: null } }
         })
 
-        const today = new Date()
+        const now = new Date()
+        const today = startOfDay(now)
         const tomorrow = addDays(today, 1)
+        const todayStr = format(today, 'yyyy-MM-dd')
+        const tomorrowStr = format(tomorrow, 'yyyy-MM-dd')
 
         const results = []
 
         for (const setting of settings) {
             if (!setting.notificationEmail) continue
 
-            // 2. Fetch User Data
-            // Note: In a real app with Auth, we would filter by userId. 
-            // Here assuming single user or shared DB for simplicity as per existing schema lacking userId on Assignment/Todo?
-            // Actually schema `Todo` etc have no userId? Prisma schema shows NO userId on Todo/Assignment.
-            // This suggests it's a single-user Personal Dashboard or strict silo.
-            // I will assume global data for the "user" (Personal usage).
-
-            const todos = await prisma.todo.findMany({
-                where: {
-                    completed: false,
-                    OR: [
-                        { dueDate: { equals: today.toISOString().split('T')[0] } }, // "YYYY-MM-DD"
-                        { dueDate: { equals: null } } // Inbox
-                    ]
-                }
-            })
-
+            // Fetch all incomplete assignments
             const assignments = await prisma.assignment.findMany({
-                where: {
-                    status: { not: 'Completed' },
-                    due: { lte: tomorrow.toISOString().split('T')[0] } // Due by tomorrow
-                }
+                where: { status: { not: 'Completed' } }
             })
 
+            // Fetch incomplete todos with due dates
+            const todos = await prisma.todo.findMany({
+                where: { completed: false }
+            })
+
+            // Fetch upcoming exams
             const exams = await prisma.exam.findMany({
                 where: {
-                    date: {
-                        gte: startOfDay(today),
-                        lte: addDays(today, 7) // Next 7 days
-                    }
+                    date: { gte: today, lte: addDays(today, 7) }
                 }
             })
 
-            const stats = {
-                completedToday: 0, // Placeholder
-                pendingTotal: todos.length
+            // Categorize by urgency
+            const overdue: any[] = []
+            const dueTodayUrgent: any[] = []  // Due in < 6 hours
+            const dueToday: any[] = []
+            const dueTomorrow: any[] = []
+            const dueThisWeek: any[] = []
+
+            assignments.forEach(a => {
+                try {
+                    const dueDate = parseISO(a.due)
+                    const hoursLeft = differenceInHours(dueDate, now)
+                    const daysLeft = differenceInDays(dueDate, today)
+
+                    if (daysLeft < 0) {
+                        overdue.push({ ...a, hoursOverdue: Math.abs(hoursLeft) })
+                    } else if (a.due === todayStr) {
+                        if (hoursLeft <= 6) {
+                            dueTodayUrgent.push({ ...a, hoursLeft })
+                        } else {
+                            dueToday.push(a)
+                        }
+                    } else if (a.due === tomorrowStr) {
+                        dueTomorrow.push(a)
+                    } else if (daysLeft <= 7) {
+                        dueThisWeek.push(a)
+                    }
+                } catch { }
+            })
+
+            // Categorize todos
+            const pendingTodos = todos.filter(t => {
+                if (!t.dueDate) return false
+                return t.dueDate === todayStr || t.dueDate < todayStr
+            }).map(t => ({ id: t.id, text: t.text, dueDate: t.dueDate }))
+
+            // Categorize exams
+            const upcomingExams = exams.map(e => {
+                const examDate = new Date(e.date)
+                const daysLeft = differenceInDays(examDate, today)
+                return {
+                    ...e,
+                    daysUntil: daysLeft,
+                    date: format(examDate, 'MMM d, yyyy')
+                }
+            }).sort((a, b) => a.daysUntil - b.daysUntil)
+
+            // Determine if we should send based on urgency and time of day
+            const hasUrgent = overdue.length > 0 || dueTodayUrgent.length > 0
+            const hasCriticalExam = upcomingExams.some(e => e.daysUntil <= 1)
+            const totalItems = overdue.length + dueTodayUrgent.length + dueToday.length + dueTomorrow.length + pendingTodos.length
+
+            // Smart sending logic based on time of day
+            let shouldSend = false
+            let subjectLine = ''
+            let urgencyEmoji = ''
+
+            if (emailType === 'morning') {
+                // Always send morning briefing if there's anything
+                shouldSend = totalItems > 0 || upcomingExams.length > 0
+                if (overdue.length > 0) {
+                    urgencyEmoji = '🚨'
+                    subjectLine = `${overdue.length} OVERDUE! Morning Briefing`
+                } else if (hasCriticalExam) {
+                    urgencyEmoji = '📚'
+                    subjectLine = `EXAM ${upcomingExams[0].daysUntil === 0 ? 'TODAY' : 'TOMORROW'}! Get ready`
+                } else if (dueToday.length > 0 || dueTodayUrgent.length > 0) {
+                    urgencyEmoji = '⏰'
+                    subjectLine = `${dueToday.length + dueTodayUrgent.length} item(s) due today`
+                } else {
+                    urgencyEmoji = '☀️'
+                    subjectLine = `Your day ahead - ${totalItems} pending items`
+                }
+            } else if (emailType === 'midday') {
+                // Midday: only send if urgent items exist
+                shouldSend = overdue.length > 0 || dueTodayUrgent.length > 0 || hasCriticalExam
+                if (overdue.length > 0) {
+                    urgencyEmoji = '🚨'
+                    subjectLine = `STILL OVERDUE: ${overdue.length} item(s) need attention NOW`
+                } else if (dueTodayUrgent.length > 0) {
+                    urgencyEmoji = '⚠️'
+                    subjectLine = `${dueTodayUrgent.length} item(s) due in a few hours!`
+                } else if (hasCriticalExam) {
+                    urgencyEmoji = '📖'
+                    subjectLine = `Exam reminder: ${upcomingExams[0].title}`
+                }
+            } else if (emailType === 'afternoon') {
+                // Afternoon check-in
+                shouldSend = overdue.length > 0 || dueTodayUrgent.length > 0 || dueToday.length > 0
+                if (overdue.length > 0) {
+                    urgencyEmoji = '🔴'
+                    subjectLine = `Action needed: ${overdue.length} overdue, ${dueToday.length + dueTodayUrgent.length} due today`
+                } else if (dueTodayUrgent.length > 0) {
+                    urgencyEmoji = '🟠'
+                    subjectLine = `Hours left! ${dueTodayUrgent.length} item(s) need your attention`
+                } else if (dueToday.length > 0) {
+                    urgencyEmoji = '🟡'
+                    subjectLine = `Afternoon check: ${dueToday.length} still due today`
+                }
+            } else if (emailType === 'evening') {
+                // Evening: remind about today's items and tomorrow prep
+                shouldSend = overdue.length > 0 || dueTodayUrgent.length > 0 || dueToday.length > 0 || (dueTomorrow.length > 0 && emailType === 'evening')
+                if (overdue.length > 0 || dueTodayUrgent.length > 0 || dueToday.length > 0) {
+                    const todayTotal = dueTodayUrgent.length + dueToday.length
+                    urgencyEmoji = '🌆'
+                    subjectLine = `Evening wrap-up: ${todayTotal > 0 ? todayTotal + ' still due today!' : ''} ${overdue.length > 0 ? overdue.length + ' overdue' : ''}`
+                } else if (dueTomorrow.length > 0) {
+                    urgencyEmoji = '📋'
+                    subjectLine = `Prep for tomorrow: ${dueTomorrow.length} item(s) due`
+                }
+            } else if (emailType === 'night') {
+                // Night: only critical/overdue
+                shouldSend = overdue.length > 0 || dueTodayUrgent.length > 0
+                if (overdue.length > 0 || dueTodayUrgent.length > 0) {
+                    urgencyEmoji = '🚨'
+                    subjectLine = `URGENT: ${overdue.length + dueTodayUrgent.length} item(s) still incomplete!`
+                }
             }
 
-            // 3. Send Email
-            if (!resendInfo) {
-                console.error("Resend API Key missing")
+            if (!shouldSend) {
+                results.push({ email: setting.notificationEmail, status: 'skipped_no_urgent' })
+                continue
+            }
+
+            if (!resend) {
                 results.push({ email: setting.notificationEmail, status: 'skipped_no_key' })
                 continue
             }
 
-            const { data, error } = await resendInfo.emails.send({
-                from: 'Study Board <digest@resend.dev>', // Update domain
+            const { data, error } = await resend.emails.send({
+                from: 'Study Board <digest@resend.dev>',
                 to: [setting.notificationEmail],
-                subject: `Your Daily Briefing for ${today.toLocaleDateString()}`,
+                subject: `${urgencyEmoji} ${subjectLine}`,
                 react: DailyDigestEmail({
                     userName: setting.displayName,
-                    overdue: [],
-                    dueToday: assignments.filter(a => a.due === today.toISOString().split('T')[0]),
-                    dueTomorrow: assignments.filter(a => a.due === tomorrow.toISOString().split('T')[0]),
-                    dueThisWeek: assignments.filter(a => a.due > tomorrow.toISOString().split('T')[0]),
-                    upcomingExams: exams as any,
-                    pendingTodos: todos as any,
-                    stats
+                    overdue: overdue.map(a => ({ ...a, due: format(parseISO(a.due), 'MMM d') })),
+                    dueToday: [...dueTodayUrgent, ...dueToday].map(a => ({ ...a, due: 'Today' })),
+                    dueTomorrow: dueTomorrow.map(a => ({ ...a, due: 'Tomorrow' })),
+                    dueThisWeek: dueThisWeek.map(a => ({ ...a, due: format(parseISO(a.due), 'MMM d') })),
+                    upcomingExams: upcomingExams as any,
+                    pendingTodos: pendingTodos as any,
+                    stats: {
+                        completedToday: 0,
+                        pendingTotal: totalItems
+                    }
                 })
             })
 
             if (error) {
                 console.error("Email failed:", error)
-                results.push({ email: setting.notificationEmail, status: 'failed' })
+                results.push({ email: setting.notificationEmail, status: 'failed', error: error.message })
             } else {
-                results.push({ email: setting.notificationEmail, status: 'sent', id: data?.id })
+                results.push({ email: setting.notificationEmail, status: 'sent', id: data?.id, type: emailType })
             }
         }
 
-        return NextResponse.json({ success: true, results })
+        return NextResponse.json({ success: true, results, type: emailType })
     } catch (error) {
         console.error(error)
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })

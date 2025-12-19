@@ -3,10 +3,12 @@ import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider"
 import { StoreProvider } from "@/components/providers/store-provider"
+import { SWRProvider } from "@/components/providers/swr-provider"
 import { XPProvider } from "@/components/xp-widget"
 import { Toaster } from "@/components/ui/sonner"
 import { AuthProvider } from "@/components/providers/auth-provider"
 import { GamificationProvider } from "@/components/providers/gamification-provider"
+import { SmartReminders } from "@/components/smart-reminders"
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -43,12 +45,15 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <XPProvider>
-              <StoreProvider>
-                <GamificationProvider>
-                  {children}
-                  <Toaster />
-                </GamificationProvider>
-              </StoreProvider>
+              <SWRProvider>
+                <StoreProvider>
+                  <GamificationProvider>
+                    {children}
+                    <SmartReminders />
+                    <Toaster />
+                  </GamificationProvider>
+                </StoreProvider>
+              </SWRProvider>
             </XPProvider>
           </ThemeProvider>
         </AuthProvider>

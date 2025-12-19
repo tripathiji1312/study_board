@@ -1,0 +1,24 @@
+{
+    "crons": [
+        {
+            "path": "/api/cron/digest?secret=studyboard_cron_secret_2024&type=morning",
+            "schedule": "0 6 * * *"
+        },
+        {
+            "path": "/api/cron/digest?secret=studyboard_cron_secret_2024&type=midday",
+            "schedule": "0 11 * * *"
+        },
+        {
+            "path": "/api/cron/digest?secret=studyboard_cron_secret_2024&type=afternoon",
+            "schedule": "0 14 * * *"
+        },
+        {
+            "path": "/api/cron/digest?secret=studyboard_cron_secret_2024&type=evening",
+            "schedule": "0 18 * * *"
+        },
+        {
+            "path": "/api/cron/digest?secret=studyboard_cron_secret_2024&type=night",
+            "schedule": "0 21 * * *"
+        }
+    ]
+}
