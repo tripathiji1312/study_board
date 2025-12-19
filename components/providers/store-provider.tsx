@@ -240,6 +240,7 @@ interface StoreContextType {
 
     // Schedule
     addScheduleEvent: (event: any) => void
+    updateScheduleEvent: (event: any) => void
     deleteScheduleEvent: (id: number) => void
 
     // Resources
@@ -639,6 +640,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         }
     }
 
+    const updateScheduleEvent = async (event: ScheduleEvent) => {
+        setSchedule(prev => prev.map(s => s.id === event.id ? event : s))
+        const res = await fetch('/api/schedule', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(event) })
+        if (res.ok) {
+            toast.success("Event updated")
+        } else {
+            toast.error("Failed to update event")
+        }
+    }
+
     const deleteScheduleEvent = async (id: number) => {
         setSchedule(schedule.filter(s => s.id !== id))
         await fetch(`/api/schedule?id=${id}`, { method: 'DELETE' })
@@ -814,6 +825,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             deleteProject,
             updateProjectStatus,
             addScheduleEvent,
+            updateScheduleEvent,
             deleteScheduleEvent,
             addResource,
             deleteResource,

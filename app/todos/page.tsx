@@ -48,7 +48,8 @@ import {
     IconX,
     IconDotsVertical,
     IconEdit,
-    IconCalendarDue
+    IconCalendarDue,
+    IconBook
 } from "@tabler/icons-react"
 import { useStore, Todo, Tag } from "@/components/providers/store-provider"
 import { useXP } from "@/components/xp-widget"
@@ -101,6 +102,7 @@ export default function TodosPage() {
     const [newTaskPriority, setNewTaskPriority] = React.useState<1 | 2 | 3 | 4>(4)
     const [newTaskTags, setNewTaskTags] = React.useState<string[]>([])
     const [newTagInput, setNewTagInput] = React.useState("")
+    const [newTaskSubjectId, setNewTaskSubjectId] = React.useState<string | undefined>(undefined)
 
     const currentSubjects = subjects.filter(s => s.semesterId === currentSemester?.id)
 
@@ -242,7 +244,8 @@ export default function TodosPage() {
             priority: newTaskPriority,
             dueDate: newTaskDate ? format(newTaskDate, 'yyyy-MM-dd') : undefined,
             dueTime: newTaskTime || undefined,
-            tagIds: newTaskTags
+            tagIds: newTaskTags,
+            subjectId: newTaskSubjectId
         })
 
         // Reset form
@@ -252,6 +255,7 @@ export default function TodosPage() {
         setNewTaskTime("")
         setNewTaskPriority(4)
         setNewTaskTags([])
+        setNewTaskSubjectId(undefined)
         setShowAddDialog(false)
     }
 
@@ -387,6 +391,17 @@ export default function TodosPage() {
                                     {formatDueDate(todo.dueDate, todo.dueTime)}
                                 </div>
                             )}
+
+                            {/* Subject Badge */}
+                            {todo.subjectId && (() => {
+                                const subj = subjects.find(s => s.id === todo.subjectId)
+                                return subj ? (
+                                    <Badge variant="secondary" className="text-[10px] h-5 gap-1">
+                                        <IconBook className="w-3 h-3" />
+                                        {subj.name}
+                                    </Badge>
+                                ) : null
+                            })()}
 
                             {todo.tags?.map(tag => (
                                 <Badge
@@ -688,6 +703,34 @@ export default function TodosPage() {
                                                     >
                                                         <IconFlag className={cn("w-4 h-4 mr-2", PRIORITY_FLAGS[p])} />
                                                         Priority {p}
+                                                    </DropdownMenuItem>
+                                                ))}
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+
+                                        {/* Subject */}
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="outline" className="gap-2">
+                                                    <IconBook className="w-4 h-4" />
+                                                    {newTaskSubjectId
+                                                        ? currentSubjects.find(s => s.id === newTaskSubjectId)?.name || "Subject"
+                                                        : "Subject"}
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent className="w-[240px] max-h-[300px] overflow-y-auto">
+                                                <DropdownMenuItem onClick={() => setNewTaskSubjectId(undefined)}>
+                                                    <IconX className="w-4 h-4 mr-2 opacity-50" />
+                                                    No Subject
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                                {currentSubjects.map(subject => (
+                                                    <DropdownMenuItem
+                                                        key={subject.id}
+                                                        onClick={() => setNewTaskSubjectId(subject.id)}
+                                                    >
+                                                        <IconBook className="w-4 h-4 mr-2" />
+                                                        <span className="truncate">{subject.name}</span>
                                                     </DropdownMenuItem>
                                                 ))}
                                             </DropdownMenuContent>

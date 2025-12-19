@@ -27,7 +27,9 @@ import {
     IconAlertTriangle,
     IconCheck,
     IconPlus,
-    IconMapPin
+    IconMapPin,
+    IconTrash,
+    IconEdit
 } from "@tabler/icons-react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -41,7 +43,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner"
 
 export default function SchedulePage() {
-    const { schedule, assignments, exams, todos, subjects, toggleTodo, addScheduleEvent, addExam, refreshData } = useStore()
+    const { schedule, assignments, exams, todos, subjects, toggleTodo, addScheduleEvent, updateScheduleEvent, addExam, refreshData, deleteScheduleEvent } = useStore()
     const [currentMonth, setCurrentMonth] = React.useState(new Date())
     const [selectedDate, setSelectedDate] = React.useState(new Date())
 
@@ -53,6 +55,7 @@ export default function SchedulePage() {
     const [newEventEndTime, setNewEventEndTime] = React.useState("10:00")
     const [newEventLocation, setNewEventLocation] = React.useState("")
     const [newExamSubjectId, setNewExamSubjectId] = React.useState("")
+    const [editingEvent, setEditingEvent] = React.useState<any>(null)
 
     // --- Calendar Logic ---
     const monthStart = startOfMonth(currentMonth)
@@ -77,31 +80,49 @@ export default function SchedulePage() {
         const dateStr = format(selectedDate, "yyyy-MM-dd")
 
         if (newEventType === "Exam") {
-            // Add as exam
+            // Add as exam (Exams are not editable in this quick view yet)
             addExam({
                 title: newEventTitle,
                 subjectId: newExamSubjectId || undefined,
                 date: dateStr,
                 time: newEventTime,
-                syllabus: newEventLocation // Use location for notes
+                syllabus: newEventLocation
             })
             toast.success("Exam scheduled")
         } else {
-            addScheduleEvent({
-                title: newEventTitle,
-                type: newEventType,
-                day: dateStr,
-                startTime: newEventTime,
-                endTime: newEventEndTime,
-                location: newEventLocation
-            })
-            toast.success("Event added to schedule")
+            if (editingEvent) {
+                updateScheduleEvent({
+                    ...editingEvent,
+                    title: newEventTitle,
+                    type: newEventType,
+                    day: dateStr,
+                    startTime: newEventTime,
+                    endTime: newEventEndTime,
+                    location: newEventLocation
+                })
+                toast.success("Event updated")
+            } else {
+                addScheduleEvent({
+                    title: newEventTitle,
+                    type: newEventType,
+                    day: dateStr,
+                    startTime: newEventTime,
+                    endTime: newEventEndTime,
+                    location: newEventLocation
+                })
+                toast.success("Event added to schedule")
+            }
         }
 
         setIsAddOpen(false)
+        setEditingEvent(null)
         setNewEventTitle("")
         setNewEventLocation("")
         setNewExamSubjectId("")
+        // Reset times
+        setNewEventTime("09:00")
+        setNewEventEndTime("10:00")
+        setNewEventType("Personal")
     }
 
     // --- Data Aggregation Helper ---
@@ -162,14 +183,14 @@ export default function SchedulePage() {
 
     return (
         <Shell>
-            <div className="max-w-[1400px] mx-auto h-auto md:h-[calc(100vh-6rem)] flex flex-col md:flex-row gap-6 p-2">
+            <div className="max-w-[1600px] mx-auto h-auto lg:h-[calc(100vh-6rem)] flex flex-col lg:flex-row gap-6 p-2">
 
                 {/* BIG CALENDAR AREA */}
-                <div className="flex-1 flex flex-col gap-4">
+                <div className="flex-1 flex flex-col gap-4 min-h-[500px]">
                     {/* Header */}
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         <div className="flex items-center gap-4">
-                            <h2 className="text-3xl font-bold tracking-tight">{format(currentMonth, "MMMM yyyy")}</h2>
+                            <h2 className="text-2xl md:text-3xl font-bold tracking-tight">{format(currentMonth, "MMMM yyyy")}</h2>
                             <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-0.5">
                                 <Button variant="ghost" size="icon" className="h-7 w-7" onClick={prevMonth}>
                                     <IconChevronLeft className="w-4 h-4" />
@@ -179,15 +200,17 @@ export default function SchedulePage() {
                                 </Button>
                             </div>
                         </div>
-                        <Button variant="outline" onClick={jumpToToday}>Today</Button>
-                        <CalendarImporter onImportComplete={refreshData} />
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                            <Button variant="outline" size="sm" onClick={jumpToToday}>Today</Button>
+                            <CalendarImporter onImportComplete={refreshData} />
+                        </div>
                     </div>
 
                     {/* Calendar Grid */}
-                    <Card className="flex-1 flex flex-col shadow-sm border-muted min-h-[500px] md:min-h-0 overflow-hidden">
+                    <Card className="flex-1 flex flex-col shadow-sm border-muted min-h-[400px] lg:min-h-0 overflow-hidden">
                         <div className="grid grid-cols-7 border-b bg-muted/40 text-center py-2">
                             {weeks.map(day => (
-                                <div key={day} className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                <div key={day} className="text-[10px] md:text-xs font-medium text-muted-foreground uppercase tracking-wider">
                                     {day}
                                 </div>
                             ))}
@@ -205,33 +228,36 @@ export default function SchedulePage() {
                                         key={date.toString()}
                                         onClick={() => setSelectedDate(date)}
                                         className={cn(
-                                            "relative bg-card p-2 flex flex-col gap-1 transition-colors hover:bg-muted/50 cursor-pointer min-h-[100px]",
+                                            "relative bg-card p-1 md:p-2 flex flex-col gap-1 transition-colors hover:bg-muted/50 cursor-pointer min-h-[60px] md:min-h-[100px]",
                                             !isCurrentMonth && "bg-muted/10 text-muted-foreground/50",
                                             isSelected && "ring-2 ring-primary ring-inset z-10"
                                         )}
                                     >
                                         <div className="flex justify-between items-start">
                                             <span className={cn(
-                                                "text-sm font-medium w-7 h-7 flex items-center justify-center rounded-full",
+                                                "text-xs md:text-sm font-medium w-6 h-6 md:w-7 md:h-7 flex items-center justify-center rounded-full",
                                                 isToday && "bg-primary text-primary-foreground"
                                             )}>
                                                 {format(date, "d")}
                                             </span>
-                                            {dayEvents.length > 0 && <span className="text-[10px] text-muted-foreground font-mono">{dayEvents.length} items</span>}
+                                            {dayEvents.length > 0 && <span className="hidden md:inline text-[10px] text-muted-foreground font-mono">{dayEvents.length}</span>}
+                                            {dayEvents.length > 0 && <div className="md:hidden w-1.5 h-1.5 rounded-full bg-primary" />}
                                         </div>
 
                                         <div className="flex-1 flex flex-col justify-end gap-1 overflow-hidden">
-                                            {dayEvents.slice(0, 3).map((ev, idx) => (
-                                                <div key={idx} className="flex items-center gap-1.5 px-1.5 py-0.5 rounded-sm bg-muted/50 border border-transparent hover:border-border transition-colors truncate">
-                                                    <div className={cn("w-1.5 h-1.5 rounded-full shrink-0", ev.color)} />
-                                                    <span className="text-[10px] truncate font-medium leading-tight">{ev.title}</span>
-                                                </div>
-                                            ))}
-                                            {dayEvents.length > 3 && (
-                                                <div className="text-[10px] text-muted-foreground pl-1">
-                                                    + {dayEvents.length - 3} more
-                                                </div>
-                                            )}
+                                            <div className="hidden md:block space-y-1">
+                                                {dayEvents.slice(0, 3).map((ev, idx) => (
+                                                    <div key={idx} className="flex items-center gap-1.5 px-1.5 py-0.5 rounded-sm bg-muted/50 border border-transparent hover:border-border transition-colors truncate">
+                                                        <div className={cn("w-1.5 h-1.5 rounded-full shrink-0", ev.color)} />
+                                                        <span className="text-[10px] truncate font-medium leading-tight">{ev.title}</span>
+                                                    </div>
+                                                ))}
+                                                {dayEvents.length > 3 && (
+                                                    <div className="text-[10px] text-muted-foreground pl-1">
+                                                        + {dayEvents.length - 3} more
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 )
@@ -241,7 +267,7 @@ export default function SchedulePage() {
                 </div>
 
                 {/* RIGHT: Selected Day Agenda */}
-                <Card className="w-full md:w-[350px] flex flex-col shadow-lg border-l-4 border-l-primary/20 h-auto md:h-full">
+                <Card className="w-full lg:w-[400px] flex flex-col shadow-lg border-l-0 lg:border-l-4 border-t-4 lg:border-t-0 border-primary/20 h-[600px] lg:h-full">
                     <CardHeader className="py-4 border-b bg-muted/10">
                         <div className="flex justify-between items-center">
                             <div>
@@ -257,7 +283,7 @@ export default function SchedulePage() {
                                 </DialogTrigger>
                                 <DialogContent>
                                     <DialogHeader>
-                                        <DialogTitle>Add to Schedule ({format(selectedDate, "MMM d")})</DialogTitle>
+                                        <DialogTitle>{editingEvent ? "Edit Event" : `Add to Schedule (${format(selectedDate, "MMM d")})`}</DialogTitle>
                                     </DialogHeader>
                                     <div className="grid gap-4 py-4">
                                         <div className="grid gap-2">
@@ -335,8 +361,8 @@ export default function SchedulePage() {
                                         )}
                                     </div>
                                     <DialogFooter>
-                                        <Button variant="outline" onClick={() => setIsAddOpen(false)}>Cancel</Button>
-                                        <Button onClick={handleAddEvent}>Add Event</Button>
+                                        <Button variant="outline" onClick={() => { setIsAddOpen(false); setEditingEvent(null); }}>Cancel</Button>
+                                        <Button onClick={handleAddEvent}>{editingEvent ? "Update Event" : "Add Event"}</Button>
                                     </DialogFooter>
                                 </DialogContent>
                             </Dialog>
@@ -376,13 +402,47 @@ export default function SchedulePage() {
                                                                 <Badge variant="secondary" className="text-[10px] h-4 px-1">{item.time || "All Day"}</Badge>
                                                                 <span className="text-xs text-muted-foreground font-medium uppercase tracking-tight">{item.type}</span>
                                                             </div>
-                                                            {item.type === "Todo" && (
-                                                                <Checkbox
-                                                                    checked={isCompleted}
-                                                                    className="w-4 h-4 rounded-full"
-                                                                    onCheckedChange={(c) => toggleTodo(item.id.toString(), !!c)}
-                                                                />
-                                                            )}
+                                                            <div className="flex items-center gap-1">
+                                                                {item.type === "Todo" && (
+                                                                    <Checkbox
+                                                                        checked={isCompleted}
+                                                                        className="w-4 h-4 rounded-full"
+                                                                        onCheckedChange={(c) => toggleTodo(item.id.toString(), !!c)}
+                                                                    />
+                                                                )}
+                                                                {item.type === "Class" && (
+                                                                    <>
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="icon"
+                                                                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation()
+                                                                                setEditingEvent(item)
+                                                                                setNewEventTitle(item.title)
+                                                                                setNewEventType(item.type)
+                                                                                setNewEventTime(item.startTime || "09:00")
+                                                                                setNewEventEndTime(item.endTime || "10:00")
+                                                                                setNewEventLocation(item.location || "")
+                                                                                setIsAddOpen(true)
+                                                                            }}
+                                                                        >
+                                                                            <IconEdit className="w-3 h-3" />
+                                                                        </Button>
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="icon"
+                                                                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation()
+                                                                                deleteScheduleEvent(item.id)
+                                                                            }}
+                                                                        >
+                                                                            <IconTrash className="w-3 h-3" />
+                                                                        </Button>
+                                                                    </>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                         <h4 className={cn("font-semibold text-sm truncate", isCompleted && "line-through")}>{item.title || item.text}</h4>
                                                         {item.location && <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1"><IconMapPin className="w-3 h-3" /> {item.location}</p>}

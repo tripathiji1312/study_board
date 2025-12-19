@@ -426,7 +426,7 @@ export function SmartScheduleWidget() {
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center justify-between gap-2">
                                         <span className={cn(
-                                            "font-medium truncate text-sm",
+                                            "font-medium text-sm line-clamp-2 break-words leading-tight",
                                             isCompleted && "line-through text-muted-foreground"
                                         )}>
                                             {item.title}

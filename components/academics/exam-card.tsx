@@ -1,6 +1,6 @@
 "use client"
 
-import { IconCalendar, IconClock, IconBook, IconTrash, IconAlertTriangle } from "@tabler/icons-react"
+import { IconCalendar, IconClock, IconBook, IconTrash, IconAlertTriangle, IconSparkles } from "@tabler/icons-react"
 import { format, differenceInDays, parseISO } from "date-fns"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
 import { Exam, useStore } from "@/components/providers/store-provider"
+import { StudyPlannerWizard } from "./study-planner-wizard"
+import React from "react"
 
 interface ExamCardProps {
     exam: Exam
@@ -15,7 +17,12 @@ interface ExamCardProps {
 
 export function ExamCard({ exam }: ExamCardProps) {
     const { subjects, deleteExam } = useStore()
+    const [showPlanner, setShowPlanner] = React.useState(false)
     const subject = subjects.find(s => s.id === exam.subjectId)
+
+    // DEBUG: Check why button is missing
+    console.log(`Exam: ${exam.title}, ID: ${exam.id}, SubjectID: ${exam.subjectId}`)
+    console.log(`Found Subject:`, subject)
 
     const daysLeft = differenceInDays(parseISO(exam.date), new Date())
     const isUrgent = daysLeft <= 3 && daysLeft >= 0
@@ -30,7 +37,7 @@ export function ExamCard({ exam }: ExamCardProps) {
     }
 
     return (
-        <Card className={cn("group transition-all hover:shadow-md", isUrgent && "border-orange-200 shadow-orange-100")}>
+        <Card className={cn("group transition-all hover:shadow-md h-full flex flex-col", isUrgent && "border-orange-200 shadow-orange-100")}>
             <CardHeader className="pb-3 flex flex-row items-start justify-between space-y-0">
                 <div>
                     <Badge variant="outline" className={cn("mb-2", getUrgencyColor())}>
@@ -90,7 +97,18 @@ export function ExamCard({ exam }: ExamCardProps) {
                     )}
                 </div>
             </CardContent>
-            <CardFooter className="pt-0 flex justify-end">
+            <CardFooter className="pt-0 flex justify-between mt-auto">
+                {subject && !isPast && (
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 gap-2 text-indigo-600 border-indigo-200 hover:bg-indigo-50"
+                        onClick={() => setShowPlanner(true)}
+                    >
+                        <IconSparkles className="w-3.5 h-3.5" />
+                        Generate Plan
+                    </Button>
+                )}
                 <Button
                     variant="ghost"
                     size="sm"
@@ -101,6 +119,15 @@ export function ExamCard({ exam }: ExamCardProps) {
                     Remove
                 </Button>
             </CardFooter>
+
+            {subject && !isPast && (
+                <StudyPlannerWizard
+                    open={showPlanner}
+                    onOpenChange={setShowPlanner}
+                    defaultSubjectId={subject.id}
+                    defaultExamId={String(exam.id)}
+                />
+            )}
         </Card>
     )
 }

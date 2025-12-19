@@ -33,3 +33,22 @@ export async function DELETE(request: Request) {
     })
     return NextResponse.json({ success: true })
 }
+
+export async function PUT(request: Request) {
+    const body = await request.json()
+    if (!body.id) return NextResponse.json({ error: 'ID required' }, { status: 400 })
+
+    const event = await prisma.scheduleEvent.update({
+        where: { id: body.id },
+        data: {
+            title: body.title,
+            type: body.type,
+            time: body.time,
+            duration: body.duration,
+            location: body.location,
+            day: body.day,
+            subjectId: body.subjectId
+        }
+    })
+    return NextResponse.json(event)
+}
