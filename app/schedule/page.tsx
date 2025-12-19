@@ -4,6 +4,7 @@ import * as React from "react"
 import { Shell } from "@/components/ui/shell"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useStore, ScheduleEvent } from "@/components/providers/store-provider"
+import { CalendarImporter } from "@/components/calendar-importer"
 import {
     format,
     startOfMonth,
@@ -40,17 +41,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner"
 
 export default function SchedulePage() {
-    const { schedule, assignments, exams, todos, toggleTodo, addScheduleEvent } = useStore()
+    const { schedule, assignments, exams, todos, subjects, toggleTodo, addScheduleEvent, addExam, refreshData } = useStore()
     const [currentMonth, setCurrentMonth] = React.useState(new Date())
     const [selectedDate, setSelectedDate] = React.useState(new Date())
 
     // Dialog State
     const [isAddOpen, setIsAddOpen] = React.useState(false)
     const [newEventTitle, setNewEventTitle] = React.useState("")
-    const [newEventType, setNewEventType] = React.useState<"Lecture" | "Lab" | "Study" | "Personal">("Personal")
+    const [newEventType, setNewEventType] = React.useState<"Lecture" | "Lab" | "Study" | "Personal" | "Exam">("Personal")
     const [newEventTime, setNewEventTime] = React.useState("09:00")
     const [newEventEndTime, setNewEventEndTime] = React.useState("10:00")
     const [newEventLocation, setNewEventLocation] = React.useState("")
+    const [newExamSubjectId, setNewExamSubjectId] = React.useState("")
 
     // --- Calendar Logic ---
     const monthStart = startOfMonth(currentMonth)
@@ -72,23 +74,34 @@ export default function SchedulePage() {
     const handleAddEvent = () => {
         if (!newEventTitle) return
 
-        // Schedule events mostly use 'day' as "Monday" for recurring, or YYYY-MM-DD for one-off.
-        // For this visual calendar, we will save as YYYY-MM-DD to be specific to this date.
         const dateStr = format(selectedDate, "yyyy-MM-dd")
 
-        addScheduleEvent({
-            title: newEventTitle,
-            type: newEventType,
-            day: dateStr,
-            startTime: newEventTime,
-            endTime: newEventEndTime,
-            location: newEventLocation
-        })
+        if (newEventType === "Exam") {
+            // Add as exam
+            addExam({
+                title: newEventTitle,
+                subjectId: newExamSubjectId || undefined,
+                date: dateStr,
+                time: newEventTime,
+                syllabus: newEventLocation // Use location for notes
+            })
+            toast.success("Exam scheduled")
+        } else {
+            addScheduleEvent({
+                title: newEventTitle,
+                type: newEventType,
+                day: dateStr,
+                startTime: newEventTime,
+                endTime: newEventEndTime,
+                location: newEventLocation
+            })
+            toast.success("Event added to schedule")
+        }
 
         setIsAddOpen(false)
         setNewEventTitle("")
         setNewEventLocation("")
-        toast.success("Event added to schedule")
+        setNewExamSubjectId("")
     }
 
     // --- Data Aggregation Helper ---
@@ -167,6 +180,7 @@ export default function SchedulePage() {
                             </div>
                         </div>
                         <Button variant="outline" onClick={jumpToToday}>Today</Button>
+                        <CalendarImporter onImportComplete={refreshData} />
                     </div>
 
                     {/* Calendar Grid */}
@@ -266,40 +280,59 @@ export default function SchedulePage() {
                                                         <SelectItem value="Study">Study Block</SelectItem>
                                                         <SelectItem value="Lecture">Lecture</SelectItem>
                                                         <SelectItem value="Lab">Lab</SelectItem>
+                                                        <SelectItem value="Exam">📝 Exam</SelectItem>
                                                     </SelectContent>
                                                 </Select>
                                             </div>
                                             <div className="grid gap-2">
-                                                <Label>Location</Label>
+                                                <Label>{newEventType === "Exam" ? "Notes" : "Location"}</Label>
                                                 <Input
-                                                    placeholder="Room / Online"
+                                                    placeholder={newEventType === "Exam" ? "Modules 1-3..." : "Room / Online"}
                                                     value={newEventLocation}
                                                     onChange={(e) => setNewEventLocation(e.target.value)}
                                                 />
                                             </div>
                                         </div>
+                                        {newEventType === "Exam" && (
+                                            <div className="grid gap-2">
+                                                <Label>Subject (Optional)</Label>
+                                                <Select value={newExamSubjectId} onValueChange={setNewExamSubjectId}>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select subject..." />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {subjects.map(s => (
+                                                            <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                        )}
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="grid gap-2">
-                                                <Label>Start Time</Label>
+                                                <Label>{newEventType === "Exam" ? "Time" : "Start Time"}</Label>
                                                 <Input
                                                     type="time"
                                                     value={newEventTime}
                                                     onChange={(e) => setNewEventTime(e.target.value)}
                                                 />
                                             </div>
-                                            <div className="grid gap-2">
-                                                <Label>End Time</Label>
-                                                <Input
-                                                    type="time"
-                                                    value={newEventEndTime}
-                                                    onChange={(e) => setNewEventEndTime(e.target.value)}
-                                                />
+                                            {newEventType !== "Exam" && (
+                                                <div className="grid gap-2">
+                                                    <Label>End Time</Label>
+                                                    <Input
+                                                        type="time"
+                                                        value={newEventEndTime}
+                                                        onChange={(e) => setNewEventEndTime(e.target.value)}
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+                                        {newEventType !== "Exam" && (
+                                            <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
+                                                <p>This will add a <b>Schedule Event</b> for this specific date.</p>
                                             </div>
-                                        </div>
-                                        <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
-                                            <p>This will add a <b>Schedule Event</b> for this specific date.</p>
-                                            <p className="mt-1">For <b>Assignments</b>/<b>Exams</b>, please use their respective pages.</p>
-                                        </div>
+                                        )}
                                     </div>
                                     <DialogFooter>
                                         <Button variant="outline" onClick={() => setIsAddOpen(false)}>Cancel</Button>

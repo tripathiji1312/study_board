@@ -37,10 +37,10 @@ export function ExamCard({ exam }: ExamCardProps) {
                         {isPast ? "Completed" : isToday ? "Today!" : `${daysLeft} days left`}
                     </Badge>
                     <CardTitle className="text-lg font-bold leading-tight">
-                        {subject?.name || "Unknown Subject"}
+                        {exam.title || subject?.name || "Untitled Exam"}
                     </CardTitle>
                     <p className="text-sm text-muted-foreground font-medium mt-1">
-                        {exam.type} Exam
+                        {subject ? `${subject.name} - ${exam.type || 'Exam'}` : (exam.type || 'Exam')}
                     </p>
                 </div>
                 <div className="flex flex-col items-end text-sm text-muted-foreground">
