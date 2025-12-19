@@ -18,14 +18,11 @@ import {
 import { IconSchool, IconUser, IconPencil, IconTrophy, IconTarget, IconBook, IconTrash, IconCalendarEvent } from "@tabler/icons-react"
 import { useStore } from "@/components/providers/store-provider"
 import { motion } from "framer-motion"
-import { SyllabusTracker } from "@/components/academics/syllabus-tracker"
-import { SyllabusImporter } from "@/components/academics/syllabus-importer"
 import { AcademicHeatmap } from "@/components/academics/heatmap"
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import Link from "next/link"
 
 export default function AcademicsPage() {
-    const { subjects, currentSemester, updateSubject, deleteSubject } = useStore()
+    const { subjects, currentSemester, updateSubject, deleteSubject, refreshData } = useStore()
     const [selectedSubject, setSelectedSubject] = React.useState<typeof subjects[0] | null>(null)
     const [isMarksDialogOpen, setIsMarksDialogOpen] = React.useState(false)
 
@@ -215,23 +212,12 @@ export default function AcademicsPage() {
 
                                         {/* Actions Footer */}
                                         <div className="p-4 pt-0 flex justify-between gap-2 mt-auto">
-                                            <Sheet>
-                                                <SheetTrigger asChild>
-                                                    <Button variant="outline" size="sm" className="w-full" onClick={(e) => e.stopPropagation()}>
-                                                        <IconBook className="w-4 h-4 mr-2" />
-                                                        Syllabus
-                                                    </Button>
-                                                </SheetTrigger>
-                                                <SheetContent className="w-full sm:max-w-2xl" onClick={(e) => e.stopPropagation()}>
-                                                    <SheetHeader className="mb-4">
-                                                        <div className="flex items-center justify-between">
-                                                            <SheetTitle className="text-2xl">{sub.name} Syllabus</SheetTitle>
-                                                            <SyllabusImporter subjectId={sub.id} />
-                                                        </div>
-                                                    </SheetHeader>
-                                                    <SyllabusTracker subjectId={sub.id} />
-                                                </SheetContent>
-                                            </Sheet>
+                                            <Button variant="outline" size="sm" className="w-full" asChild onClick={(e) => e.stopPropagation()}>
+                                                <Link href={`/academics/syllabus/${sub.id}`}>
+                                                    <IconBook className="w-4 h-4 mr-2" />
+                                                    Syllabus
+                                                </Link>
+                                            </Button>
 
                                             <Button
                                                 variant="ghost"

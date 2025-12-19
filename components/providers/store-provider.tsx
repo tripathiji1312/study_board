@@ -261,6 +261,8 @@ interface StoreContextType {
 
     addSnippet: (snippet: Omit<Snippet, "id">) => void
     deleteSnippet: (id: string) => void
+
+    refreshData: () => Promise<void>
 }
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined)
@@ -825,7 +827,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             updateIdea,
             deleteIdea,
             addSnippet,
-            deleteSnippet
+            deleteSnippet,
+            refreshData: fetchData
         }}>
             {children}
         </StoreContext.Provider>

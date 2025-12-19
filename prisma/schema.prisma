@@ -53,6 +53,23 @@ model Subject {
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  
+  modules     SyllabusModule[]
+}
+
+// ========== SYLLABUS MODULE (New) ==========
+model SyllabusModule {
+  id        String   @id @default(uuid())
+  title     String
+  topics    String[] // Array of topics
+  status    String   @default("Pending") // "Pending", "InProgress", "Completed"
+  order     Int      @default(0)
+  
+  subjectId String
+  subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ========== ASSIGNMENT ==========

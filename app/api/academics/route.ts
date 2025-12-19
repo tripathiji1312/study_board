@@ -9,7 +9,12 @@ export async function GET(request: Request) {
 
     const subjects = await prisma.subject.findMany({
         where,
-        include: { semester: true },
+        include: {
+            semester: true,
+            modules: {
+                orderBy: { order: 'asc' }
+            }
+        },
         orderBy: { createdAt: 'desc' }
     })
     return NextResponse.json(subjects)
