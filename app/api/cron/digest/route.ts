@@ -148,15 +148,22 @@ export async function GET(req: Request) {
                     subjectLine = `Afternoon check: ${dueToday.length} still due today`
                 }
             } else if (emailType === 'evening') {
-                // Evening: remind about today's items and tomorrow prep
-                shouldSend = overdue.length > 0 || dueTodayUrgent.length > 0 || dueToday.length > 0 || (dueTomorrow.length > 0 && emailType === 'evening')
-                if (overdue.length > 0 || dueTodayUrgent.length > 0 || dueToday.length > 0) {
-                    const todayTotal = dueTodayUrgent.length + dueToday.length
-                    urgencyEmoji = '🌆'
-                    subjectLine = `Evening wrap-up: ${todayTotal > 0 ? todayTotal + ' still due today!' : ''} ${overdue.length > 0 ? overdue.length + ' overdue' : ''}`
+                // Evening: URGENT check for items due tonight + prep for tomorrow
+                const dueTonight = dueTodayUrgent.length + dueToday.length
+                shouldSend = overdue.length > 0 || dueTonight > 0 || dueTomorrow.length > 0
+
+                if (overdue.length > 0 && dueTonight > 0) {
+                    urgencyEmoji = '🚨'
+                    subjectLine = `CRITICAL: ${overdue.length} overdue + ${dueTonight} due TONIGHT!`
+                } else if (dueTonight > 0) {
+                    urgencyEmoji = '⏰'
+                    subjectLine = `${dueTonight} task(s) due TONIGHT - finish them now!`
+                } else if (overdue.length > 0) {
+                    urgencyEmoji = '🔴'
+                    subjectLine = `${overdue.length} overdue item(s) need attention!`
                 } else if (dueTomorrow.length > 0) {
                     urgencyEmoji = '📋'
-                    subjectLine = `Prep for tomorrow: ${dueTomorrow.length} item(s) due`
+                    subjectLine = `Heads up: ${dueTomorrow.length} item(s) due tomorrow`
                 }
             } else if (emailType === 'night') {
                 // Night: only critical/overdue
