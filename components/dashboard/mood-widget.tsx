@@ -179,17 +179,17 @@ export function MoodWidget() {
                                             <div className="flex items-start gap-3">
                                                 <button
                                                     onClick={() => toggleTodo(todo.id, !todo.completed)}
-                                                    className="mt-0.5 text-muted-foreground hover:text-primary transition-colors"
+                                                    className="mt-0.5 shrink-0 text-muted-foreground hover:text-primary transition-colors"
                                                 >
                                                     {todo.completed ? <IconCircleCheck className="w-5 h-5 text-green-500" /> : <IconCircle className="w-5 h-5" />}
                                                 </button>
-                                                <div className="flex-1">
-                                                    <div className={cn("font-medium text-sm", todo.completed && "line-through opacity-50")}>
+                                                <div className="flex-1 min-w-0 overflow-hidden">
+                                                    <div className={cn("font-medium text-sm line-clamp-2 break-words", todo.completed && "line-through opacity-50")}>
                                                         {todo.text}
                                                     </div>
-                                                    <div className="text-xs text-primary/80 mt-1 flex items-center gap-1">
-                                                        <IconSparkles className="w-3 h-3" />
-                                                        {rec.reason}
+                                                    <div className="text-xs text-primary/80 mt-1 flex items-start gap-1">
+                                                        <IconSparkles className="w-3 h-3 shrink-0 mt-0.5" />
+                                                        <span className="line-clamp-2 break-words">{rec.reason}</span>
                                                     </div>
                                                     <div className="flex gap-2 mt-2 flex-wrap">
                                                         <Button

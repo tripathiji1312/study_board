@@ -161,23 +161,23 @@ export default function FocusPage() {
             </div>
 
             {/* Top Bar - Refined Subject Selector */}
-            <div className="flex items-center justify-between p-8 z-20">
-                <div className="flex items-center gap-6">
+            <div className="flex flex-wrap items-center justify-between gap-4 p-4 md:p-8 z-20">
+                <div className="flex items-center gap-3 md:gap-6 flex-wrap">
                     <Button variant="ghost" size="sm" asChild className="text-muted-foreground/60 hover:text-white hover:bg-white/5 transition-all text-xs tracking-widest uppercase">
-                        <a href="/"><IconArrowLeft className="w-3 h-3 mr-2" /> Dashboard</a>
+                        <a href="/"><IconArrowLeft className="w-3 h-3 mr-2" />Dashboard</a>
                     </Button>
-                    <div className="h-4 w-[1px] bg-white/5" />
-                    <div className="h-4 w-[1px] bg-white/5" />
+                    <div className="hidden md:block h-4 w-[1px] bg-white/5" />
+                    <div className="hidden md:block h-4 w-[1px] bg-white/5" />
                     <ThemeSelector currentTheme={theme} onThemeChange={handleThemeChange} />
 
                     {/* History Sheet */}
                     <Sheet>
                         <SheetTrigger asChild>
                             <Button variant="ghost" size="sm" className="text-muted-foreground/60 hover:text-white hover:bg-white/5 transition-all text-xs tracking-widest uppercase">
-                                <IconChartBar className="w-3 h-3 mr-2" /> History
+                                <IconChartBar className="w-3 h-3 mr-2" />History
                             </Button>
                         </SheetTrigger>
-                        <SheetContent className="w-[400px] sm:w-[540px] border-l border-white/10 bg-black/90 backdrop-blur-xl text-white">
+                        <SheetContent className="w-[300px] sm:w-[400px] md:w-[540px] border-l border-white/10 bg-black/90 backdrop-blur-xl text-white">
                             <SheetHeader>
                                 <SheetTitle className="text-white uppercase tracking-widest font-light text-sm">Session History</SheetTitle>
                             </SheetHeader>
@@ -191,7 +191,7 @@ export default function FocusPage() {
                     <div className="relative group z-30">
                         <select
                             className={cn(
-                                "bg-transparent border border-transparent hover:border-white/10 rounded-full text-[10px] tracking-widest uppercase px-4 py-2 outline-none focus:border-white/20 transition-all appearance-none cursor-pointer pr-8",
+                                "bg-transparent border border-transparent hover:border-white/10 rounded-full text-[10px] tracking-widest uppercase px-3 md:px-4 py-2 outline-none focus:border-white/20 transition-all appearance-none cursor-pointer pr-8",
                                 isActive ? "text-white/30 pointer-events-none" : "text-white/50 hover:text-white"
                             )}
                             value={selectedSubjectId}
@@ -208,7 +208,7 @@ export default function FocusPage() {
                     </div>
                 </div>
 
-                <div className="flex items-center gap-4 relative">
+                <div className="flex items-center gap-2 md:gap-4 relative">
                     {/* Blocker Toggle */}
                     <div className="relative">
                         <Button
@@ -250,7 +250,7 @@ export default function FocusPage() {
 
                         {/* Persistent Ambience Mixer (Always mounted, just hidden) */}
                         <div className={cn(
-                            "absolute top-full right-0 mt-4 w-80 bg-black/90 border border-white/10 backdrop-blur-xl text-white p-4 rounded-xl shadow-2xl z-50 transition-all duration-200 origin-top-right",
+                            "absolute top-full right-0 mt-4 w-72 md:w-80 bg-black/90 border border-white/10 backdrop-blur-xl text-white p-4 rounded-xl shadow-2xl z-50 transition-all duration-200 origin-top-right",
                             showAmbience ? "opacity-100 scale-100 visible" : "opacity-0 scale-95 invisible pointer-events-none"
                         )}>
                             <div className="flex items-center justify-between mb-4">
@@ -272,7 +272,33 @@ export default function FocusPage() {
             {/* Main Layout */}
             <div className="flex-1 flex flex-col md:flex-row items-stretch justify-center p-6 gap-8 z-10">
 
-                {/* Left: Task List */}
+                {/* Mobile: Quick Task Selection (visible on mobile only) */}
+                <div className="md:hidden w-full mb-4">
+                    <div className="bg-black/40 backdrop-blur-xl rounded-xl border border-white/10 p-4">
+                        <h4 className="text-xs font-medium tracking-widest uppercase opacity-50 mb-3">Today's Tasks</h4>
+                        <div className="space-y-2 max-h-[150px] overflow-y-auto">
+                            {todos.filter(t => t.dueDate === new Date().toISOString().split('T')[0] && !t.completed).slice(0, 5).map(todo => (
+                                <button
+                                    key={todo.id}
+                                    onClick={() => handleTaskSelect(todo.id, todo.text)}
+                                    className={cn(
+                                        "w-full text-left p-2 rounded-lg text-sm transition-all",
+                                        selectedTaskId === todo.id
+                                            ? "bg-white/10 text-white"
+                                            : "text-white/50 hover:bg-white/5 hover:text-white"
+                                    )}
+                                >
+                                    {todo.text}
+                                </button>
+                            ))}
+                            {todos.filter(t => t.dueDate === new Date().toISOString().split('T')[0] && !t.completed).length === 0 && (
+                                <p className="text-white/30 text-sm text-center py-2">No tasks for today</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Left: Task List (Desktop only) */}
                 <div className="hidden md:flex flex-col items-start w-[250px] lg:w-[300px] h-full justify-center pt-20">
                     <FocusTaskList
                         todos={todos.filter(t => t.dueDate === new Date().toISOString().split('T')[0])}
@@ -344,9 +370,29 @@ export default function FocusPage() {
                     </div>
                 </div>
 
-                {/* Right: Gamification (Vertical Path) */}
+                {/* Right: Gamification (Desktop only) */}
                 <div className="hidden md:flex flex-col items-end w-[250px] lg:w-[300px] h-full justify-center">
                     <GamificationWidget todayMinutes={todayMinutes} />
+                </div>
+
+                {/* Mobile: Bottom Stats Bar */}
+                <div className="md:hidden fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-xl border-t border-white/10 p-4 z-40">
+                    <div className="flex items-center justify-around">
+                        <div className="text-center">
+                            <p className="text-2xl font-light text-white">{todayMinutes}</p>
+                            <p className="text-[10px] uppercase tracking-wider text-white/50">Min Today</p>
+                        </div>
+                        <div className="w-px h-8 bg-white/10" />
+                        <div className="text-center">
+                            <p className="text-2xl font-light text-white">{Math.floor(totalMinutes / 60)}</p>
+                            <p className="text-[10px] uppercase tracking-wider text-white/50">Hours Total</p>
+                        </div>
+                        <div className="w-px h-8 bg-white/10" />
+                        <div className="text-center">
+                            <p className="text-2xl font-light text-white">{selectedSubjectId !== "none" ? subjects.find(s => s.id === selectedSubjectId)?.code || "—" : "—"}</p>
+                            <p className="text-[10px] uppercase tracking-wider text-white/50">Subject</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 

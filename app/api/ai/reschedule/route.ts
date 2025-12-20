@@ -3,8 +3,6 @@ import prisma from '@/lib/prisma'
 import { addDays, format, startOfToday } from 'date-fns'
 import Groq from 'groq-sdk'
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
-
 export async function POST(req: Request) {
     try {
         const { strategy } = await req.json()
@@ -99,6 +97,26 @@ Return ONLY a valid JSON array with format:
 No explanations, just the JSON array.`
 
             try {
+                // Fetch user's API key
+                const settings = await prisma.userSettings.findFirst()
+                const apiKey = settings?.groqApiKey || process.env.GROQ_API_KEY
+
+                if (!apiKey) {
+                    // Fallback to spread strategy
+                    const updates = overdueTasks.map((task, index) => {
+                        const daysToAdd = 1 + (index % 4)
+                        return prisma.todo.update({
+                            where: { id: task.id },
+                            data: { dueDate: format(addDays(today, daysToAdd), 'yyyy-MM-dd') }
+                        })
+                    })
+                    await prisma.$transaction(updates)
+                    updateCount = updates.length
+                    return NextResponse.json({ success: true, count: updateCount, strategy: 'spread (no API key)' })
+                }
+
+                const groq = new Groq({ apiKey })
+
                 const completion = await groq.chat.completions.create({
                     messages: [{ role: 'user', content: prompt }],
                     model: 'llama-3.3-70b-versatile',

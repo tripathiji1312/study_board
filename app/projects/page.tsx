@@ -174,7 +174,7 @@ export default function ProjectsPage() {
         <Shell>
             <div className="flex flex-col gap-6">
                 {/* Header */}
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight">Projects</h1>
                         <p className="text-muted-foreground">Track your development work</p>
@@ -185,7 +185,7 @@ export default function ProjectsPage() {
                 </div>
 
                 {/* Stats */}
-                <div className="flex gap-6 p-4 border rounded-lg bg-muted/30">
+                <div className="flex flex-wrap gap-4 md:gap-6 p-4 border rounded-lg bg-muted/30">
                     <div className="flex items-center gap-3">
                         <IconPackage className="w-5 h-5 text-muted-foreground" />
                         <div>
@@ -193,7 +193,7 @@ export default function ProjectsPage() {
                             <p className="text-xs text-muted-foreground">Total</p>
                         </div>
                     </div>
-                    <div className="h-12 w-px bg-border" />
+                    <div className="hidden sm:block h-12 w-px bg-border" />
                     <div className="flex items-center gap-3">
                         <IconFlame className="w-5 h-5 text-orange-500" />
                         <div>
@@ -201,7 +201,7 @@ export default function ProjectsPage() {
                             <p className="text-xs text-muted-foreground">Active</p>
                         </div>
                     </div>
-                    <div className="h-12 w-px bg-border" />
+                    <div className="hidden sm:block h-12 w-px bg-border" />
                     <div className="flex items-center gap-3">
                         <IconCheck className="w-5 h-5 text-green-500" />
                         <div>

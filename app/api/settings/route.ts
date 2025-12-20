@@ -33,6 +33,7 @@ export async function PUT(request: Request) {
                 breakDuration: body.breakDuration || 5,
                 emailNotifications: body.emailNotifications || false,
                 notificationEmail: body.notificationEmail,
+                groqApiKey: body.groqApiKey,
             }
         })
     } else {
@@ -47,6 +48,7 @@ export async function PUT(request: Request) {
                 breakDuration: body.breakDuration,
                 emailNotifications: body.emailNotifications,
                 notificationEmail: body.notificationEmail,
+                groqApiKey: body.groqApiKey,
             }
         })
     }

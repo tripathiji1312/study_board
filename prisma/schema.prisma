@@ -250,6 +250,7 @@ model UserSettings {
   breakDuration     Int     @default(5)
   emailNotifications Boolean @default(false)
   notificationEmail String?  // Pomodoro break minutes
+  groqApiKey     String? // User-provided GROQ API key for AI features
 }
 
 model Exam {

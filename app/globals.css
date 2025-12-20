@@ -175,3 +175,26 @@
 .overdue-text {
   @apply text-red-600 dark:text-red-400;
 }
+
+/* Global overflow safety utilities */
+.overflow-wrap-anywhere {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* Dialog/Modal overflow handling */
+.dialog-scroll {
+  @apply max-h-[85vh] overflow-y-auto;
+}
+
+/* Ensure all dialogs don't exceed screen width on mobile */
+@media (max-width: 640px) {
+  [role="dialog"] {
+    max-width: calc(100vw - 2rem) !important;
+    margin: 0 1rem;
+  }
+  
+  [role="dialog"] > * {
+    overflow-x: hidden;
+  }
+}

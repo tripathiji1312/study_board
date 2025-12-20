@@ -305,13 +305,13 @@ export function StudyPlannerWizard({ open, onOpenChange, defaultSubjectId }: Stu
                                                         )}>
                                                             {isSelected && <IconCircleCheck className="w-4 h-4 text-primary-foreground" />}
                                                         </div>
-                                                        <div className="flex-1 min-w-0">
+                                                        <div className="flex-1 min-w-0 overflow-hidden">
                                                             <div className="flex items-center gap-2 mb-1">
-                                                                <span className="text-xs font-mono text-muted-foreground">M{i + 1}</span>
-                                                                <h4 className="font-medium text-sm truncate">{module.title}</h4>
+                                                                <span className="text-xs font-mono text-muted-foreground shrink-0">M{i + 1}</span>
+                                                                <h4 className="font-medium text-sm line-clamp-2 break-words">{module.title}</h4>
                                                             </div>
                                                             {module.topics && (
-                                                                <p className="text-xs text-muted-foreground line-clamp-2">
+                                                                <p className="text-xs text-muted-foreground line-clamp-2 break-words">
                                                                     {module.topics.join(" • ")}
                                                                 </p>
                                                             )}
@@ -595,15 +595,15 @@ export function StudyPlannerWizard({ open, onOpenChange, defaultSubjectId }: Stu
                                                                                         <div key={k} className="group">
                                                                                             <div className="flex items-start gap-2 text-sm">
                                                                                                 <IconCircle className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground/50 group-hover:text-primary transition-colors" />
-                                                                                                <div className="flex-1">
+                                                                                                <div className="flex-1 min-w-0 overflow-hidden">
                                                                                                     <div className="flex items-start justify-between gap-2">
-                                                                                                        <span className="text-foreground font-medium">{taskTitle}</span>
+                                                                                                        <span className="text-foreground font-medium break-words">{taskTitle}</span>
                                                                                                         {taskMinutes && (
                                                                                                             <span className="text-[10px] text-muted-foreground shrink-0">{taskMinutes}min</span>
                                                                                                         )}
                                                                                                     </div>
                                                                                                     {taskReasoning && (
-                                                                                                        <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                                                                                                        <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed break-words">
                                                                                                             💡 {taskReasoning}
                                                                                                         </p>
                                                                                                     )}

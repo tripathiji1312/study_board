@@ -34,7 +34,10 @@ import {
     IconTrash,
     IconPencil,
     IconCheck,
-    IconClock
+    IconClock,
+    IconSparkles,
+    IconEye,
+    IconEyeOff
 } from "@tabler/icons-react"
 import { useStore } from "@/components/providers/store-provider"
 import { toast } from "sonner"
@@ -63,6 +66,8 @@ export default function SettingsPage() {
     const [breakDuration, setBreakDuration] = React.useState(5)
     const [emailNotifications, setEmailNotifications] = React.useState(false)
     const [notificationEmail, setNotificationEmail] = React.useState("")
+    const [groqApiKey, setGroqApiKey] = React.useState("")
+    const [showApiKey, setShowApiKey] = React.useState(false)
 
     // Semester Dialog
     const [semDialogOpen, setSemDialogOpen] = React.useState(false)
@@ -95,6 +100,7 @@ export default function SettingsPage() {
             setBreakDuration(settings.breakDuration || 5)
             setEmailNotifications(settings.emailNotifications || false)
             setNotificationEmail(settings.notificationEmail || "")
+            setGroqApiKey(settings.groqApiKey || "")
         }
     }, [settings])
 
@@ -106,7 +112,8 @@ export default function SettingsPage() {
             focusDuration,
             breakDuration,
             emailNotifications,
-            notificationEmail
+            notificationEmail,
+            groqApiKey
         })
     }
 
@@ -288,6 +295,43 @@ export default function SettingsPage() {
                                                 </div>
                                             </div>
                                         )}
+                                    </div>
+                                </div>
+
+                                {/* AI Settings */}
+                                <div className="border-t pt-6">
+                                    <h3 className="font-semibold mb-4 flex items-center gap-2">
+                                        <IconSparkles className="w-4 h-4" /> AI Settings
+                                    </h3>
+                                    <div className="space-y-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="apiKey">GROQ API Key</Label>
+                                            <div className="flex gap-2">
+                                                <div className="relative flex-1">
+                                                    <Input
+                                                        id="apiKey"
+                                                        type={showApiKey ? "text" : "password"}
+                                                        value={groqApiKey}
+                                                        onChange={e => setGroqApiKey(e.target.value)}
+                                                        placeholder="gsk_..."
+                                                        className="pr-10"
+                                                    />
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                                                        onClick={() => setShowApiKey(!showApiKey)}
+                                                    >
+                                                        {showApiKey ? <IconEyeOff className="w-4 h-4" /> : <IconEye className="w-4 h-4" />}
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                            <p className="text-xs text-muted-foreground">
+                                                Enter your GROQ API key for AI-powered features like smart recommendations.
+                                                Get one at <a href="https://console.groq.com" target="_blank" rel="noopener noreferrer" className="underline">console.groq.com</a>
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
 

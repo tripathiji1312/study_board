@@ -2,11 +2,21 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import Groq from 'groq-sdk'
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
-
 export async function POST(req: Request) {
     try {
         const { mood } = await req.json()
+
+        // Fetch user's API key from settings (fallback to env var)
+        const settings = await prisma.userSettings.findFirst()
+        const apiKey = settings?.groqApiKey || process.env.GROQ_API_KEY
+
+        if (!apiKey) {
+            return NextResponse.json({
+                error: "No API key configured. Add your GROQ API key in Settings."
+            }, { status: 400 })
+        }
+
+        const groq = new Groq({ apiKey })
 
         // Fetch pending tasks (limit to 20 to avoid token limits)
         const todos = await prisma.todo.findMany({

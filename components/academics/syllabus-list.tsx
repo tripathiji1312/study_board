@@ -119,7 +119,7 @@ export function SyllabusList({ subjectId, initialModules, onUpdate }: SyllabusLi
                                 </div>
 
                                 <div className="flex-1 min-w-0">
-                                    <h4 className="font-medium text-sm truncate pr-2" title={mod.title}>
+                                    <h4 className="font-medium text-sm line-clamp-2 break-words pr-2" title={mod.title}>
                                         {mod.title}
                                     </h4>
                                     <p className="text-xs text-muted-foreground mt-0.5">
@@ -159,7 +159,7 @@ export function SyllabusList({ subjectId, initialModules, onUpdate }: SyllabusLi
                                                 {mod.topics.map((topic, i) => (
                                                     <div key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
                                                         <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30 mt-1.5 shrink-0" />
-                                                        <span className="leading-relaxed">{topic}</span>
+                                                        <span className="leading-relaxed break-words">{topic}</span>
                                                     </div>
                                                 ))}
                                             </div>

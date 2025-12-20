@@ -398,24 +398,24 @@ export default function TodosPage() {
                         )}
                     />
 
-                    <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
+                    <div className="flex-1 min-w-0 overflow-hidden">
+                        <div className="flex items-start gap-2">
                             <label
                                 htmlFor={todo.id}
                                 className={cn(
-                                    "text-sm font-medium cursor-pointer",
+                                    "text-sm font-medium cursor-pointer break-words",
                                     todo.completed && "line-through text-muted-foreground"
                                 )}
                             >
                                 {todo.text}
                             </label>
                             {todo.priority < 4 && (
-                                <IconFlag className={cn("w-3.5 h-3.5", PRIORITY_FLAGS[todo.priority])} />
+                                <IconFlag className={cn("w-3.5 h-3.5 shrink-0", PRIORITY_FLAGS[todo.priority])} />
                             )}
                         </div>
 
                         {todo.description && (
-                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2 break-words">
                                 {todo.description}
                             </p>
                         )}
@@ -701,7 +701,7 @@ export default function TodosPage() {
                                         onChange={(e) => setNewTaskDescription(e.target.value)}
                                     />
 
-                                    <div className="flex gap-4">
+                                    <div className="flex flex-wrap gap-2">
                                         {/* Date Picker */}
                                         <Popover>
                                             <PopoverTrigger asChild>
@@ -876,7 +876,7 @@ export default function TodosPage() {
                                         onChange={(e) => setEditDescription(e.target.value)}
                                     />
 
-                                    <div className="flex gap-4">
+                                    <div className="flex flex-wrap gap-2">
                                         {/* Date Picker */}
                                         <Popover>
                                             <PopoverTrigger asChild>

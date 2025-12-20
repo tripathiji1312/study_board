@@ -93,49 +93,54 @@ export function AppSidebar({ className }: SidebarProps) {
     )
 
     const SidebarContent = () => (
-        <div className="flex h-full flex-col">
-            {/* Header */}
-            <div className="flex h-14 items-center justify-between border-b px-4">
+        <div className="flex h-full flex-col overflow-hidden">
+            {/* Header - Fixed */}
+            <div className="flex h-14 items-center justify-between border-b px-4 shrink-0">
                 <Link className="flex items-center gap-2 font-bold text-lg hover:opacity-80 transition-opacity" href="/">
                     <Logo />
                 </Link>
                 <ModeToggle />
             </div>
 
-            {/* Navigation */}
-            <ScrollArea className="flex-1 py-4">
-                <div className="flex flex-col gap-4 px-3">
-                    {/* Global Search */}
-                    <GlobalSearch />
+            {/* Scrollable Content - Navigation + Footer */}
+            <ScrollArea className="flex-1">
+                <div className="flex flex-col min-h-full">
+                    {/* Navigation */}
+                    <div className="flex-1 py-4">
+                        <div className="flex flex-col gap-4 px-3">
+                            {/* Global Search */}
+                            <GlobalSearch />
 
-                    <NavGroup label="Main" routes={mainRoutes} />
-                    <NavGroup label="Productivity" routes={productivityRoutes} />
-                    <NavGroup label="Academic" routes={academicRoutes} />
-                    <NavGroup label="Tools" routes={toolRoutes} />
+                            <NavGroup label="Main" routes={mainRoutes} />
+                            <NavGroup label="Productivity" routes={productivityRoutes} />
+                            <NavGroup label="Academic" routes={academicRoutes} />
+                            <NavGroup label="Tools" routes={toolRoutes} />
+                        </div>
+                    </div>
+
+                    {/* Footer - Inside scroll area so it scrolls on short viewports */}
+                    <div className="border-t p-4 space-y-4 mt-auto">
+                        {/* XP Widget */}
+                        <XPWidget />
+
+                        {/* User + Settings */}
+                        <div className="flex items-center gap-3">
+                            <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-sky-400 to-blue-600 flex items-center justify-center shadow-md ring-2 ring-white/10 shrink-0">
+                                <IconUserBolt className="h-5 w-5 text-white" strokeWidth={2} />
+                            </div>
+                            <div className="flex flex-col flex-1 min-w-0">
+                                <span className="text-sm font-medium truncate">{settings?.displayName || "Student"}</span>
+                                <span className="text-[10px] text-muted-foreground">CSE Dept</span>
+                            </div>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" asChild>
+                                <Link href="/settings">
+                                    <IconSettings className="h-4 w-4" />
+                                </Link>
+                            </Button>
+                        </div>
+                    </div>
                 </div>
             </ScrollArea>
-
-            {/* Footer */}
-            <div className="border-t p-4 space-y-4">
-                {/* XP Widget */}
-                <XPWidget />
-
-                {/* User + Settings */}
-                <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-sky-400 to-blue-600 flex items-center justify-center shadow-md ring-2 ring-white/10">
-                        <IconUserBolt className="h-5 w-5 text-white" strokeWidth={2} />
-                    </div>
-                    <div className="flex flex-col flex-1 min-w-0">
-                        <span className="text-sm font-medium truncate">{settings?.displayName || "Student"}</span>
-                        <span className="text-[10px] text-muted-foreground">CSE Dept</span>
-                    </div>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                        <Link href="/settings">
-                            <IconSettings className="h-4 w-4" />
-                        </Link>
-                    </Button>
-                </div>
-            </div>
         </div>
     )
 

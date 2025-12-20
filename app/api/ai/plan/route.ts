@@ -5,8 +5,6 @@ import { addDays, differenceInDays, format, parseISO } from 'date-fns'
 // @ts-ignore
 import PDFParser from 'pdf2json'
 
-const groq = process.env.GROQ_API_KEY ? new Groq({ apiKey: process.env.GROQ_API_KEY }) : null
-
 export const runtime = 'nodejs'
 
 // Helper to extract text from PDF
@@ -29,9 +27,7 @@ async function extractTextFromPDF(buffer: Buffer): Promise<string> {
 }
 
 // Helper to extract text from image using Groq Vision
-async function extractTextFromImage(buffer: Buffer, mimeType: string): Promise<string> {
-    if (!groq) return ''
-
+async function extractTextFromImage(buffer: Buffer, mimeType: string, groq: Groq): Promise<string> {
     try {
         const base64 = buffer.toString('base64')
         const response = await groq.chat.completions.create({
@@ -53,11 +49,17 @@ async function extractTextFromImage(buffer: Buffer, mimeType: string): Promise<s
 }
 
 export async function POST(req: Request) {
-    if (!groq) {
-        return NextResponse.json({ error: 'Groq API key not configured' }, { status: 500 })
-    }
-
     try {
+        // Fetch user's API key
+        const settings = await prisma.userSettings.findFirst()
+        const apiKey = settings?.groqApiKey || process.env.GROQ_API_KEY
+
+        if (!apiKey) {
+            return NextResponse.json({ error: 'No API key configured. Add your GROQ API key in Settings.' }, { status: 400 })
+        }
+
+        const groq = new Groq({ apiKey })
+
         // Support both JSON and FormData
         const contentType = req.headers.get('content-type') || ''
 
@@ -86,7 +88,7 @@ export async function POST(req: Request) {
                 if (file.type === 'application/pdf') {
                     extractedFileContent = await extractTextFromPDF(buffer)
                 } else if (file.type.startsWith('image/')) {
-                    extractedFileContent = await extractTextFromImage(buffer, file.type)
+                    extractedFileContent = await extractTextFromImage(buffer, file.type, groq)
                 }
 
                 // Truncate if too long

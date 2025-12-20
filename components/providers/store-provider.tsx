@@ -17,6 +17,7 @@ export interface UserSettings {
     breakDuration: number
     emailNotifications?: boolean
     notificationEmail?: string
+    groqApiKey?: string
 }
 
 export interface Semester {
