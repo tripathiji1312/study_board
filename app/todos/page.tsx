@@ -49,11 +49,11 @@ import {
     IconDotsVertical,
     IconEdit,
     IconCalendarDue,
-    IconBook
+    IconBook,
+    IconSparkles
 } from "@tabler/icons-react"
 import { useStore, Todo, Tag } from "@/components/providers/store-provider"
 import { useXP } from "@/components/xp-widget"
-import { AnimatePresence, motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { format, isToday, isPast, isTomorrow, parseISO, isThisWeek, addDays } from "date-fns"
 
@@ -320,14 +320,9 @@ export default function TodosPage() {
 
         return (
             <div className={cn("group", isSubtask && "ml-8")}>
-                <motion.div
-                    layout
-                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
+                <div
                     className={cn(
-                        "flex items-start gap-3 p-3 rounded-lg border-l-4 transition-all",
+                        "flex items-start gap-3 p-3 rounded-lg border-l-4 transition-colors",
                         "hover:shadow-md bg-card",
                         todo.completed && "opacity-60 bg-muted/40",
                         overdue && !todo.completed && "border-l-red-500 bg-red-500/5",
@@ -414,6 +409,14 @@ export default function TodosPage() {
                                 </Badge>
                             ))}
 
+                            {/* Auto-tagging indicator */}
+                            {todo.isOptimistic && (
+                                <span className="inline-flex items-center gap-1 text-[10px] text-indigo-500 animate-pulse font-medium">
+                                    <IconSparkles className="w-3 h-3" />
+                                    Auto-tagging...
+                                </span>
+                            )}
+
                             {hasSubtasks && (
                                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                     <IconCheck className="w-3 h-3" />
@@ -429,7 +432,7 @@ export default function TodosPage() {
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 opacity-0 group-hover:opacity-100"
+                                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
                             >
                                 <IconDotsVertical className="w-4 h-4" />
                             </Button>
@@ -450,7 +453,7 @@ export default function TodosPage() {
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
-                </motion.div>
+                </div>
 
                 {/* Subtasks */}
                 {isExpanded && hasSubtasks && (
@@ -836,34 +839,28 @@ export default function TodosPage() {
                     {/* Task List */}
                     <ScrollArea className="flex-1">
                         <div className="space-y-2 pr-4">
-                            <AnimatePresence mode="popLayout">
-                                {sortedTodos.length > 0 ? (
-                                    sortedTodos.map(todo => (
-                                        <TodoItem key={todo.id} todo={todo} />
-                                    ))
-                                ) : (
-                                    <motion.div
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        className="py-16 text-center text-muted-foreground"
-                                    >
-                                        <div className="inline-flex p-4 rounded-full bg-muted/50 mb-4">
-                                            {activeView === "inbox" && <IconInbox className="w-8 h-8 opacity-30" />}
-                                            {activeView === "today" && <IconSun className="w-8 h-8 opacity-30" />}
-                                            {activeView === "upcoming" && <IconCalendarEvent className="w-8 h-8 opacity-30" />}
-                                            {activeView === "completed" && <IconCheck className="w-8 h-8 opacity-30" />}
-                                        </div>
-                                        <p className="font-medium">
-                                            {activeView === "inbox" && "Inbox is empty"}
-                                            {activeView === "today" && "No tasks for today"}
-                                            {activeView === "upcoming" && "No upcoming tasks"}
-                                            {activeView === "completed" && "No completed tasks"}
-                                            {activeView.startsWith("tag-") && "No tasks with this tag"}
-                                        </p>
-                                        <p className="text-sm mt-1">Add a task to get started</p>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
+                            {sortedTodos.length > 0 ? (
+                                sortedTodos.map(todo => (
+                                    <TodoItem key={todo.id} todo={todo} />
+                                ))
+                            ) : (
+                                <div className="py-16 text-center text-muted-foreground">
+                                    <div className="inline-flex p-4 rounded-full bg-muted/50 mb-4">
+                                        {activeView === "inbox" && <IconInbox className="w-8 h-8 opacity-30" />}
+                                        {activeView === "today" && <IconSun className="w-8 h-8 opacity-30" />}
+                                        {activeView === "upcoming" && <IconCalendarEvent className="w-8 h-8 opacity-30" />}
+                                        {activeView === "completed" && <IconCheck className="w-8 h-8 opacity-30" />}
+                                    </div>
+                                    <p className="font-medium">
+                                        {activeView === "inbox" && "Inbox is empty"}
+                                        {activeView === "today" && "No tasks for today"}
+                                        {activeView === "upcoming" && "No upcoming tasks"}
+                                        {activeView === "completed" && "No completed tasks"}
+                                        {activeView.startsWith("tag-") && "No tasks with this tag"}
+                                    </p>
+                                    <p className="text-sm mt-1">Add a task to get started</p>
+                                </div>
+                            )}
                         </div>
                     </ScrollArea>
                 </div>
