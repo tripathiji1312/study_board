@@ -13,7 +13,8 @@ import {
     IconVideo,
     IconPlus,
     IconBrandYoutube,
-    IconBrandGithub
+    IconBrandGithub,
+    IconTelescope
 } from "@tabler/icons-react"
 
 const RESOURCE_ICONS: Record<string, any> = {
@@ -53,8 +54,14 @@ export function ResourcesWidget() {
                                     href={r.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex flex-col p-3 rounded-lg border bg-card hover:bg-secondary/50 transition-all group hover:-translate-y-0.5 hover:shadow-sm"
+                                    className={`flex flex-col p-3 rounded-lg border bg-card hover:bg-secondary/50 transition-all group hover:-translate-y-0.5 hover:shadow-sm ${r.scoutedByAi ? "border-indigo-500/30 bg-indigo-50/5 relative" : ""}`}
                                 >
+                                    {r.scoutedByAi && (
+                                        <div className="absolute top-2 right-2 flex items-center gap-1">
+                                            <span className="sr-only">AI Curated</span>
+                                            <IconTelescope className="w-3 h-3 text-indigo-500 opacity-70" />
+                                        </div>
+                                    )}
                                     <div className="flex items-center justify-between mb-2">
                                         <div className="p-1.5 rounded-md bg-secondary text-secondary-foreground group-hover:bg-background group-hover:text-primary transition-colors">
                                             <Icon className="w-4 h-4" />

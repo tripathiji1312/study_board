@@ -147,9 +147,11 @@ export interface Resource {
     id: number
     title: string
     url: string
-    type: "pdf" | "video" | "link"
+    type: string
     category: string
     subjectId?: string
+    syllabusModuleId?: string
+    scoutedByAi?: boolean
 }
 
 export interface Exam {

@@ -16,7 +16,9 @@ export async function POST(request: Request) {
             url: body.url,
             category: body.category,
             meta: body.meta,
-            subjectId: body.subjectId
+            subjectId: body.subjectId,
+            syllabusModuleId: body.syllabusModuleId,
+            scoutedByAi: body.scoutedByAi
         }
     })
     return NextResponse.json(resource)

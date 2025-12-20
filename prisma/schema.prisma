@@ -231,6 +231,8 @@ model Resource {
   category  String
   meta      String?       // size, duration, etc.
   subjectId String?       // Optional: link to subject
+  syllabusModuleId String? // Optional: link to specific module
+  scoutedByAi Boolean     @default(false)
   tags      ResourceTag[]
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt

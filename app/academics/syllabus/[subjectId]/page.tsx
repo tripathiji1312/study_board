@@ -19,7 +19,10 @@ import {
     IconFileText,
     IconPlus,
     IconPencil,
-    IconTrash
+    IconTrash,
+    IconTelescope,
+    IconExternalLink,
+    IconBookmark
 } from "@tabler/icons-react"
 import { Shell } from "@/components/ui/shell"
 import { Button } from "@/components/ui/button"
@@ -117,6 +120,14 @@ export default function SyllabusPage() {
     const [moduleTitle, setModuleTitle] = React.useState("")
     const [moduleTopics, setModuleTopics] = React.useState("")
     const [isSaving, setIsSaving] = React.useState(false)
+
+    // Resource Scout State
+    const [isScoutOpen, setIsScoutOpen] = React.useState(false)
+    const [scoutingModule, setScoutingModule] = React.useState<SyllabusModule | null>(null)
+    const [scoutedResources, setScoutedResources] = React.useState<any[]>([])
+    const [isScouting, setIsScouting] = React.useState(false)
+    const [scoutStep, setScoutStep] = React.useState(0) // 0: Idle, 1: Analyzing, 2: Searching, 3: Curating
+    const [savedResourceIds, setSavedResourceIds] = React.useState<Set<string>>(new Set())
 
     // Fetch data on mount
     React.useEffect(() => {
@@ -314,6 +325,81 @@ export default function SyllabusPage() {
             setModules(oldModules)
             toast.error("Failed to delete module")
         }
+    }
+
+    // --- AI Resource Scout Logic ---
+    const openScoutDefault = (mod: SyllabusModule) => {
+        setScoutingModule(mod)
+        setScoutedResources([])
+        setSavedResourceIds(new Set())
+        setIsScoutOpen(true)
+        scoutResources(mod)
+    }
+
+    const scoutResources = async (mod: SyllabusModule) => {
+        setIsScouting(true)
+        setScoutStep(1)
+
+        // Simulation of steps for UX
+        const stepsInterval = setInterval(() => {
+            setScoutStep(prev => (prev < 3 ? prev + 1 : prev))
+        }, 1500)
+
+        try {
+            const res = await fetch('/api/resources/scout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    subjectName: subject?.name,
+                    moduleTitle: mod.title,
+                    topics: mod.topics
+                })
+            })
+            const data = await res.json()
+            if (data.resources) {
+                setScoutedResources(data.resources)
+            }
+        } catch (error) {
+            toast.error("Failed to scout resources")
+        } finally {
+            clearInterval(stepsInterval)
+            setIsScouting(false)
+            setScoutStep(0)
+        }
+    }
+
+    const saveResource = async (res: any, index: number) => {
+        try {
+            const response = await fetch('/api/resources', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title: res.title,
+                    type: res.type,
+                    url: `https://www.google.com/search?q=${encodeURIComponent(res.searchQuery)}`,
+                    category: "Learning",
+                    subjectId: subjectId,
+                    syllabusModuleId: scoutingModule?.id,
+                    scoutedByAi: true
+                })
+            })
+            if (!response.ok) throw new Error("Failed")
+
+            // Mark as saved
+            setSavedResourceIds(prev => new Set(prev).add(`${res.title}-${index}`))
+            toast.success("Saved to Library!")
+        } catch (error) {
+            toast.error("Failed to save")
+        }
+    }
+
+    const saveAllResources = async () => {
+        const promises = scoutedResources.map((res, index) => {
+            if (savedResourceIds.has(`${res.title}-${index}`)) return Promise.resolve()
+            return saveResource(res, index)
+        })
+        await Promise.all(promises)
+        toast.info("All resources saved to library!")
     }
 
     // Calculate progress
@@ -521,6 +607,18 @@ export default function SyllabusPage() {
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
+                                                        className="h-8 w-8 text-indigo-500 hover:text-indigo-600 hover:bg-indigo-500/10"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            openScoutDefault(mod)
+                                                        }}
+                                                        title="Scout Resources"
+                                                    >
+                                                        <IconTelescope className="w-4 h-4" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
                                                         className="h-8 w-8 text-muted-foreground hover:text-foreground"
                                                         onClick={(e) => {
                                                             e.stopPropagation()
@@ -621,20 +719,131 @@ export default function SyllabusPage() {
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                            Cancel
-                        </Button>
+                        <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
                         <Button onClick={handleSaveModule} disabled={isSaving}>
-                            {isSaving ? (
-                                <>
-                                    <IconLoader2 className="w-4 h-4 mr-2 animate-spin" />
-                                    Saving...
-                                </>
-                            ) : (
-                                editingModule ? "Save Changes" : "Add Module"
-                            )}
+                            {isSaving ? "Saving..." : (editingModule ? "Update" : "Add")}
                         </Button>
                     </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* AI Scout Dialog */}
+            <Dialog open={isScoutOpen} onOpenChange={setIsScoutOpen}>
+                <DialogContent className="sm:max-w-2xl bg-zinc-950 border-zinc-900">
+                    <DialogHeader>
+                        <div className="flex items-center justify-between">
+                            <DialogTitle className="flex items-center gap-2 text-xl">
+                                <IconTelescope className="w-6 h-6 text-indigo-500" />
+                                <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">
+                                    AI Curriculum Architect
+                                </span>
+                            </DialogTitle>
+                            {!isScouting && scoutedResources.length > 0 && (
+                                <Button size="sm" onClick={saveAllResources} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                                    <IconBookmark className="w-4 h-4 mr-2" />
+                                    Save All
+                                </Button>
+                            )}
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-1">
+                            Curating <span className="text-indigo-400 font-medium">Gold Standard</span> resources for: <span className="font-medium text-foreground">{scoutingModule?.title}</span>
+                        </p>
+                    </DialogHeader>
+
+                    <div className="min-h-[350px] max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar p-1">
+                        {isScouting ? (
+                            <div className="flex flex-col items-center justify-center h-[300px] space-y-6">
+                                <div className="relative w-24 h-24">
+                                    <div className="absolute inset-0 rounded-full border-4 border-indigo-500/20 animate-[spin_3s_linear_infinite]" />
+                                    <div className="absolute inset-2 rounded-full border-4 border-t-indigo-500 border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <IconTelescope className="w-8 h-8 text-indigo-500" />
+                                    </div>
+                                </div>
+                                <div className="space-y-2 text-center">
+                                    <h3 className="font-medium text-lg animate-pulse">
+                                        {scoutStep === 1 && "Analyzing syllabus module..."}
+                                        {scoutStep === 2 && "Searching expert educators..."}
+                                        {scoutStep === 3 && "Selecting top 5 resources..."}
+                                    </h3>
+                                    <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+                                        Using Llama 3 to find high-authority content from top universities and tech experts.
+                                    </p>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="space-y-4 pb-4">
+                                {scoutedResources.map((res, i) => {
+                                    const isSaved = savedResourceIds.has(`${res.title}-${i}`)
+                                    return (
+                                        <motion.div
+                                            key={i}
+                                            initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            transition={{ delay: i * 0.1 }}
+                                        >
+                                            <Card className={cn(
+                                                "border-l-4 transition-all duration-200 hover:shadow-lg hover:shadow-indigo-500/5 hover:border-zinc-700 bg-zinc-900/50",
+                                                isSaved ? "border-l-emerald-500 bg-emerald-500/5" : "border-l-indigo-500"
+                                            )}>
+                                                <CardContent className="p-4 flex items-start justify-between gap-4">
+                                                    <div className="space-y-1.5 flex-1">
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <Badge variant="outline" className="text-[10px] uppercase tracking-wider bg-zinc-900 border-zinc-800 text-zinc-400">
+                                                                {res.category?.replace('_', ' ') || res.type}
+                                                            </Badge>
+                                                            {res.author && (
+                                                                <span className="text-xs text-indigo-400 font-medium flex items-center gap-1">
+                                                                    <div className="w-1 h-1 rounded-full bg-indigo-500" />
+                                                                    {res.author}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <h4 className="font-semibold text-base leading-tight text-zinc-100">{res.title}</h4>
+                                                        <p className="text-sm text-zinc-400">{res.description}</p>
+                                                    </div>
+                                                    <div className="flex flex-col gap-2 shrink-0">
+                                                        <Button size="sm" variant="outline" asChild className="h-8 w-24 justify-start bg-zinc-900 border-zinc-800 hover:bg-zinc-800 text-zinc-300">
+                                                            <a href={`https://www.google.com/search?q=${encodeURIComponent(res.searchQuery)}`} target="_blank" rel="noopener noreferrer">
+                                                                <IconExternalLink className="w-3.5 h-3.5 mr-2" />
+                                                                Open
+                                                            </a>
+                                                        </Button>
+                                                        <Button
+                                                            size="sm"
+                                                            className={cn("h-8 w-24 justify-start transition-colors", isSaved ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "bg-indigo-600 hover:bg-indigo-700 text-white")}
+                                                            onClick={() => !isSaved && saveResource(res, i)}
+                                                            disabled={isSaved}
+                                                        >
+                                                            {isSaved ? (
+                                                                <>
+                                                                    <IconCircleCheck className="w-3.5 h-3.5 mr-2" />
+                                                                    Saved
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <IconBookmark className="w-3.5 h-3.5 mr-2" />
+                                                                    Save
+                                                                </>
+                                                            )}
+                                                        </Button>
+                                                    </div>
+                                                </CardContent>
+                                            </Card>
+                                        </motion.div>
+                                    )
+                                })}
+                                {scoutedResources.length > 0 && (
+                                    <div className="flex justify-center pt-2">
+                                        <div className="bg-zinc-900/50 rounded-full px-4 py-2 text-xs text-zinc-500 flex items-center gap-2 border border-zinc-800">
+                                            <IconTelescope className="w-3.5 h-3.5" />
+                                            Curated by Llama 3 Curriculum Architect
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </DialogContent>
             </Dialog>
         </Shell>
