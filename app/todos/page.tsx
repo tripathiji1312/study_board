@@ -56,6 +56,7 @@ import { useStore, Todo, Tag } from "@/components/providers/store-provider"
 import { useXP } from "@/components/xp-widget"
 import { cn } from "@/lib/utils"
 import { format, isToday, isPast, isTomorrow, parseISO, isThisWeek, addDays } from "date-fns"
+import { useReschedule } from "@/hooks/use-reschedule"
 
 type ViewType = "inbox" | "today" | "upcoming" | "completed" | "all" | `tag-${string}`
 
@@ -86,6 +87,8 @@ export default function TodosPage() {
         addSubtask,
         addTag
     } = useStore()
+    const { requestReschedule, RescheduleDialog } = useReschedule()
+
     const { addXP } = useXP()
 
     const [activeView, setActiveView] = React.useState<ViewType>("today")
@@ -277,12 +280,27 @@ export default function TodosPage() {
     const handleSaveEdit = () => {
         if (!editingTodo || !editText.trim()) return
 
-        updateTodo(editingTodo.id, {
-            text: editText,
-            description: editDescription || undefined,
-            dueDate: editDate ? format(editDate, 'yyyy-MM-dd') : undefined,
-            priority: editPriority
-        })
+        const newDateStr = editDate ? format(editDate, 'yyyy-MM-dd') : undefined
+        const dateChanged = newDateStr !== editingTodo.dueDate
+
+        if (dateChanged && newDateStr) {
+            // Update details first
+            updateTodo(editingTodo.id, {
+                text: editText,
+                description: editDescription || undefined,
+                priority: editPriority
+            })
+            // Trigger Nudge for date change
+            requestReschedule(editingTodo.id, newDateStr)
+        } else {
+            // Standard update (no date change or move to inbox)
+            updateTodo(editingTodo.id, {
+                text: editText,
+                description: editDescription || undefined,
+                dueDate: newDateStr,
+                priority: editPriority
+            })
+        }
         setEditingTodo(null)
     }
 
@@ -470,7 +488,7 @@ export default function TodosPage() {
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => {
                                 const tomorrow = addDays(new Date(), 1)
-                                updateTodo(todo.id, { dueDate: format(tomorrow, 'yyyy-MM-dd') })
+                                requestReschedule(todo.id, format(tomorrow, 'yyyy-MM-dd'))
                             }}>
                                 <IconCalendarDue className="w-4 h-4 mr-2" /> Move to Tomorrow
                             </DropdownMenuItem>
@@ -917,6 +935,8 @@ export default function TodosPage() {
                                 </DialogFooter>
                             </DialogContent>
                         </Dialog>
+
+                        <RescheduleDialog />
                     </div>
 
                     {/* Progress (for Today view) */}

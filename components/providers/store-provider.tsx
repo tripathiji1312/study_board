@@ -83,6 +83,7 @@ export interface Todo {
     tags?: Tag[]
     updatedAt?: string
     isOptimistic?: boolean
+    rescheduleCount?: number
 }
 
 // Added missing interfaces
