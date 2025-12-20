@@ -78,6 +78,8 @@ interface SyllabusModule {
     topics: string[]
     status: keyof typeof STATUS_CONFIG
     order: number
+    lastStudiedAt?: string | null
+    strength?: number
 }
 
 interface Subject {
@@ -85,6 +87,15 @@ interface Subject {
     name: string
     code: string
     type: string
+}
+
+// Helper to calculate retention
+const calculateRetention = (lastStudiedAt?: string | null, strength: number = 1.0) => {
+    if (!lastStudiedAt) return 0
+    const diffTime = Math.abs(new Date().getTime() - new Date(lastStudiedAt).getTime())
+    const diffDays = diffTime / (1000 * 60 * 60 * 24)
+    // Ebbinghaus Formula
+    return Math.round(Math.exp(-diffDays / strength) * 100)
 }
 
 export default function SyllabusPage() {
@@ -471,8 +482,35 @@ export default function SyllabusPage() {
                                                 </div>
 
                                                 {/* Module Info */}
+                                                {/* Module Info */}
                                                 <div className="flex-1 min-w-0">
-                                                    <h4 className="font-medium text-base truncate">{mod.title}</h4>
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <h4 className="font-medium text-base truncate">{mod.title}</h4>
+                                                        {/* Retention Indicator */}
+                                                        {(() => {
+                                                            if (mod.status === 'Completed' || mod.status === 'Revised') {
+                                                                const retention = calculateRetention(mod.lastStudiedAt, mod.strength)
+                                                                let color = "bg-emerald-500" // > 80%
+                                                                if (retention < 50) color = "bg-red-500"
+                                                                else if (retention < 80) color = "bg-amber-500"
+
+                                                                return (
+                                                                    <div className="flex items-center bg-muted/50 rounded-full px-1.5 py-0.5">
+                                                                        <div className={cn("w-1.5 h-1.5 rounded-full", color)} />
+                                                                        <span className="ml-1 text-[10px] text-muted-foreground font-mono">{retention}%</span>
+                                                                    </div>
+                                                                )
+                                                            } else if (mod.status === 'InProgress') {
+                                                                return (
+                                                                    <div className="flex items-center bg-amber-500/10 rounded-full px-1.5 py-0.5">
+                                                                        <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                                                        <span className="ml-1 text-[10px] text-amber-600 font-medium">Learning</span>
+                                                                    </div>
+                                                                )
+                                                            }
+                                                            return null
+                                                        })()}
+                                                    </div>
                                                     <p className="text-sm text-muted-foreground">
                                                         {mod.topics?.length || 0} topics
                                                     </p>

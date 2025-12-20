@@ -25,6 +25,7 @@ import { SmartScheduleWidget } from "@/components/dashboard/smart-schedule"
 import { AssignmentsWidget } from "@/components/dashboard/assignments-widget"
 import { ResourcesWidget } from "@/components/dashboard/resources-widget"
 import { FocusAnalytics } from "@/components/dashboard/focus-analytics"
+import { MemoryLeaksWidget } from "@/components/dashboard/memory-leaks-widget"
 import { StreakWidget, BadgesWidget } from "@/components/dashboard/gamification-widgets"
 import { WidgetSkeleton, StatCardSkeleton, ChartSkeleton } from "@/components/ui/skeleton-loaders"
 import { isToday, parseISO, differenceInDays, format } from "date-fns"
@@ -280,9 +281,14 @@ export default function DashboardPage() {
                     {isLoading ? <ChartSkeleton /> : <StudyGraph />}
                 </motion.div>
 
-                {/* Resources */}
-                <motion.div variants={item}>
-                    <ResourcesWidget />
+                {/* Resources & Memory Leaks Row */}
+                <motion.div variants={item} className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+                    <div className="md:col-span-2 h-full">
+                        <ResourcesWidget />
+                    </div>
+                    <div className="md:col-span-1 h-full [&>*]:h-full">
+                        <MemoryLeaksWidget />
+                    </div>
                 </motion.div>
 
             </motion.div>

@@ -81,6 +81,22 @@ export async function PATCH(request: Request) {
 
         if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 })
 
+        // Logic for Memory Updates
+        if (updates.status && (updates.status === 'Completed' || updates.status === 'Revised')) {
+            // Fetch current state to increment values
+            const current = await prisma.syllabusModule.findUnique({ where: { id } })
+            if (current) {
+                // Ebbinghaus Stability Increase
+                // If it's a revision, increase strength multiplier (default 2.5x base)
+                const newReviewCount = current.reviewCount + 1
+                const newStrength = current.strength * 2.5
+
+                updates.lastStudiedAt = new Date()
+                updates.reviewCount = newReviewCount
+                updates.strength = newStrength
+            }
+        }
+
         const updated = await prisma.syllabusModule.update({
             where: { id },
             data: updates

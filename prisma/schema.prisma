@@ -65,6 +65,11 @@ model SyllabusModule {
   status    String   @default("Pending") // "Pending", "InProgress", "Completed"
   order     Int      @default(0)
   
+  // Retention Tracking
+  lastStudiedAt DateTime?
+  reviewCount   Int      @default(0)
+  strength      Float    @default(1.0)
+  
   subjectId String
   subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   
