@@ -30,14 +30,23 @@ export function XPProvider({ children }: { children: React.ReactNode }) {
     const [xp, setXP] = React.useState(0)
 
     React.useEffect(() => {
-        const saved = localStorage.getItem("study_xp")
-        if (saved) setXP(parseInt(saved, 10))
+        if (typeof window === "undefined") return
+        try {
+            const saved = localStorage.getItem("study_xp")
+            if (saved) setXP(parseInt(saved, 10))
+        } catch (error) {
+            console.error("Failed to load XP:", error)
+        }
     }, [])
 
     const addXP = React.useCallback((amount: number) => {
         setXP(prev => {
             const newXP = prev + amount
-            localStorage.setItem("study_xp", String(newXP))
+            try {
+                localStorage.setItem("study_xp", String(newXP))
+            } catch (error) {
+                console.error("Failed to save XP:", error)
+            }
             return newXP
         })
         toast.success(`+${amount} XP! ⚔️`, { duration: 1500 })

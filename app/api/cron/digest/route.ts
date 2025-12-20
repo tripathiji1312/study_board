@@ -100,6 +100,9 @@ export async function GET(req: Request) {
             const hasCriticalExam = upcomingExams.some(e => e.daysUntil <= 1)
             const totalItems = overdue.length + dueTodayUrgent.length + dueToday.length + dueTomorrow.length + pendingTodos.length
 
+            console.log(`[Cron Debug] User: ${setting.notificationEmail}, Type: ${emailType}`)
+            console.log(`[Cron Debug] Stats: Overdue=${overdue.length}, Urgent=${dueTodayUrgent.length}, Today=${dueToday.length}, Tomorrow=${dueTomorrow.length}, Exams=${upcomingExams.length}`)
+
             // Smart sending logic based on time of day
             let shouldSend = false
             let subjectLine = ''
@@ -174,18 +177,23 @@ export async function GET(req: Request) {
                 }
             }
 
+            console.log(`[Cron Debug] Should Send: ${shouldSend}, Subject: ${subjectLine}`)
+
             if (!shouldSend) {
+                console.log(`[Cron Debug] Skipping email - not enough urgency`)
                 results.push({ email: setting.notificationEmail, status: 'skipped_no_urgent' })
                 continue
             }
 
             if (!resend) {
+                console.error(`[Cron Debug] FATAL: Resend client not initialized. Check RESEND_API_KEY.`)
                 results.push({ email: setting.notificationEmail, status: 'skipped_no_key' })
                 continue
             }
 
+            console.log(`[Cron Debug] Attempting to send email via Resend...`)
             const { data, error } = await resend.emails.send({
-                from: 'Study Board <digest@resend.dev>',
+                from: 'Study Board <onboarding@resend.dev>',
                 to: [setting.notificationEmail],
                 subject: `${urgencyEmoji} ${subjectLine}`,
                 react: DailyDigestEmail({
@@ -207,13 +215,18 @@ export async function GET(req: Request) {
                 console.error("Email failed:", error)
                 results.push({ email: setting.notificationEmail, status: 'failed', error: error.message })
             } else {
+                console.log(`[Cron Debug] Email sent successfully! ID: ${data?.id}`)
                 results.push({ email: setting.notificationEmail, status: 'sent', id: data?.id, type: emailType })
             }
         }
 
         return NextResponse.json({ success: true, results, type: emailType })
-    } catch (error) {
-        console.error(error)
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
+    } catch (error: any) {
+        console.error("Cron Job Error:", error)
+        return NextResponse.json({
+            error: 'Internal Server Error',
+            details: error.message,
+            stack: error.stack
+        }, { status: 500 })
     }
 }

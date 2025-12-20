@@ -13,17 +13,27 @@ export function DistractionBlocker() {
     const [newSite, setNewSite] = React.useState("")
 
     React.useEffect(() => {
-        const saved = localStorage.getItem("blocked_sites")
-        if (saved) {
-            try { setSites(JSON.parse(saved)) } catch (e) { console.error(e) }
-        } else {
+        if (typeof window === "undefined") return
+        try {
+            const saved = localStorage.getItem("blocked_sites")
+            if (saved) {
+                setSites(JSON.parse(saved))
+            } else {
+                setSites(["twitter.com", "instagram.com", "reddit.com", "youtube.com", "tiktok.com"])
+            }
+        } catch (e) {
+            console.error("Failed to load blocked sites:", e)
             setSites(["twitter.com", "instagram.com", "reddit.com", "youtube.com", "tiktok.com"])
         }
     }, [])
 
     const saveSites = (updated: string[]) => {
         setSites(updated)
-        localStorage.setItem("blocked_sites", JSON.stringify(updated))
+        try {
+            localStorage.setItem("blocked_sites", JSON.stringify(updated))
+        } catch (e) {
+            console.error("Failed to save blocked sites:", e)
+        }
     }
 
     const addSite = (e: React.FormEvent) => {

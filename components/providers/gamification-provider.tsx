@@ -111,17 +111,31 @@ export function GamificationProvider({ children }: { children: React.ReactNode }
 
     // Load from local storage
     React.useEffect(() => {
-        const savedStats = localStorage.getItem("study_gamification_stats")
-        const savedBadges = localStorage.getItem("study_gamification_badges")
+        // SSR safety check
+        if (typeof window === "undefined") return
 
-        if (savedStats) setStats(JSON.parse(savedStats))
-        if (savedBadges) setEarnedBadges(JSON.parse(savedBadges))
+        try {
+            const savedStats = localStorage.getItem("study_gamification_stats")
+            const savedBadges = localStorage.getItem("study_gamification_badges")
+
+            if (savedStats) setStats(JSON.parse(savedStats))
+            if (savedBadges) setEarnedBadges(JSON.parse(savedBadges))
+        } catch (error) {
+            console.error("Failed to load gamification data:", error)
+        }
     }, [])
 
     // Persist changes
     React.useEffect(() => {
-        localStorage.setItem("study_gamification_stats", JSON.stringify(stats))
-        localStorage.setItem("study_gamification_badges", JSON.stringify(earnedBadges))
+        // SSR safety check
+        if (typeof window === "undefined") return
+
+        try {
+            localStorage.setItem("study_gamification_stats", JSON.stringify(stats))
+            localStorage.setItem("study_gamification_badges", JSON.stringify(earnedBadges))
+        } catch (error) {
+            console.error("Failed to persist gamification data:", error)
+        }
     }, [stats, earnedBadges])
 
     // Badge Check Logic
@@ -131,11 +145,16 @@ export function GamificationProvider({ children }: { children: React.ReactNode }
             if (!earnedBadges.includes(badge.id) && badge.condition(stats)) {
                 newBadges.push(badge.id)
                 toast.success(`Badge Unlocked: ${badge.name}! ${badge.icon}`)
-                confetti({
-                    particleCount: 100,
-                    spread: 70,
-                    origin: { y: 0.6 }
-                })
+                // Wrap confetti in try-catch as it may fail on some mobile browsers
+                try {
+                    confetti({
+                        particleCount: 100,
+                        spread: 70,
+                        origin: { y: 0.6 }
+                    })
+                } catch (error) {
+                    console.warn("Confetti animation failed:", error)
+                }
             }
         })
 

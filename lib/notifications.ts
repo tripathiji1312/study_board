@@ -1,4 +1,9 @@
 export async function requestNotificationPermission() {
+    // SSR safety check - window may not exist during server-side rendering
+    if (typeof window === "undefined") {
+        return false
+    }
+
     if (!("Notification" in window)) {
         console.warn("This browser does not support desktop notification")
         return false
