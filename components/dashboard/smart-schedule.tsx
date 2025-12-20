@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useStore } from "@/components/providers/store-provider"
-import { format, isSameDay, addDays, parseISO } from "date-fns"
+import { format, isSameDay, addDays, parseISO, isPast, isToday } from "date-fns"
 import confetti from "canvas-confetti"
 import { toast } from "sonner"
 import { useSession, signIn, signOut } from "next-auth/react"
@@ -42,6 +42,7 @@ import {
     useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { CatchUpDialog } from "./catch-up-dialog"
 
 // --- Small Components ---
 function ProgressBadge({ progress }: { progress: number }) {
@@ -141,6 +142,15 @@ export function SmartScheduleWidget() {
                 .catch(err => console.error("Failed to fetch GCal", err))
         }
     }, [session])
+
+    // Panic Mode Logic
+    const [catchUpOpen, setCatchUpOpen] = React.useState(false)
+    const overdueTasks = React.useMemo(() => {
+        return todos.filter(t => !t.completed && t.dueDate && isPast(parseISO(t.dueDate)) && !isToday(parseISO(t.dueDate)))
+    }, [todos])
+    const showPanic = overdueTasks.length > 5
+
+    // Memoize the data processing to prevent lag
 
     // Memoize the data processing to prevent lag
     const getItemsForDate = React.useCallback((date: Date) => {
@@ -542,8 +552,28 @@ export function SmartScheduleWidget() {
                 </div>
             </CardHeader>
 
-            <CardContent className="flex-1 p-0 overflow-hidden relative bg-card/50">
-                <ScrollArea className="h-full p-2">
+            <CardContent className="flex-1 p-0 overflow-hidden relative bg-card/50 flex flex-col">
+                {showPanic && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        className="bg-red-500/10 px-4 py-2 flex items-center justify-between border-b border-red-500/20 shrink-0"
+                    >
+                        <div className="flex items-center gap-2 text-red-600 dark:text-red-400 text-xs font-semibold animate-pulse">
+                            <IconAlertTriangle className="w-4 h-4" />
+                            Schedule Overload ({overdueTasks.length} overdue)
+                        </div>
+                        <Button
+                            size="sm"
+                            variant="destructive"
+                            className="h-6 text-[10px] px-2"
+                            onClick={() => setCatchUpOpen(true)}
+                        >
+                            Fix Schedule
+                        </Button>
+                    </motion.div>
+                )}
+                <ScrollArea className="flex-1 p-2">
                     {activeTab === "today" && renderList(todayItems)}
                     {activeTab === "tomorrow" && renderList(tomorrowItems)}
                     {activeTab === "week" && renderWeekList()}
@@ -560,6 +590,13 @@ export function SmartScheduleWidget() {
                     </Button>
                 </div>
             </CardContent>
-        </Card>
+
+            <CatchUpDialog
+                open={catchUpOpen}
+                onOpenChange={setCatchUpOpen}
+                overdueCount={overdueTasks.length}
+                onComplete={() => { }} // Store handles refresh
+            />
+        </Card >
     )
 }

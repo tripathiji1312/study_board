@@ -223,6 +223,7 @@ interface StoreContextType {
     toggleTodo: (id: string, completed: boolean) => void
     deleteTodo: (id: string) => void
     addSubtask: (parentId: string, text: string) => void
+    rescheduleOverdue: (strategy: 'tomorrow' | 'spread' | 'ruthless' | 'ai') => Promise<void>
 
     // Tags
     fetchTags: () => void
@@ -531,6 +532,26 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         }
     }
 
+    const rescheduleOverdue = async (strategy: 'tomorrow' | 'spread' | 'ruthless' | 'ai') => {
+        const res = await fetch('/api/ai/reschedule', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ strategy })
+        })
+        if (res.ok) {
+            const data = await res.json()
+            toast.success(`Rescheduled ${data.count} tasks!`)
+            // Refetch todos
+            const todosRes = await fetch('/api/todos')
+            if (todosRes.ok) {
+                const todosData = await todosRes.json()
+                setTodos(todosData)
+            }
+        } else {
+            toast.error("Failed to reschedule")
+        }
+    }
+
     // === TAGS ===
     const fetchTags = async () => {
         const res = await fetch('/api/tags')
@@ -816,6 +837,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             toggleTodo,
             deleteTodo,
             addSubtask,
+            rescheduleOverdue,
             fetchTags,
             addTag,
             updateTag,

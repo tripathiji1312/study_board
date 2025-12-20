@@ -94,6 +94,13 @@ export default function TodosPage() {
     const [showAddDialog, setShowAddDialog] = React.useState(false)
     const [expandedTodos, setExpandedTodos] = React.useState<Set<string>>(new Set())
 
+    // Edit task state
+    const [editingTodo, setEditingTodo] = React.useState<Todo | null>(null)
+    const [editText, setEditText] = React.useState("")
+    const [editDescription, setEditDescription] = React.useState("")
+    const [editDate, setEditDate] = React.useState<Date | undefined>(undefined)
+    const [editPriority, setEditPriority] = React.useState<1 | 2 | 3 | 4>(4)
+
     // New task form state
     const [newTaskText, setNewTaskText] = React.useState("")
     const [newTaskDescription, setNewTaskDescription] = React.useState("")
@@ -257,6 +264,26 @@ export default function TodosPage() {
         setNewTaskTags([])
         setNewTaskSubjectId(undefined)
         setShowAddDialog(false)
+    }
+
+    const handleOpenEdit = (todo: Todo) => {
+        setEditingTodo(todo)
+        setEditText(todo.text)
+        setEditDescription(todo.description || "")
+        setEditDate(todo.dueDate ? parseISO(todo.dueDate) : undefined)
+        setEditPriority(todo.priority)
+    }
+
+    const handleSaveEdit = () => {
+        if (!editingTodo || !editText.trim()) return
+
+        updateTodo(editingTodo.id, {
+            text: editText,
+            description: editDescription || undefined,
+            dueDate: editDate ? format(editDate, 'yyyy-MM-dd') : undefined,
+            priority: editPriority
+        })
+        setEditingTodo(null)
     }
 
     const handleCreateTag = async () => {
@@ -438,11 +465,14 @@ export default function TodosPage() {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => { }}>
+                            <DropdownMenuItem onClick={() => handleOpenEdit(todo)}>
                                 <IconEdit className="w-4 h-4 mr-2" /> Edit
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => { }}>
-                                <IconCalendarDue className="w-4 h-4 mr-2" /> Reschedule
+                            <DropdownMenuItem onClick={() => {
+                                const tomorrow = addDays(new Date(), 1)
+                                updateTodo(todo.id, { dueDate: format(tomorrow, 'yyyy-MM-dd') })
+                            }}>
+                                <IconCalendarDue className="w-4 h-4 mr-2" /> Move to Tomorrow
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
@@ -803,6 +833,87 @@ export default function TodosPage() {
                                         Cancel
                                     </Button>
                                     <Button onClick={handleAddTask}>Add Task</Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
+
+                        {/* Edit Task Dialog */}
+                        <Dialog open={!!editingTodo} onOpenChange={(open) => !open && setEditingTodo(null)}>
+                            <DialogContent className="sm:max-w-lg">
+                                <DialogHeader>
+                                    <DialogTitle>Edit Task</DialogTitle>
+                                    <DialogDescription>
+                                        Make changes to your task below.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-4 py-4">
+                                    <Input
+                                        placeholder="Task name"
+                                        value={editText}
+                                        onChange={(e) => setEditText(e.target.value)}
+                                    />
+                                    <Input
+                                        placeholder="Description (optional)"
+                                        value={editDescription}
+                                        onChange={(e) => setEditDescription(e.target.value)}
+                                    />
+
+                                    <div className="flex gap-4">
+                                        {/* Date Picker */}
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <Button variant="outline" className={cn("gap-2", !editDate && "text-muted-foreground")}>
+                                                    <IconCalendar className="w-4 h-4" />
+                                                    {editDate ? format(editDate, "MMM d") : "No Date"}
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0" align="start">
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={editDate}
+                                                    onSelect={setEditDate}
+                                                />
+                                                <div className="p-3 border-t">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="w-full justify-start text-muted-foreground h-8"
+                                                        onClick={() => { setEditDate(undefined); document.body.click() }}
+                                                    >
+                                                        <IconInbox className="w-4 h-4 mr-2" />
+                                                        Move to Inbox (No Date)
+                                                    </Button>
+                                                </div>
+                                            </PopoverContent>
+                                        </Popover>
+
+                                        {/* Priority */}
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="outline" className="gap-2">
+                                                    <IconFlag className={cn("w-4 h-4", PRIORITY_FLAGS[editPriority])} />
+                                                    P{editPriority}
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent>
+                                                {[1, 2, 3, 4].map(p => (
+                                                    <DropdownMenuItem
+                                                        key={p}
+                                                        onClick={() => setEditPriority(p as 1 | 2 | 3 | 4)}
+                                                    >
+                                                        <IconFlag className={cn("w-4 h-4 mr-2", PRIORITY_FLAGS[p])} />
+                                                        Priority {p}
+                                                    </DropdownMenuItem>
+                                                ))}
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </div>
+                                </div>
+                                <DialogFooter>
+                                    <Button variant="outline" onClick={() => setEditingTodo(null)}>
+                                        Cancel
+                                    </Button>
+                                    <Button onClick={handleSaveEdit}>Save Changes</Button>
                                 </DialogFooter>
                             </DialogContent>
                         </Dialog>
