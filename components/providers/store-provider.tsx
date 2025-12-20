@@ -82,6 +82,7 @@ export interface Todo {
     subtasks?: Todo[]
     tags?: Tag[]
     updatedAt?: string
+    isOptimistic?: boolean
 }
 
 // Added missing interfaces
@@ -486,7 +487,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     // === TODOS ===
     const addTodo = async (todo: Omit<Todo, "id" | "subtasks" | "tags"> & { tagIds?: string[] }) => {
         const tempId = Date.now().toString()
-        const newTodo: Todo = { ...todo, id: tempId, priority: todo.priority || 4, subtasks: [], tags: [] }
+        const newTodo: Todo = { ...todo, id: tempId, priority: todo.priority || 4, subtasks: [], tags: [], isOptimistic: true }
         setTodos([newTodo, ...todos])
         const res = await fetch('/api/todos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(todo) })
         if (res.ok) {

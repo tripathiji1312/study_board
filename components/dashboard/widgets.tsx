@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { IconCheck, IconTrash, IconSchool, IconClock, IconBulb, IconCode } from "@tabler/icons-react"
+import { IconCheck, IconTrash, IconSchool, IconClock, IconBulb, IconCode, IconSparkles } from "@tabler/icons-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -65,35 +65,55 @@ function TodoWidget() {
 
                 <ScrollArea className="flex-1 -mx-4 px-4">
                     <div className="flex flex-col gap-2">
-                        <AnimatePresence>
-                            {todayTodos.map((todo) => (
-                                <motion.div
-                                    key={todo.id}
-                                    initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -10 }}
-                                    className="flex items-center gap-2 group p-2 hover:bg-muted/50 rounded-md transition-colors"
-                                >
-                                    <Checkbox
-                                        id={`widget-${todo.id}`}
-                                        checked={todo.completed}
-                                        onCheckedChange={() => handleToggle(todo.id, todo.completed)}
-                                    />
+                        {todayTodos.map((todo) => (
+                            <div
+                                key={todo.id}
+                                className="flex items-start gap-2 group p-2 hover:bg-muted/50 rounded-md transition-colors"
+                            >
+                                <Checkbox
+                                    id={`widget-${todo.id}`}
+                                    checked={todo.completed}
+                                    onCheckedChange={() => handleToggle(todo.id, todo.completed)}
+                                    className="mt-1"
+                                />
+                                <div className="flex-1 min-w-0 space-y-1">
                                     <label
                                         htmlFor={`widget-${todo.id}`}
-                                        className={`flex-1 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 transition-all ${todo.completed ? 'line-through text-muted-foreground' : ''}`}
+                                        className={`block text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 transition-all ${todo.completed ? 'line-through text-muted-foreground' : ''}`}
                                     >
                                         {todo.text}
                                     </label>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
-                                        onClick={() => deleteTodo(todo.id)}
-                                    >
-                                        <IconTrash className="h-3 w-3" />
-                                    </Button>
-                                </motion.div>
-                            ))}
-                        </AnimatePresence>
+                                    {((todo.tags?.length || 0) > 0 || todo.isOptimistic) && (
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                            {todo.tags?.map(t => (
+                                                <Badge
+                                                    key={t.id}
+                                                    variant="outline"
+                                                    className="text-[10px] h-4 px-1.5 py-0 border-0"
+                                                    style={{ backgroundColor: t.color + '20', color: t.color }}
+                                                >
+                                                    {t.name}
+                                                </Badge>
+                                            ))}
+                                            {todo.isOptimistic && (
+                                                <span className="text-[10px] text-indigo-500 animate-pulse flex items-center gap-1 font-medium">
+                                                    <IconSparkles className="w-3 h-3" />
+                                                    Auto-tagging...
+                                                </span>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    onClick={() => deleteTodo(todo.id)}
+                                >
+                                    <IconTrash className="h-3 w-3" />
+                                </Button>
+                            </div>
+                        ))}
                         {todayTodos.length === 0 && (
                             <div className="text-center text-muted-foreground text-sm py-8">
                                 No tasks for today!

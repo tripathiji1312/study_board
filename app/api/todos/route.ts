@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import Groq from 'groq-sdk'
+
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
 
 // GET all todos with subtasks and tags
 export async function GET(request: Request) {
@@ -104,6 +107,7 @@ export async function POST(request: Request) {
     })
 
     // Add tags if provided
+    // Add tags if provided, otherwise AUTO-TAG with AI
     if (body.tagIds && body.tagIds.length > 0) {
         await Promise.all(
             body.tagIds.map((tagId: string) =>
@@ -112,6 +116,65 @@ export async function POST(request: Request) {
                 })
             )
         )
+    } else if (body.text.length > 5) { // Only auto-tag if text has some substance
+        try {
+            // 1. Get existing tags for context
+            const existingTags = await prisma.tag.findMany({ select: { name: true } })
+            const tagNames = existingTags.map(t => t.name).join(', ')
+
+            // 2. Ask AI
+            const completion = await groq.chat.completions.create({
+                messages: [{
+                    role: 'user',
+                    content: `
+                    Task: "${body.text}"
+                    Description: "${body.description || ''}"
+                    Existing Tags: [${tagNames}]
+                    
+                    Classify this task into 1 or 2 tags.
+                    - Prefer using Existing Tags if they fit perfectly.
+                    - If no existing tag fits, create a NEW short, single-word tag (e.g. "finance", "health", "urgent").
+                    - For NEW tags, suggest a valid hex color code.
+                    - JSON ONLY.
+                    
+                    Output format:
+                    { "tags": [{ "name": "tagname", "isNew": boolean, "color": "#hex" }] }
+                    `
+                }],
+                model: 'llama-3.3-70b-versatile',
+                temperature: 0.3,
+                response_format: { type: 'json_object' }
+            })
+
+            const aiContent = completion.choices[0]?.message?.content
+            if (aiContent) {
+                const result = JSON.parse(aiContent)
+
+                // 3. Process Tags
+                for (const tag of result.tags || []) {
+                    const tagName = tag.name.toLowerCase().trim()
+
+                    // Upsert tag (find or create)
+                    // Note: Ideally we use upsert, but color update on existing might be unwanted.
+                    // We'll just find or create.
+                    let tagRecord = await prisma.tag.findUnique({ where: { name: tagName } })
+
+                    if (!tagRecord) {
+                        tagRecord = await prisma.tag.create({
+                            data: { name: tagName, color: tag.color || '#6366f1' }
+                        })
+                    }
+
+                    // Link to Todo
+                    await prisma.todoTag.create({
+                        data: { todoId: todo.id, tagId: tagRecord.id }
+                    })
+                }
+            }
+        } catch (error) {
+            console.error("Auto-tagging failed:", error)
+            // Continue without tags, don't block response
+        }
     }
 
     // Fetch updated todo with tags
@@ -215,9 +278,15 @@ export async function DELETE(request: Request) {
     }
 
     // Cascade delete will handle subtasks and tags
-    await prisma.todo.delete({
-        where: { id }
-    })
+    try {
+        await prisma.todo.delete({
+            where: { id }
+        })
+    } catch (error: any) {
+        if (error.code !== 'P2025') {
+            throw error
+        }
+    }
 
     return NextResponse.json({ success: true })
 }
