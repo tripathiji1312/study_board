@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/lib/auth"
 
 export async function GET() {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
     try {
         const logs = await prisma.dailyLog.findMany({
+            where: { userId: session.user.id },
             orderBy: { date: 'desc' },
             take: 365 // Last year only
         })
@@ -14,10 +20,14 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
     try {
         const body = await req.json()
         const log = await prisma.dailyLog.create({
             data: {
+                userId: session.user.id,
                 date: new Date(body.date),
                 mood: body.mood,
                 note: body.note,

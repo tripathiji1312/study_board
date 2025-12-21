@@ -3,16 +3,30 @@ import { NextResponse } from 'next/server'
 import Groq from 'groq-sdk'
 // @ts-ignore
 import PDFParser from 'pdf2json'
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/lib/auth"
+import prisma from "@/lib/prisma"
 
 // Force Node.js runtime
 export const runtime = 'nodejs'
 
-const groq = new Groq({
-    apiKey: process.env.GROQ_API_KEY
-})
-
 export async function POST(request: Request) {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
     try {
+        // Fetch user settings for API key
+        const settings = await prisma.userSettings.findUnique({
+            where: { userId: session.user.id }
+        })
+
+        const apiKey = settings?.groqApiKey || process.env.GROQ_API_KEY
+        if (!apiKey) {
+            return NextResponse.json({ error: 'Groq API Key not configured. Please add it in Settings.' }, { status: 400 })
+        }
+
+        const groq = new Groq({ apiKey })
+
         const formData = await request.formData()
         const file = formData.get('file') as File
 
@@ -51,8 +65,6 @@ export async function POST(request: Request) {
         }
 
         // 2. Clean and Truncate Text
-        // The PDF has huge gaps (e.g. "Module:1                                Introduction") which bloats the character count.
-        // We compress multiple spaces into one to save context window.
         const cleanedText = text
             .replace(/Page \(\d+\) Break/g, '') // Remove page breaks like "Page (0) Break"
             .replace(/\s\s+/g, ' ') // Collapse multiple spaces/newlines into single space
@@ -60,8 +72,6 @@ export async function POST(request: Request) {
 
         console.log("Original length:", text.length, "Cleaned length:", cleanedText.length)
 
-        // Groq Llama 3.3 has 128k context, so we can send a lot. 
-        // 1 token ~= 4 chars, so 100k chars is safe.
         const truncatedText = cleanedText.substring(0, 100000)
         console.log("Sending text to Groq, length:", truncatedText.length)
 

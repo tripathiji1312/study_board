@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react"
 import { toast } from "sonner"
+import { useSession } from "next-auth/react"
 
 // --- Types ---
 export type Priority = "Low" | "Medium" | "High" | "Urgent"
@@ -18,6 +19,7 @@ export interface UserSettings {
     emailNotifications?: boolean
     notificationEmail?: string
     groqApiKey?: string
+    resendApiKey?: string
 }
 
 export interface Semester {
@@ -295,10 +297,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
     const currentSemester = semesters.find(s => s.isCurrent) || null
 
+    const { data: session, status } = useSession()
+
     // --- Initial Data Fetch ---
     useEffect(() => {
-        fetchData()
-    }, [])
+        if (status === "authenticated") {
+            fetchData()
+        }
+    }, [status])
 
     const fetchData = async () => {
         try {
@@ -337,7 +343,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             const examsData = examsRes.ok ? await examsRes.json() : []
             const logsData = logsRes.ok ? await logsRes.json() : []
 
-            if (settingsData) setSettings(settingsData)
+            if (settingsData) {
+                setSettings(settingsData)
+            } else if (status === "authenticated") {
+                // Retry once if settings are missing but user is authenticated
+                setTimeout(fetchData, 1000)
+            }
             setSemesters(semsData)
             setTodos(todosData)
             setAssignments(assignsData)

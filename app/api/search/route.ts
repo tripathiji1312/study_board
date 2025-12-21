@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/lib/auth"
 
 // Global search API - searches across all entities including tags
 export async function GET(request: Request) {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    const userId = session.user.id
+
     const { searchParams } = new URL(request.url)
     const query = searchParams.get('q')
     const type = searchParams.get('type') // 'all' | 'todos' | 'projects' | 'ideas' | 'snippets' | 'resources' | 'tags'
@@ -18,6 +24,7 @@ export async function GET(request: Request) {
     if (!type || type === 'all' || type === 'todos') {
         const todos = await prisma.todo.findMany({
             where: {
+                userId,
                 OR: [
                     { text: { contains: searchQuery } },
                     { description: { contains: searchQuery } },
@@ -42,6 +49,7 @@ export async function GET(request: Request) {
     if (!type || type === 'all' || type === 'projects') {
         const projects = await prisma.project.findMany({
             where: {
+                userId,
                 OR: [
                     { title: { contains: searchQuery } },
                     { description: { contains: searchQuery } },
@@ -65,6 +73,7 @@ export async function GET(request: Request) {
     if (!type || type === 'all' || type === 'ideas') {
         const ideas = await prisma.idea.findMany({
             where: {
+                userId,
                 OR: [
                     { content: { contains: searchQuery } },
                     { tags: { some: { tag: { name: { contains: searchQuery } } } } }
@@ -86,6 +95,7 @@ export async function GET(request: Request) {
     if (!type || type === 'all' || type === 'snippets') {
         const snippets = await prisma.snippet.findMany({
             where: {
+                userId,
                 OR: [
                     { title: { contains: searchQuery } },
                     { content: { contains: searchQuery } },
@@ -108,6 +118,7 @@ export async function GET(request: Request) {
     if (!type || type === 'all' || type === 'resources') {
         const resources = await prisma.resource.findMany({
             where: {
+                userId,
                 OR: [
                     { title: { contains: searchQuery } },
                     { category: { contains: searchQuery } },
@@ -130,6 +141,7 @@ export async function GET(request: Request) {
     if (!type || type === 'all' || type === 'tags') {
         const tags = await prisma.tag.findMany({
             where: {
+                userId,
                 name: { contains: searchQuery }
             },
             include: {

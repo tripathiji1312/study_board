@@ -1,11 +1,28 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import Groq from 'groq-sdk'
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/lib/auth"
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
+// Helper to get Groq client for user
+async function getGroqClient(userId: string) {
+    const settings = await prisma.userSettings.findUnique({
+        where: { userId },
+        select: { groqApiKey: true }
+    })
+    const apiKey = settings?.groqApiKey || process.env.GROQ_API_KEY
+    if (!apiKey) return null
+    return new Groq({ apiKey })
+}
 
 // GET all todos with subtasks and tags
 export async function GET(request: Request) {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+    const userId = session.user.id
+
     const { searchParams } = new URL(request.url)
     const view = searchParams.get('view') // 'inbox' | 'today' | 'upcoming' | 'all'
     const tagId = searchParams.get('tagId')
@@ -19,8 +36,11 @@ export async function GET(request: Request) {
     nextWeek.setDate(nextWeek.getDate() + 7)
     const nextWeekStr = nextWeek.toISOString().split('T')[0]
 
-    // Base where clause - only get parent todos (not subtasks)
-    let where: any = { parentId: null }
+    // Base where clause - only get parent todos (not subtasks) AND belonging to user
+    let where: any = {
+        userId: userId,
+        parentId: null
+    }
 
     // Apply view filters
     if (view === 'inbox') {
@@ -43,10 +63,14 @@ export async function GET(request: Request) {
 
     // Apply search filter
     if (search) {
-        where.OR = [
-            { text: { contains: search } },
-            { description: { contains: search } },
-            { tags: { some: { tag: { name: { contains: search.toLowerCase() } } } } }
+        where.AND = [
+            {
+                OR: [
+                    { text: { contains: search } },
+                    { description: { contains: search } },
+                    { tags: { some: { tag: { name: { contains: search.toLowerCase() } } } } }
+                ]
+            }
         ]
     }
 
@@ -86,10 +110,17 @@ export async function GET(request: Request) {
 
 // CREATE a new todo
 export async function POST(request: Request) {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+    const userId = session.user.id
+
     const body = await request.json()
 
     const todo = await prisma.todo.create({
         data: {
+            userId: userId, // Link to User
             text: body.text,
             description: body.description,
             completed: body.completed ?? false,
@@ -106,7 +137,6 @@ export async function POST(request: Request) {
         }
     })
 
-    // Add tags if provided
     // Add tags if provided, otherwise AUTO-TAG with AI
     if (body.tagIds && body.tagIds.length > 0) {
         await Promise.all(
@@ -116,64 +146,73 @@ export async function POST(request: Request) {
                 })
             )
         )
-    } else if (body.text.length > 5) { // Only auto-tag if text has some substance
+    } else if (body.text.length > 5) {
         try {
-            // 1. Get existing tags for context
-            const existingTags = await prisma.tag.findMany({ select: { name: true } })
-            const tagNames = existingTags.map(t => t.name).join(', ')
+            const groq = await getGroqClient(userId)
+            if (groq) {
+                // 1. Get existing tags for context (USER specific)
+                const existingTags = await prisma.tag.findMany({
+                    where: { userId },
+                    select: { name: true }
+                })
+                const tagNames = existingTags.map(t => t.name).join(', ')
 
-            // 2. Ask AI
-            const completion = await groq.chat.completions.create({
-                messages: [{
-                    role: 'user',
-                    content: `
-                    Task: "${body.text}"
-                    Description: "${body.description || ''}"
-                    Existing Tags: [${tagNames}]
-                    
-                    Classify this task into 1 or 2 tags.
-                    - Prefer using Existing Tags if they fit perfectly.
-                    - If no existing tag fits, create a NEW short, single-word tag (e.g. "finance", "health", "urgent").
-                    - For NEW tags, suggest a valid hex color code.
-                    - JSON ONLY.
-                    
-                    Output format:
-                    { "tags": [{ "name": "tagname", "isNew": boolean, "color": "#hex" }] }
-                    `
-                }],
-                model: 'llama-3.3-70b-versatile',
-                temperature: 0.3,
-                response_format: { type: 'json_object' }
-            })
+                // 2. Ask AI
+                const completion = await groq.chat.completions.create({
+                    messages: [{
+                        role: 'user',
+                        content: `
+                        Task: "${body.text}"
+                        Description: "${body.description || ''}"
+                        Existing Tags: [${tagNames}]
+                        
+                        Classify this task into 1 or 2 tags.
+                        - Prefer using Existing Tags if they fit perfectly.
+                        - If no existing tag fits, create a NEW short, single-word tag.
+                        - For NEW tags, suggest a valid hex color code.
+                        - JSON ONLY.
+                        
+                        Output format:
+                        { "tags": [{ "name": "tagname", "isNew": boolean, "color": "#hex" }] }
+                        `
+                    }],
+                    model: 'llama-3.3-70b-versatile',
+                    temperature: 0.3,
+                    response_format: { type: 'json_object' }
+                })
 
-            const aiContent = completion.choices[0]?.message?.content
-            if (aiContent) {
-                const result = JSON.parse(aiContent)
+                const aiContent = completion.choices[0]?.message?.content
+                if (aiContent) {
+                    const result = JSON.parse(aiContent)
 
-                // 3. Process Tags
-                for (const tag of result.tags || []) {
-                    const tagName = tag.name.toLowerCase().trim()
+                    // 3. Process Tags
+                    for (const tag of result.tags || []) {
+                        const tagName = tag.name.toLowerCase().trim()
 
-                    // Upsert tag (find or create)
-                    // Note: Ideally we use upsert, but color update on existing might be unwanted.
-                    // We'll just find or create.
-                    let tagRecord = await prisma.tag.findUnique({ where: { name: tagName } })
+                        // Upsert tag (find or create) for USER
+                        let tagRecord = await prisma.tag.findUnique({
+                            where: { userId_name: { userId, name: tagName } } // Composite unique
+                        })
 
-                    if (!tagRecord) {
-                        tagRecord = await prisma.tag.create({
-                            data: { name: tagName, color: tag.color || '#6366f1' }
+                        if (!tagRecord) {
+                            tagRecord = await prisma.tag.create({
+                                data: {
+                                    userId,
+                                    name: tagName,
+                                    color: tag.color || '#6366f1'
+                                }
+                            })
+                        }
+
+                        // Link to Todo
+                        await prisma.todoTag.create({
+                            data: { todoId: todo.id, tagId: tagRecord.id }
                         })
                     }
-
-                    // Link to Todo
-                    await prisma.todoTag.create({
-                        data: { todoId: todo.id, tagId: tagRecord.id }
-                    })
                 }
             }
         } catch (error) {
             console.error("Auto-tagging failed:", error)
-            // Continue without tags, don't block response
         }
     }
 
@@ -194,14 +233,19 @@ export async function POST(request: Request) {
 
 // UPDATE a todo
 export async function PUT(request: Request) {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    const userId = session.user.id
+
     const body = await request.json()
 
     if (!body.id) {
         return NextResponse.json({ error: 'ID required' }, { status: 400 })
     }
 
-    const existingTodo = await prisma.todo.findUnique({
-        where: { id: body.id }
+    // Ensure todo belongs to user
+    const existingTodo = await prisma.todo.findFirst({
+        where: { id: body.id, userId }
     })
 
     if (!existingTodo) {
@@ -232,12 +276,10 @@ export async function PUT(request: Request) {
 
     // Update tags if provided
     if (body.tagIds !== undefined) {
-        // Remove existing tags
         await prisma.todoTag.deleteMany({
             where: { todoId: body.id }
         })
 
-        // Add new tags
         if (body.tagIds.length > 0) {
             await Promise.all(
                 body.tagIds.map((tagId: string) =>
@@ -249,7 +291,7 @@ export async function PUT(request: Request) {
         }
     }
 
-    // Fetch updated todo with relations
+    // Fetch updated todo
     const updatedTodo = await prisma.todo.findUnique({
         where: { id: body.id },
         include: {
@@ -270,6 +312,10 @@ export async function PUT(request: Request) {
 
 // DELETE a todo
 export async function DELETE(request: Request) {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    const userId = session.user.id
+
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
 
@@ -277,7 +323,10 @@ export async function DELETE(request: Request) {
         return NextResponse.json({ error: 'ID required' }, { status: 400 })
     }
 
-    // Cascade delete will handle subtasks and tags
+    // Ensure ownership before delete
+    const existing = await prisma.todo.findFirst({ where: { id, userId } })
+    if (!existing) return NextResponse.json({ error: "Not Found" }, { status: 404 })
+
     try {
         await prisma.todo.delete({
             where: { id }

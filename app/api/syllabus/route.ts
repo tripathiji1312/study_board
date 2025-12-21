@@ -1,13 +1,30 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/lib/auth"
+
+async function verifySubjectOwnership(subjectId: string, userId: string) {
+    const subject = await prisma.subject.findFirst({
+        where: { id: subjectId, userId: userId }
+    })
+    return !!subject
+}
 
 // GET /api/syllabus?subjectId=...
 export async function GET(request: Request) {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
     const { searchParams } = new URL(request.url)
     const subjectId = searchParams.get('subjectId')
 
     if (!subjectId) {
         return NextResponse.json({ error: 'Subject ID required' }, { status: 400 })
+    }
+
+    // Verify ownership
+    if (!await verifySubjectOwnership(subjectId, session.user.id)) {
+        return NextResponse.json({ error: "Not Found or Unauthorized" }, { status: 404 })
     }
 
     try {
@@ -25,12 +42,20 @@ export async function GET(request: Request) {
 // POST /api/syllabus
 // Body: { subjectId, modules: [{ title, topics }], mode: 'replace' | 'append' }
 export async function POST(request: Request) {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
     try {
         const body = await request.json()
         const { subjectId, modules, mode = 'replace' } = body
 
         if (!subjectId || !modules) {
             return NextResponse.json({ error: 'Missing data' }, { status: 400 })
+        }
+
+        // Verify ownership
+        if (!await verifySubjectOwnership(subjectId, session.user.id)) {
+            return NextResponse.json({ error: "Not Found or Unauthorized" }, { status: 404 })
         }
 
         // Transaction to ensure atomicity
@@ -49,7 +74,6 @@ export async function POST(request: Request) {
                 startOrder = count
             }
 
-            // Create new modules
             // Create new modules efficiently
             if (modules.length > 0) {
                 await tx.syllabusModule.createMany({
@@ -75,26 +99,34 @@ export async function POST(request: Request) {
 // PATCH /api/syllabus
 // Body: { id, status, topics } - Update a specific module
 export async function PATCH(request: Request) {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
     try {
         const body = await request.json()
         const { id, ...updates } = body
 
         if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 })
 
+        // Verify ownership (Module -> Subject -> User)
+        const current = await prisma.syllabusModule.findUnique({
+            where: { id },
+            include: { subject: true }
+        })
+
+        if (!current || current.subject.userId !== session.user.id) {
+            return NextResponse.json({ error: "Not Found or Unauthorized" }, { status: 404 })
+        }
+
         // Logic for Memory Updates
         if (updates.status && (updates.status === 'Completed' || updates.status === 'Revised')) {
-            // Fetch current state to increment values
-            const current = await prisma.syllabusModule.findUnique({ where: { id } })
-            if (current) {
-                // Ebbinghaus Stability Increase
-                // If it's a revision, increase strength multiplier (default 2.5x base)
-                const newReviewCount = current.reviewCount + 1
-                const newStrength = current.strength * 2.5
+            // Ebbinghaus Stability Increase
+            const newReviewCount = current.reviewCount + 1
+            const newStrength = current.strength * 2.5
 
-                updates.lastStudiedAt = new Date()
-                updates.reviewCount = newReviewCount
-                updates.strength = newStrength
-            }
+            updates.lastStudiedAt = new Date()
+            updates.reviewCount = newReviewCount
+            updates.strength = newStrength
         }
 
         const updated = await prisma.syllabusModule.update({
@@ -112,12 +144,25 @@ export async function PATCH(request: Request) {
 
 // DELETE /api/syllabus?id=...
 export async function DELETE(request: Request) {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
 
     if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 })
 
     try {
+        // Verify ownership
+        const current = await prisma.syllabusModule.findUnique({
+            where: { id },
+            include: { subject: true }
+        })
+
+        if (!current || current.subject.userId !== session.user.id) {
+            return NextResponse.json({ error: "Not Found or Unauthorized" }, { status: 404 })
+        }
+
         await prisma.syllabusModule.delete({
             where: { id }
         })

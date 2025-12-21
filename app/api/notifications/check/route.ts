@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server'
 import { Resend } from 'resend'
-import { PrismaClient } from '@prisma/client'
+import prisma from '@/lib/prisma'
 import { differenceInDays, parseISO, format, isBefore, startOfDay, addDays, endOfDay } from 'date-fns'
 import { render } from '@react-email/components'
 import { DailyDigestEmail } from '@/emails/DailyDigestEmail'
-
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
-const prisma = new PrismaClient()
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/lib/auth"
 
 // Store sent notifications in memory to avoid spamming 
 // (In production, use a Database table "NotificationLogs")
@@ -43,28 +42,42 @@ interface ExamWithDays {
 
 
 export async function POST(req: Request) {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    const userId = session.user.id
+
     try {
-        const { email } = await req.json()
+        const body = await req.json()
+        const email = body.email || session.user.email
         if (!email) return NextResponse.json({ error: 'Email required' }, { status: 400 })
 
         cleanupOldNotifications()
         const today = startOfDay(new Date())
         const endOfWeek = endOfDay(addDays(today, 7))
 
-        // Fetch user settings for personalization
-        const settings = await prisma.userSettings.findFirst()
+        // Fetch user settings for personalization and API keys
+        const settings = await prisma.userSettings.findUnique({
+            where: { userId }
+        })
         const userName = settings?.displayName || undefined
+        const resendApiKey = settings?.resendApiKey || process.env.RESEND_API_KEY
 
-        // ============ FETCH ALL DATA ============
+        const userResend = resendApiKey ? new Resend(resendApiKey) : null
+        if (!userResend) {
+            return NextResponse.json({ error: 'Email service not configured. Please add Resend API Key in Settings.' }, { status: 400 })
+        }
+
+        // ============ FETCH USER DATA ============
 
         // Assignments
         const assignments = await prisma.assignment.findMany({
-            where: { status: { not: 'Completed' } }
+            where: { userId, status: { not: 'Completed' } }
         })
 
         // Exams within next 7 days
         const exams = await prisma.exam.findMany({
             where: {
+                userId,
                 date: {
                     gte: today,
                     lte: endOfWeek
@@ -74,12 +87,13 @@ export async function POST(req: Request) {
 
         // Todos (incomplete, with due dates)
         const todos = await prisma.todo.findMany({
-            where: { completed: false }
+            where: { userId, completed: false }
         })
 
         // Get completed todos today for stats
         const completedToday = await prisma.todo.count({
             where: {
+                userId,
                 completed: true,
                 updatedAt: {
                     gte: today
@@ -98,7 +112,8 @@ export async function POST(req: Request) {
                 const dueDate = parseISO(a.due)
                 const days = differenceInDays(dueDate, today)
 
-                const key = `assign_${a.id}_${format(today, 'yyyy-MM-dd')}`
+                // User-scoped notification key
+                const key = `assign_${userId}_${a.id}_${format(today, 'yyyy-MM-dd')}`
                 if (sentNotifications.has(key)) return // Skip if already sent today
 
                 const item: AssignmentWithDays = {
@@ -122,7 +137,6 @@ export async function POST(req: Request) {
                     sentNotifications.set(key, new Date())
                 } else if (days <= 7) {
                     dueThisWeek.push(item)
-                    // Don't mark as sent for weekly items, they can be reminded again
                 }
             } catch (e) {
                 console.error('Error parsing assignment date:', e)
@@ -146,7 +160,7 @@ export async function POST(req: Request) {
         // Mark exam notifications as sent
         upcomingExams.forEach(exam => {
             if (exam.daysUntil <= 3) {
-                const key = `exam_${exam.id}_${format(today, 'yyyy-MM-dd')}`
+                const key = `exam_${userId}_${exam.id}_${format(today, 'yyyy-MM-dd')}`
                 if (!sentNotifications.has(key)) {
                     sentNotifications.set(key, new Date())
                 }
@@ -201,10 +215,7 @@ export async function POST(req: Request) {
         }
 
         // ============ SEND EMAIL ============
-        if (!resend) {
-            return NextResponse.json({ error: 'Email service not configured' }, { status: 503 })
-        }
-        const { data, error } = await resend.emails.send({
+        const { data, error } = await userResend.emails.send({
             from: 'Study Board <onboarding@resend.dev>',
             to: [email],
             subject,

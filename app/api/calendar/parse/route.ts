@@ -7,31 +7,26 @@ import { promisify } from 'util'
 import fs from 'fs/promises'
 import path from 'path'
 import os from 'os'
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/lib/auth"
 // @ts-ignore
 import PDFParser from 'pdf2json'
 
 const execAsync = promisify(exec)
-
-const groq = process.env.GROQ_API_KEY ? new Groq({ apiKey: process.env.GROQ_API_KEY }) : null
 
 export const runtime = 'nodejs'
 
 function isJunkText(text: string): boolean {
     if (!text || text.trim().length < 20) return true
 
-    // Remove whitespace for better ratio calculation
     const stripped = text.replace(/\s/g, '')
     if (stripped.length < 10) return true
 
-    // Check ratio of alphanumeric characters
-    // Scanned PDFs often result in just lines (---) or random symbols (!!!)
     const alphaNum = stripped.replace(/[^a-zA-Z0-9]/g, '').length
     const ratio = alphaNum / stripped.length
 
-    // If less than 25% of text is alphanumeric, it's likely junk
     if (ratio < 0.25) return true
 
-    // Check for dominant dash/table line patterns
     const dashes = (stripped.match(/-/g) || []).length
     if (dashes / stripped.length > 0.4) return true
 
@@ -48,20 +43,32 @@ interface CalendarEvent {
 }
 
 export async function POST(req: Request) {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    const userId = session.user.id
+
     try {
         const formData = await req.formData()
         const file = formData.get('file') as File | null
         const textContent = formData.get('text') as string | null
 
+        // Fetch user settings for API key
+        const settings = await prisma.userSettings.findUnique({
+            where: { userId }
+        })
+        const apiKey = settings?.groqApiKey || process.env.GROQ_API_KEY
+        if (!apiKey) {
+            return NextResponse.json({ error: 'Groq API Key not configured. Please add it in Settings.' }, { status: 400 })
+        }
+
+        const groq = new Groq({ apiKey })
         let rawText = ''
 
         if (file) {
-            // Handle PDF or image
             const buffer = Buffer.from(await file.arrayBuffer())
 
             if (file.type === 'application/pdf') {
                 try {
-                    // 1. Try traditional text extraction
                     rawText = await new Promise<string>((resolve, reject) => {
                         const pdfParser = new (PDFParser as any)(null, 1);
                         pdfParser.on("pdfParser_dataError", (errData: any) => reject(errData.parserError));
@@ -69,34 +76,27 @@ export async function POST(req: Request) {
                         pdfParser.parseBuffer(buffer);
                     });
 
-                    // 2. Check if we got "junk" (likely a scanned PDF)
                     if (isJunkText(rawText)) {
                         console.log("Junk text detected from PDF, falling back to OCR/Vision...")
-
-                        // Use pdftoppm to convert first 2 pages to images
                         const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'calendar-'))
                         const inputPdf = path.join(tempDir, 'input.pdf')
                         await fs.writeFile(inputPdf, buffer)
 
                         try {
-                            // -jpeg = output jpeg, -r 150 = 150 DPI for good balance of speed/quality
-                            // -f 1 -l 2 = first 2 pages
                             await execAsync(`pdftoppm -jpeg -r 150 -f 1 -l 2 "${inputPdf}" "${tempDir}/page"`)
-
                             const files = await fs.readdir(tempDir)
                             const pageImages = files
                                 .filter(f => f.startsWith('page-') && f.endsWith('.jpg'))
                                 .sort()
 
                             let combinedOcrText = ''
-
                             for (const imgName of pageImages) {
                                 const imgPath = path.join(tempDir, imgName)
                                 const imgBuffer = await fs.readFile(imgPath)
                                 const base64 = imgBuffer.toString('base64')
                                 const dataUrl = `data:image/jpeg;base64,${base64}`
 
-                                const visionResponse = await groq?.chat.completions.create({
+                                const visionResponse = await groq.chat.completions.create({
                                     model: 'meta-llama/llama-4-scout-17b-16e-instruct',
                                     messages: [
                                         {
@@ -115,7 +115,6 @@ export async function POST(req: Request) {
                                 rawText = 'OCR_FALLBACK_ACTIVE\n' + combinedOcrText
                             }
                         } finally {
-                            // Cleanup
                             await fs.rm(tempDir, { recursive: true, force: true })
                         }
                     }
@@ -127,13 +126,8 @@ export async function POST(req: Request) {
                     }, { status: 400 })
                 }
             } else if (file.type.startsWith('image/')) {
-                // For images, we'll use Groq's vision capability
                 const base64 = buffer.toString('base64')
                 const dataUrl = `data:${file.type};base64,${base64}`
-
-                if (!groq) {
-                    return NextResponse.json({ error: 'Groq API key not configured' }, { status: 500 })
-                }
 
                 try {
                     const visionResponse = await groq.chat.completions.create({
@@ -142,20 +136,13 @@ export async function POST(req: Request) {
                             {
                                 role: 'user',
                                 content: [
-                                    {
-                                        type: 'image_url',
-                                        image_url: { url: dataUrl }
-                                    },
-                                    {
-                                        type: 'text',
-                                        text: 'Extract all text from this academic calendar image. List all dates, events, exams, holidays, and deadlines you can see. Format as plain text.'
-                                    }
+                                    { type: 'image_url', image_url: { url: dataUrl } },
+                                    { type: 'text', text: 'Extract all text from this academic calendar image. List all dates, events, exams, holidays, and deadlines you can see. Format as plain text.' }
                                 ]
                             }
                         ],
                         max_tokens: 4000
                     })
-
                     rawText = visionResponse.choices[0]?.message?.content || ''
                 } catch (visionError) {
                     console.error('Vision API error:', visionError)
@@ -174,32 +161,18 @@ export async function POST(req: Request) {
         }
 
         if (!rawText || rawText.trim().length === 0) {
-            console.warn("Extracted text is empty")
             return NextResponse.json({
                 error: 'No text found in PDF',
-                debugText: "The PDF parser successfully ran but found 0 characters of text.\n\nPossible reasons:\n1. The PDF is a scanned image (requires OCR).\n2. The PDF is encrypted/protected.\n3. The file is corrupted."
+                debugText: "The PDF parser successfully ran but found 0 characters of text."
             }, { status: 400 })
         }
 
-        // Clean and Truncate Text
-        // The PDF often has huge gaps which bloat the character count.
-        // We compress multiple spaces into one to save context window.
         const cleanedText = rawText
-            .replace(/Page \(\d+\) Break/g, '') // Remove page breaks
-            .replace(/\s\s+/g, ' ') // Collapse multiple spaces/newlines into single space
+            .replace(/Page \(\d+\) Break/g, '')
+            .replace(/\s\s+/g, ' ')
             .trim()
 
-        console.log("Original length:", rawText.length, "Cleaned length:", cleanedText.length)
-
-        // Groq Llama 3.3 has 128k context, so 100k chars is safe.
         const truncatedText = cleanedText.substring(0, 100000)
-        console.log("Sending text to Groq, length:", truncatedText.length)
-
-        // Use Groq to parse calendar events
-        if (!groq) {
-            return NextResponse.json({ error: 'Groq API key not configured' }, { status: 500 })
-        }
-
         const currentYear = new Date().getFullYear()
 
         const completion = await groq.chat.completions.create({
@@ -208,13 +181,7 @@ export async function POST(req: Request) {
                 {
                     role: 'system',
                     content: `You are a strict academic calendar parser for extracted PDF text. 
-                    
-                    CRITICAL INSTRUCTIONS:
-                    - The input text has been compressed (extra spaces removed), so table headers and data might look like "Event Date Description CAT1 Oct25 Exam".
-                    - Identify ALL events, exams, holidays, and deadlines.
-                    - Look for patterns like "Date - Event", "Event ... Date", or table row patterns.
                     - Dates are extremely important. Assume year ${currentYear} or ${currentYear + 1} based on context.
-                    
                     Extract:
                     - title: Event name
                     - type: "exam" | "holiday" | "event" | "deadline"
@@ -224,12 +191,7 @@ export async function POST(req: Request) {
                     - description: Additional details
                     
                     Output valid JSON object:
-                    {
-                        "events": [
-                            { ...event1 },
-                            { ...event2 }
-                        ]
-                    }`
+                    { "events": [ { ...event } ] }`
                 },
                 {
                     role: 'user',
@@ -241,60 +203,40 @@ export async function POST(req: Request) {
         })
 
         const responseText = completion.choices[0]?.message?.content || '{}'
-
-        // Extract JSON from response
         let events: CalendarEvent[] = []
         try {
             const parsed = JSON.parse(responseText)
-            events = (parsed.events || []).map((e: any) => ({
-                ...e,
-                selected: true
-            }))
+            events = (parsed.events || []).map((e: any) => ({ ...e, selected: true }))
         } catch (e) {
-            console.error('Failed to parse AI response:', e)
-            return NextResponse.json({
-                error: 'Failed to parse calendar events',
-                rawText: truncatedText.slice(0, 500)
-            }, { status: 400 })
+            return NextResponse.json({ error: 'Failed to parse calendar events' }, { status: 400 })
         }
 
-        return NextResponse.json({
-            success: true,
-            events,
-            debugText: truncatedText,
-            rawTextPreview: truncatedText.slice(0, 500)
-        })
+        return NextResponse.json({ success: true, events, debugText: truncatedText })
 
     } catch (error) {
         console.error('Calendar parse error:', error)
-        return NextResponse.json({
-            error: 'Failed to parse calendar',
-            details: error instanceof Error ? error.message : 'Unknown error'
-        }, { status: 500 })
+        return NextResponse.json({ error: 'Failed to parse calendar' }, { status: 500 })
     }
 }
 
 // POST to save parsed events
 export async function PUT(req: Request) {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    const userId = session.user.id
+
     try {
         const { events } = await req.json() as { events: CalendarEvent[] }
+        if (!events || !Array.isArray(events)) return NextResponse.json({ error: 'Invalid events array' }, { status: 400 })
 
-        if (!events || !Array.isArray(events)) {
-            return NextResponse.json({ error: 'Invalid events array' }, { status: 400 })
-        }
-
-        const results = {
-            exams: 0,
-            scheduleEvents: 0,
-            errors: 0
-        }
+        const results = { exams: 0, scheduleEvents: 0, errors: 0 }
 
         for (const event of events) {
             try {
                 if (event.type === 'exam') {
-                    // Add as exam
                     await prisma.exam.create({
                         data: {
+                            userId,
                             title: event.title,
                             date: new Date(event.startDate),
                             syllabus: event.description || null
@@ -302,9 +244,7 @@ export async function PUT(req: Request) {
                     })
                     results.exams++
                 } else {
-                    // Add as schedule event(s)
                     if (event.endDate && event.endDate !== event.startDate) {
-                        // Date range - create events for each day
                         const days = eachDayOfInterval({
                             start: new Date(event.startDate),
                             end: new Date(event.endDate)
@@ -313,6 +253,7 @@ export async function PUT(req: Request) {
                         for (const day of days) {
                             await prisma.scheduleEvent.create({
                                 data: {
+                                    userId,
                                     title: event.title,
                                     type: event.type === 'holiday' ? 'Personal' : 'Study',
                                     day: format(day, 'yyyy-MM-dd'),
@@ -324,9 +265,9 @@ export async function PUT(req: Request) {
                             results.scheduleEvents++
                         }
                     } else {
-                        // Single day event
                         await prisma.scheduleEvent.create({
                             data: {
+                                userId,
                                 title: event.title,
                                 type: event.type === 'holiday' ? 'Personal' : 'Study',
                                 day: event.startDate,
@@ -343,11 +284,8 @@ export async function PUT(req: Request) {
                 results.errors++
             }
         }
-
         return NextResponse.json({ success: true, results })
-
     } catch (error) {
-        console.error('Save calendar error:', error)
         return NextResponse.json({ error: 'Failed to save events' }, { status: 500 })
     }
 }

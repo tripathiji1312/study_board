@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/lib/auth"
 
-// GET all tags with usage counts
+// GET all tags with usage counts for the current user
 export async function GET() {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
     const tags = await prisma.tag.findMany({
+        where: { userId: session.user.id },
         include: {
             _count: {
                 select: {
@@ -34,15 +40,20 @@ export async function GET() {
 
 // CREATE a new tag
 export async function POST(request: Request) {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
     const body = await request.json()
 
     if (!body.name) {
         return NextResponse.json({ error: 'Tag name is required' }, { status: 400 })
     }
 
-    // Check if tag already exists
+    const tagName = body.name.toLowerCase().trim()
+
+    // Check if tag already exists for THIS user
     const existing = await prisma.tag.findUnique({
-        where: { name: body.name.toLowerCase().trim() }
+        where: { userId_name: { userId: session.user.id, name: tagName } }
     })
 
     if (existing) {
@@ -51,7 +62,8 @@ export async function POST(request: Request) {
 
     const tag = await prisma.tag.create({
         data: {
-            name: body.name.toLowerCase().trim(),
+            userId: session.user.id,
+            name: tagName,
             color: body.color || '#6366f1'
         }
     })
@@ -61,14 +73,23 @@ export async function POST(request: Request) {
 
 // UPDATE a tag
 export async function PUT(request: Request) {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
     const body = await request.json()
 
     if (!body.id) {
         return NextResponse.json({ error: 'Tag ID is required' }, { status: 400 })
     }
 
+    // Verify ownership
+    const existing = await prisma.tag.findUnique({
+        where: { id: body.id, userId: session.user.id }
+    })
+    if (!existing) return NextResponse.json({ error: "Not Found" }, { status: 404 })
+
     const tag = await prisma.tag.update({
-        where: { id: body.id },
+        where: { id: body.id, userId: session.user.id },
         data: {
             name: body.name?.toLowerCase().trim(),
             color: body.color
@@ -80,6 +101,9 @@ export async function PUT(request: Request) {
 
 // DELETE a tag
 export async function DELETE(request: Request) {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
 
@@ -87,8 +111,14 @@ export async function DELETE(request: Request) {
         return NextResponse.json({ error: 'Tag ID is required' }, { status: 400 })
     }
 
+    // Verify ownership
+    const existing = await prisma.tag.findUnique({
+        where: { id: id, userId: session.user.id }
+    })
+    if (!existing) return NextResponse.json({ error: "Not Found" }, { status: 404 })
+
     await prisma.tag.delete({
-        where: { id }
+        where: { id: id, userId: session.user.id }
     })
 
     return NextResponse.json({ success: true })

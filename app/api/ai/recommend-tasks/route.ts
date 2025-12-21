@@ -1,13 +1,21 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import Groq from 'groq-sdk'
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/lib/auth"
 
 export async function POST(req: Request) {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    const userId = session.user.id
+
     try {
         const { mood } = await req.json()
 
         // Fetch user's API key from settings (fallback to env var)
-        const settings = await prisma.userSettings.findFirst()
+        const settings = await prisma.userSettings.findUnique({
+            where: { userId }
+        })
         const apiKey = settings?.groqApiKey || process.env.GROQ_API_KEY
 
         if (!apiKey) {
@@ -18,9 +26,9 @@ export async function POST(req: Request) {
 
         const groq = new Groq({ apiKey })
 
-        // Fetch pending tasks (limit to 20 to avoid token limits)
+        // Fetch pending tasks for THIS user
         const todos = await prisma.todo.findMany({
-            where: { completed: false },
+            where: { userId, completed: false },
             take: 20,
             orderBy: { priority: 'asc' }, // Get high priority first just in case
             select: { id: true, text: true, priority: true, dueDate: true }
@@ -65,11 +73,10 @@ Return a strict JSON array:
         })
 
         const content = completion.choices[0]?.message?.content || '[]'
-        console.log("AI Response:", content) // Debug log
+        console.log("AI Response:", content)
         let recommendations = []
         try {
             const parsed = JSON.parse(content)
-            // Handle various possible response formats
             if (Array.isArray(parsed)) {
                 recommendations = parsed
             } else if (parsed.recommendations) {
@@ -77,7 +84,6 @@ Return a strict JSON array:
             } else if (parsed.tasks) {
                 recommendations = parsed.tasks
             } else {
-                // Try to find the first array property
                 const keys = Object.keys(parsed)
                 for (const key of keys) {
                     if (Array.isArray(parsed[key])) {

@@ -41,6 +41,8 @@ import {
 } from "@tabler/icons-react"
 import { useStore } from "@/components/providers/store-provider"
 import { toast } from "sonner"
+import { signOut } from "next-auth/react"
+import { IconLogout } from "@tabler/icons-react"
 
 export default function SettingsPage() {
     const {
@@ -67,6 +69,7 @@ export default function SettingsPage() {
     const [emailNotifications, setEmailNotifications] = React.useState(false)
     const [notificationEmail, setNotificationEmail] = React.useState("")
     const [groqApiKey, setGroqApiKey] = React.useState("")
+    const [resendApiKey, setResendApiKey] = React.useState("")
     const [showApiKey, setShowApiKey] = React.useState(false)
 
     // Semester Dialog
@@ -101,6 +104,7 @@ export default function SettingsPage() {
             setEmailNotifications(settings.emailNotifications || false)
             setNotificationEmail(settings.notificationEmail || "")
             setGroqApiKey(settings.groqApiKey || "")
+            setResendApiKey(settings.resendApiKey || "")
         }
     }, [settings])
 
@@ -113,7 +117,8 @@ export default function SettingsPage() {
             breakDuration,
             emailNotifications,
             notificationEmail,
-            groqApiKey
+            groqApiKey,
+            resendApiKey
         })
     }
 
@@ -298,12 +303,13 @@ export default function SettingsPage() {
                                     </div>
                                 </div>
 
-                                {/* AI Settings */}
+                                {/* API Settings */}
                                 <div className="border-t pt-6">
                                     <h3 className="font-semibold mb-4 flex items-center gap-2">
-                                        <IconSparkles className="w-4 h-4" /> AI Settings
+                                        <IconSparkles className="w-4 h-4" /> API Integrations
                                     </h3>
                                     <div className="space-y-4">
+                                        {/* GROQ Key */}
                                         <div className="space-y-2">
                                             <Label htmlFor="apiKey">GROQ API Key</Label>
                                             <div className="flex gap-2">
@@ -328,16 +334,93 @@ export default function SettingsPage() {
                                                 </div>
                                             </div>
                                             <p className="text-xs text-muted-foreground">
-                                                Enter your GROQ API key for AI-powered features like smart recommendations.
-                                                Get one at <a href="https://console.groq.com" target="_blank" rel="noopener noreferrer" className="underline">console.groq.com</a>
+                                                Required for AI recommendations. Get it at <a href="https://console.groq.com" target="_blank" rel="noopener noreferrer" className="underline">console.groq.com</a>
+                                            </p>
+                                        </div>
+
+                                        {/* Resend Key */}
+                                        <div className="space-y-2">
+                                            <Label htmlFor="resendKey">Resend API Key</Label>
+                                            <div className="flex gap-2">
+                                                <div className="relative flex-1">
+                                                    <Input
+                                                        id="resendKey"
+                                                        type="password"
+                                                        value={resendApiKey}
+                                                        onChange={e => setResendApiKey(e.target.value)}
+                                                        placeholder="re_..."
+                                                    />
+                                                </div>
+                                            </div>
+                                            <p className="text-xs text-muted-foreground">
+                                                Required for email notifications. Get it at <a href="https://resend.com/api-keys" target="_blank" rel="noopener noreferrer" className="underline">resend.com</a>
                                             </p>
                                         </div>
                                     </div>
                                 </div>
 
-                                <Button onClick={handleSaveProfile} className="gap-2">
-                                    <IconDeviceFloppy className="w-4 h-4" /> Save Profile
-                                </Button>
+                                <div className="flex justify-between items-center border-t pt-6">
+                                    <Button onClick={handleSaveProfile} className="gap-2">
+                                        <IconDeviceFloppy className="w-4 h-4" /> Save Changes
+                                    </Button>
+
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => signOut({ callbackUrl: '/auth/signin' })}
+                                        className="gap-2 text-muted-foreground hover:text-foreground"
+                                    >
+                                        <IconLogout className="w-4 h-4" /> Sign Out
+                                    </Button>
+                                </div>
+
+                                {/* Danger Zone */}
+                                <div className="border-t pt-6 mt-6">
+                                    <h3 className="font-semibold text-destructive mb-2 flex items-center gap-2">
+                                        <IconTrash className="w-4 h-4" /> Danger Zone
+                                    </h3>
+                                    <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-4 flex items-center justify-between">
+                                        <div>
+                                            <p className="font-medium text-destructive">Delete Account</p>
+                                            <p className="text-sm text-muted-foreground">
+                                                Permanently delete your account and all data. This action cannot be undone.
+                                            </p>
+                                        </div>
+                                        <Dialog>
+                                            <DialogTrigger asChild>
+                                                <Button variant="destructive">Delete Account</Button>
+                                            </DialogTrigger>
+                                            <DialogContent>
+                                                <DialogHeader>
+                                                    <DialogTitle>Are you absolutely sure?</DialogTitle>
+                                                    <DialogDescription>
+                                                        This action cannot be undone. This will permanently delete your account and remove your data from our servers.
+                                                    </DialogDescription>
+                                                </DialogHeader>
+                                                <DialogFooter>
+                                                    <Button variant="outline" onClick={() => { }}>Cancel</Button>
+                                                    <Button
+                                                        variant="destructive"
+                                                        onClick={async () => {
+                                                            try {
+                                                                const res = await fetch('/api/user', { method: 'DELETE' })
+                                                                if (res.ok) {
+                                                                    toast.success("Account deleted")
+                                                                    signOut({ callbackUrl: '/auth/signin' })
+                                                                } else {
+                                                                    throw new Error("Failed")
+                                                                }
+                                                            } catch (e) {
+                                                                toast.error("Failed to delete account")
+                                                            }
+                                                        }}
+                                                    >
+                                                        Yes, delete my account
+                                                    </Button>
+                                                </DialogFooter>
+                                            </DialogContent>
+                                        </Dialog>
+                                    </div>
+                                </div>
                             </CardContent>
                         </Card>
                     </TabsContent>

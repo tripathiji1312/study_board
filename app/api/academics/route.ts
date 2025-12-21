@@ -1,11 +1,23 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+
+async function getSession() {
+    return await getServerSession(authOptions)
+}
 
 export async function GET(request: Request) {
+    const session = await getSession()
+    if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
     const { searchParams } = new URL(request.url)
     const semesterId = searchParams.get('semesterId')
 
-    const where = semesterId ? { semesterId: parseInt(semesterId) } : {}
+    const where: any = { userId: session.user.id }
+    if (semesterId) {
+        where.semesterId = parseInt(semesterId)
+    }
 
     const subjects = await prisma.subject.findMany({
         where,
@@ -21,6 +33,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+    const session = await getSession()
+    if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
     const body = await request.json()
     const subject = await prisma.subject.create({
         data: {
@@ -35,18 +50,28 @@ export async function POST(request: Request) {
             labRoom: body.labRoom,
             classRoom: body.classRoom,
             da: body.da,
-            semesterId: body.semesterId ? parseInt(body.semesterId) : null
+            semesterId: body.semesterId ? parseInt(body.semesterId) : null,
+            userId: session.user.id
         }
     })
     return NextResponse.json(subject)
 }
 
 export async function PUT(request: Request) {
+    const session = await getSession()
+    if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
     const body = await request.json()
     if (!body.id) return NextResponse.json({ error: 'ID required' }, { status: 400 })
 
+    // Verify ownership
+    const existing = await prisma.subject.findUnique({
+        where: { id: body.id, userId: session.user.id }
+    })
+    if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
     const subject = await prisma.subject.update({
-        where: { id: body.id },
+        where: { id: body.id, userId: session.user.id },
         data: {
             name: body.name,
             code: body.code,
@@ -71,12 +96,21 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+    const session = await getSession()
+    if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
     if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 })
 
+    // Verify ownership
+    const existing = await prisma.subject.findUnique({
+        where: { id: id, userId: session.user.id }
+    })
+    if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
     await prisma.subject.delete({
-        where: { id }
+        where: { id: id, userId: session.user.id }
     })
     return NextResponse.json({ success: true })
 }

@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
+import prisma from '@/lib/prisma'
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/lib/auth"
 
 const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID
 const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET
 const REDIRECT_URI = process.env.SPOTIFY_REDIRECT_URI || 'http://localhost:3000/api/spotify/callback'
 
 export async function GET(request: NextRequest) {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) return NextResponse.redirect(new URL('/auth/signin', request.url))
+    const userId = session.user.id
+
     const searchParams = request.nextUrl.searchParams
     const code = searchParams.get('code')
     const error = searchParams.get('error')
@@ -39,7 +46,35 @@ export async function GET(request: NextRequest) {
 
         const tokens = await tokenResponse.json()
 
-        // Store tokens in cookies (httpOnly for security)
+        // Store tokens in database (Central Source of Truth)
+        await prisma.account.upsert({
+            where: {
+                provider_providerAccountId: {
+                    provider: 'spotify',
+                    providerAccountId: userId // We use userId as providerAccountId for direct link
+                }
+            },
+            update: {
+                access_token: tokens.access_token,
+                refresh_token: tokens.refresh_token,
+                expires_at: Math.floor(Date.now() / 1000) + tokens.expires_in,
+                token_type: tokens.token_type,
+                scope: tokens.scope
+            },
+            create: {
+                userId: userId,
+                type: 'oauth',
+                provider: 'spotify',
+                providerAccountId: userId,
+                access_token: tokens.access_token,
+                refresh_token: tokens.refresh_token,
+                expires_at: Math.floor(Date.now() / 1000) + tokens.expires_in,
+                token_type: tokens.token_type,
+                scope: tokens.scope
+            }
+        })
+
+        // Store tokens in cookies (Legacy support & faster extraction for frontend)
         const cookieStore = await cookies()
         cookieStore.set('spotify_access_token', tokens.access_token, {
             httpOnly: true,

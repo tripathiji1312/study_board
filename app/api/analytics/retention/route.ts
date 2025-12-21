@@ -1,13 +1,19 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/lib/auth"
 
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
     try {
-        // Fetch all Completed or Revised modules
+        // Fetch all Completed or Revised modules for THIS user
         const modules = await prisma.syllabusModule.findMany({
             where: {
+                subject: { userId: session.user.id },
                 status: { in: ['Completed', 'Revised'] }
             },
             include: { subject: true }

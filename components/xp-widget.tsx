@@ -84,25 +84,18 @@ export function XPWidget() {
     const { xp, level, nextLevelXP, progress, rank } = useXP()
 
     return (
-        <div className="w-full space-y-2">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <div className={cn("p-1 rounded", rank.color.replace("text-", "bg-").replace("-400", "-500/20"))}>
-                        <IconTrophy className={cn("w-4 h-4", rank.color)} />
+        <div className="w-full space-y-1.5">
+            <div className="flex items-center justify-between px-0.5">
+                <div className="flex items-center gap-1.5">
+                    <div className={cn("p-0.5 rounded", rank.color.replace("text-", "bg-").replace("-400", "-500/20"))}>
+                        <IconTrophy className={cn("w-3 h-3", rank.color)} />
                     </div>
-                    <div>
-                        <p className={cn("text-xs font-semibold", rank.color)}>{rank.name}</p>
-                        <p className="text-[10px] text-muted-foreground">Level {level}</p>
-                    </div>
+                    <span className={cn("text-[10px] font-bold tracking-tight", rank.color)}>{rank.name}</span>
+                    <span className="text-[10px] text-muted-foreground/80 font-medium">Lvl {level}</span>
                 </div>
-                <div className="text-right">
-                    <p className="text-xs font-mono">{xp} XP</p>
-                </div>
+                <span className="text-[10px] font-mono font-bold text-primary/80">{xp} XP</span>
             </div>
-            <Progress value={progress} className="h-1.5" />
-            <p className="text-[10px] text-muted-foreground text-center">
-                {Math.round(nextLevelXP - xp)} XP to next level
-            </p>
+            <Progress value={progress} className="h-1" />
         </div>
     )
 }
