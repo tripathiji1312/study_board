@@ -52,7 +52,7 @@ export async function POST(req: Request) {
     try {
         // Fetch user's API key
         const settings = await prisma.userSettings.findFirst()
-        const apiKey = settings?.groqApiKey || process.env.GROQ_API_KEY
+        const apiKey = settings?.groqApiKey
 
         if (!apiKey) {
             return NextResponse.json({ error: 'No API key configured. Add your GROQ API key in Settings.' }, { status: 400 })

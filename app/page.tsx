@@ -11,19 +11,16 @@ export default function Home() {
 
     if (status === "loading") {
         return (
-            <Shell>
-                <div className="space-y-6 max-w-[1600px] mx-auto pt-8">
-                    <div className="flex flex-col gap-4">
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <div className="space-y-6 max-w-[1600px] mx-auto pt-8 opacity-50">
+                    {/* Neutral loading state without sidebar */}
+                    <div className="flex flex-col gap-4 items-center">
                         <div className="h-12 w-48 bg-muted rounded-lg animate-pulse" />
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <WidgetSkeleton />
-                            <WidgetSkeleton />
-                            <WidgetSkeleton />
-                        </div>
                     </div>
                 </div>
-            </Shell>
+            </div>
         )
+
     }
 
     if (session) {

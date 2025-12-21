@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server'
 import Groq from 'groq-sdk'
-
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
+import prisma from "@/lib/prisma"
 
 export async function POST(request: Request) {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     try {
         const body = await request.json()
         const { moduleTitle, topics, subjectName } = body
@@ -11,6 +17,18 @@ export async function POST(request: Request) {
         if (!moduleTitle || !subjectName) {
             return NextResponse.json({ error: 'Missing topic info' }, { status: 400 })
         }
+
+        // Fetch user's API key
+        const settings = await prisma.userSettings.findUnique({
+            where: { userId: session.user.id }
+        })
+        const apiKey = settings?.groqApiKey
+
+        if (!apiKey) {
+            return NextResponse.json({ error: 'Groq API Key not configured. Please add it in Settings.' }, { status: 400 })
+        }
+
+        const groq = new Groq({ apiKey })
 
         const prompt = `
 **ROLE**: You are an elite Curriculum Architect who has designed courses at MIT, Stanford, and trained engineers at Google. You have encyclopedic knowledge of the best educators in every CS domain.

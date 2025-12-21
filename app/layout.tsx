@@ -9,6 +9,10 @@ import { Toaster } from "@/components/ui/sonner"
 import { AuthProvider } from "@/components/providers/auth-provider"
 import { GamificationProvider } from "@/components/providers/gamification-provider"
 import { SmartReminders } from "@/components/smart-reminders"
+import { WalkthroughProvider } from "@/components/providers/walkthrough-provider"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
+import prisma from "@/lib/prisma"
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -27,11 +31,21 @@ export const metadata: Metadata = {
   description: "Advanced Student Dashboard",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await getServerSession(authOptions)
+  let hasSeenWalkthrough = false
+
+  if (session?.user?.id) {
+    const settings = await prisma.userSettings.findUnique({
+      where: { userId: session.user.id },
+      select: { hasSeenWalkthrough: true }
+    })
+    hasSeenWalkthrough = !!settings?.hasSeenWalkthrough
+  }
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <body
@@ -48,9 +62,11 @@ export default function RootLayout({
               <SWRProvider>
                 <StoreProvider>
                   <GamificationProvider>
-                    {children}
-                    <SmartReminders />
-                    <Toaster />
+                    <WalkthroughProvider hasSeenInitial={hasSeenWalkthrough}>
+                      {children}
+                      <SmartReminders />
+                      <Toaster />
+                    </WalkthroughProvider>
                   </GamificationProvider>
                 </StoreProvider>
               </SWRProvider>

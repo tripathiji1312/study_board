@@ -60,7 +60,7 @@ export async function POST(req: Request) {
             where: { userId }
         })
         const userName = settings?.displayName || undefined
-        const resendApiKey = settings?.resendApiKey || process.env.RESEND_API_KEY
+        const resendApiKey = settings?.resendApiKey
 
         const userResend = resendApiKey ? new Resend(resendApiKey) : null
         if (!userResend) {

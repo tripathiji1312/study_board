@@ -10,6 +10,7 @@ import { isSameDay, format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { IconLoader2, IconCircleCheck, IconCircle, IconSparkles } from "@tabler/icons-react"
+import { toast } from "sonner"
 
 const MOODS = [
     { level: 1, color: "bg-red-400", hover: "hover:bg-red-500", label: "Terrible", emoji: "😫" },
@@ -48,6 +49,15 @@ export function MoodWidget() {
             if (res.ok) {
                 const data = await res.json()
                 setRecommendations(data.recommendations || [])
+            } else {
+                const data = await res.json()
+                if (res.status === 400 && data.error?.includes("API")) {
+                    toast.error("AI Features Disabled", {
+                        description: "Please configure your Groq API Key in Settings to use this feature.",
+                        duration: 5000,
+                    })
+                    setShowDialog(false)
+                }
             }
         } catch (e) {
             console.error(e)

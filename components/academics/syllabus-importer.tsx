@@ -63,7 +63,14 @@ export function SyllabusImporter({ subjectId, onImportComplete }: SyllabusImport
                 }
             }
         } catch (error: any) {
-            toast.error(`Parsing failed: ${error.message}`)
+            if (error.message?.includes("API Key")) {
+                toast.error("AI Features Disabled", {
+                    description: "Please configure your Groq API Key in Settings to parse PDFs.",
+                    duration: 5000,
+                })
+            } else {
+                toast.error(`Parsing failed: ${error.message}`)
+            }
         } finally {
             setIsParsing(false)
         }

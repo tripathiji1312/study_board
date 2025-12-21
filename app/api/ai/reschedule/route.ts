@@ -99,7 +99,7 @@ No explanations, just the JSON array.`
             try {
                 // Fetch user's API key
                 const settings = await prisma.userSettings.findFirst()
-                const apiKey = settings?.groqApiKey || process.env.GROQ_API_KEY
+                const apiKey = settings?.groqApiKey
 
                 if (!apiKey) {
                     // Fallback to spread strategy

@@ -20,7 +20,7 @@ export async function POST(request: Request) {
             where: { userId: session.user.id }
         })
 
-        const apiKey = settings?.groqApiKey || process.env.GROQ_API_KEY
+        const apiKey = settings?.groqApiKey
         if (!apiKey) {
             return NextResponse.json({ error: 'Groq API Key not configured. Please add it in Settings.' }, { status: 400 })
         }

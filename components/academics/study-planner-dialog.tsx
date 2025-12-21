@@ -79,13 +79,21 @@ export function StudyPlannerDialog({ open, onOpenChange, examDate, subjectId, ex
             })
 
             const data = await res.json()
-            if (!res.ok) throw new Error(data.error)
+            if (!res.ok) throw new Error(data.error || "Failed to generate plan")
 
             setGeneratedPlan(data.plan)
             setStep("review")
-        } catch (error) {
-            toast.error("Failed to generate plan")
-            console.error(error)
+        } catch (error: any) {
+            const msg = error instanceof Error ? error.message : 'Failed to generate plan'
+            if (msg.includes("API")) {
+                toast.error("AI Features Disabled", {
+                    description: "Please configure your Groq API Key in Settings to generate study plans.",
+                    duration: 5000,
+                })
+            } else {
+                toast.error("Failed to generate plan")
+                console.error(error)
+            }
         } finally {
             setIsLoading(false)
         }

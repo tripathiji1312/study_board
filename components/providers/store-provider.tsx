@@ -561,7 +561,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
                 setTodos(todosData)
             }
         } else {
-            toast.error("Failed to reschedule")
+            const data = await res.json()
+            if (res.status === 400 && data.error?.includes("API")) {
+                toast.error("AI Features Disabled", {
+                    description: "Please configure your Groq API Key in Settings to use Smart Reschedule.",
+                    duration: 5000,
+                })
+            } else {
+                toast.error("Failed to reschedule")
+            }
         }
     }
 

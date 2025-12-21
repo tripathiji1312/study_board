@@ -114,7 +114,9 @@ export function AppSidebar({ className }: SidebarProps) {
             <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar">
                 <div className="flex flex-col gap-4 px-3 py-4">
                     {/* Global Search */}
-                    <GlobalSearch />
+                    <div id="quick-actions-menu">
+                        <GlobalSearch />
+                    </div>
 
                     <NavGroup label="Main" routes={mainRoutes} />
                     <NavGroup label="Productivity" routes={productivityRoutes} />
@@ -145,7 +147,7 @@ export function AppSidebar({ className }: SidebarProps) {
                         <div className="flex flex-col flex-1 min-w-0">
                             <div className="flex items-center justify-between">
                                 <span className="text-xs font-bold truncate leading-none">{settings?.displayName || "Student"}</span>
-                                <Button variant="ghost" size="icon" className="h-4 w-4 rounded-md hover:bg-muted" asChild>
+                                <Button variant="ghost" size="icon" className="h-4 w-4 rounded-md hover:bg-muted" asChild id="sidebar-settings">
                                     <Link href="/settings" onClick={() => setIsOpen(false)}>
                                         <IconSettings className="w-3 h-3 text-muted-foreground group-hover:text-foreground transition-colors" />
                                     </Link>

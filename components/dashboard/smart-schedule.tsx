@@ -503,7 +503,7 @@ export function SmartScheduleWidget() {
     }
 
     return (
-        <Card className="h-full min-h-[500px] flex flex-col shadow-sm group">
+        <Card className="h-full min-h-[500px] flex flex-col shadow-sm group" id="smart-schedule-widget">
             <CardHeader className="p-4 pb-2 space-y-0 flex flex-row items-center justify-between border-b bg-card shrink-0">
                 <div className="flex items-center gap-3">
                     <CardTitle className="text-sm font-medium">Smart Agenda</CardTitle>

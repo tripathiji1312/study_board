@@ -237,7 +237,14 @@ export default function SyllabusPage() {
             if (inputRef.current) inputRef.current.value = ''
         } catch (error: any) {
             console.error("Import failed:", error)
-            toast.error(error.message || "Failed to import syllabus")
+            if (error.message?.includes("API Key")) {
+                toast.error("AI Features Disabled", {
+                    description: "Please configure your Groq API Key in Settings to import syllabus PDFs.",
+                    duration: 5000,
+                })
+            } else {
+                toast.error(error.message || "Failed to import syllabus")
+            }
         } finally {
             setIsImporting(false)
         }
@@ -356,11 +363,27 @@ export default function SyllabusPage() {
                 })
             })
             const data = await res.json()
+            if (!res.ok) {
+                if (res.status === 400 && data.error?.includes("API")) {
+                    toast.error("AI Features Disabled", {
+                        description: "Groq API Key required for Resource Scout. Please check Settings.",
+                        duration: 5000,
+                    })
+                    return
+                }
+                throw new Error(data.error || "Failed to scout")
+            }
             if (data.resources) {
                 setScoutedResources(data.resources)
             }
-        } catch (error) {
-            toast.error("Failed to scout resources")
+        } catch (error: any) {
+            console.error("Scout error:", error)
+            if (error.message?.includes("API Key") || (error instanceof SyntaxError)) { // handle JSON parse error if 400 returns text/html, but our API returns json error
+                // Actually fetch throws on non-ok status if we don't handle it
+                // But here we rely on res.json() in try block.
+                // Let's improve the fetch handling above.
+            }
+            toast.error("Failed to scout resources. Check API Key.")
         } finally {
             clearInterval(stepsInterval)
             setIsScouting(false)

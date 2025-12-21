@@ -10,7 +10,7 @@ async function getGroqClient(userId: string) {
         where: { userId },
         select: { groqApiKey: true }
     })
-    const apiKey = settings?.groqApiKey || process.env.GROQ_API_KEY
+    const apiKey = settings?.groqApiKey
     if (!apiKey) return null
     return new Groq({ apiKey })
 }

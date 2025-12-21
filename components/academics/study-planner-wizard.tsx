@@ -129,11 +129,19 @@ export function StudyPlannerWizard({ open, onOpenChange, defaultSubjectId }: Stu
                 body: formData // No Content-Type header - browser sets it with boundary
             })
             const data = await res.json()
-            if (!res.ok) throw new Error(data.error)
+            if (!res.ok) throw new Error(data.error || "Failed to generate plan")
             setAiPlan(data.plan)
-        } catch (error) {
-            toast.error("Failed to generate plan")
-            console.error(error)
+        } catch (error: any) {
+            const msg = error instanceof Error ? error.message : "Failed to generate plan"
+            if (msg.includes("API")) {
+                toast.error("AI Features Disabled", {
+                    description: "Please configure your Groq API Key in Settings to generate study plans.",
+                    duration: 5000,
+                })
+            } else {
+                toast.error(msg)
+                console.error(error)
+            }
         } finally {
             setLoading(false)
         }

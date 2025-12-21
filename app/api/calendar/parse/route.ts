@@ -56,7 +56,7 @@ export async function POST(req: Request) {
         const settings = await prisma.userSettings.findUnique({
             where: { userId }
         })
-        const apiKey = settings?.groqApiKey || process.env.GROQ_API_KEY
+        const apiKey = settings?.groqApiKey
         if (!apiKey) {
             return NextResponse.json({ error: 'Groq API Key not configured. Please add it in Settings.' }, { status: 400 })
         }
