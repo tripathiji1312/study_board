@@ -146,10 +146,18 @@ export default function SyllabusPage() {
                     syllabusRes.json()
                 ])
 
-                const found = subjectsData.find((s: Subject) => s.id === subjectId)
-                if (found) setSubject(found)
+                if (Array.isArray(subjectsData)) {
+                    const found = subjectsData.find((s: Subject) => s.id === subjectId)
+                    if (found) setSubject(found)
+                }
 
-                setModules(syllabusData)
+                if (Array.isArray(syllabusData)) {
+                    setModules(syllabusData)
+                } else {
+                    console.error("Invalid syllabus data:", syllabusData)
+                    // If it's an error object, likely an empty state or error is better
+                    setModules([])
+                }
             } catch (error) {
                 console.error("Failed to fetch data:", error)
                 toast.error("Failed to load syllabus")
@@ -168,9 +176,15 @@ export default function SyllabusPage() {
 
     // Refresh modules from API
     const refreshModules = async () => {
-        const syllabusRes = await fetch(`/api/syllabus?subjectId=${subjectId}`)
-        const syllabusData = await syllabusRes.json()
-        setModules(syllabusData)
+        try {
+            const syllabusRes = await fetch(`/api/syllabus?subjectId=${subjectId}`)
+            const syllabusData = await syllabusRes.json()
+            if (Array.isArray(syllabusData)) {
+                setModules(syllabusData)
+            }
+        } catch (e) {
+            console.error("Failed to refresh modules")
+        }
     }
 
     // Toggle expand module

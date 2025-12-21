@@ -84,7 +84,7 @@ export function StudyGraph() {
 
     // Calculate Stats
     const stats = React.useMemo(() => {
-        let currentStreak = 0
+        const currentStreak = 0
         let longestStreak = 0
         let activeDays = 0
         let tempStreak = 0

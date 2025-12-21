@@ -27,7 +27,7 @@ export async function POST(req: Request) {
 
         const title = body.title || body.type || "Exam"
 
-        let dateObj = new Date(body.date)
+        const dateObj = new Date(body.date)
         if (body.time) {
             const [hours, minutes] = body.time.split(':').map(Number)
             if (!isNaN(hours) && !isNaN(minutes)) {

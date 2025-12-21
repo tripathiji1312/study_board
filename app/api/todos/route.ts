@@ -37,7 +37,7 @@ export async function GET(request: Request) {
     const nextWeekStr = nextWeek.toISOString().split('T')[0]
 
     // Base where clause - only get parent todos (not subtasks) AND belonging to user
-    let where: any = {
+    const where: any = {
         userId: userId,
         parentId: null
     }

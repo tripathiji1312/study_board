@@ -65,7 +65,6 @@ export default function PrivacyPage() {
                         <h2 className="text-2xl font-semibold mb-4">6. Your Rights</h2>
                         <p className="text-muted-foreground leading-relaxed mb-4">You have the right to:</p>
                         <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
-                            <li>Access and export your data.</li>
                             <li>Request deletion of your account and all associated data.</li>
                             <li>Update or correct your personal information.</li>
                         </ul>

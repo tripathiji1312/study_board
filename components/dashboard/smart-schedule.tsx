@@ -110,7 +110,7 @@ function SortableItem({ id, children, disabled }: { id: string, children: React.
         transition,
         opacity: isDragging ? 0.5 : 1,
         zIndex: isDragging ? 50 : "auto",
-        position: 'relative' as 'relative', // Fix type
+        position: 'relative' as const, // Fix type
     };
 
     return (
@@ -323,7 +323,7 @@ export function SmartScheduleWidget() {
         // If I drop at index 0, take index 1 time minus 30m?
         // If I drop at index 5, take index 4 time plus 30m?
 
-        let targetNeighborIndex = newIndex
+        const targetNeighborIndex = newIndex
         if (oldIndex < newIndex) {
             // Moved down. We want to be after the item currently at newIndex (which shifts up)
             // But visually, we are dropping "on" it.
