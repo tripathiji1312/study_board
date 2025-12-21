@@ -10,19 +10,19 @@ export async function POST() {
         const hashedPassword = await bcrypt.hash(password, 10)
 
         // 1. Check if demo user exists
-        let user = await prisma.user.findUnique({
+        const existingUser = await prisma.user.findUnique({
             where: { email },
             include: { settings: true }
         })
 
         // If user and settings exist, we assume it's already seeded.
         // We can just return success to let them login.
-        if (user) {
+        if (existingUser) {
             return NextResponse.json({ success: true, message: "Demo user exists" })
         }
 
         // 2. Create User
-        user = await prisma.user.create({
+        const user = await prisma.user.create({
             data: {
                 name: "Demo Student",
                 email,

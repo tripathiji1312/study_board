@@ -126,31 +126,57 @@ export default function SchedulePage() {
     }
 
     // --- Data Aggregation Helper ---
-    const getDayEvents = React.useCallback((date: Date) => {
-        const items: { type: string, title: string, color: string }[] = []
-        const dayName = format(date, "EEEE")
-        const dateStr = format(date, "yyyy-MM-dd")
+    // Optimization: Create Maps for O(1) lookup instead of O(N) filtering inside loops
+    const eventsByDate = React.useMemo(() => {
+        const map = new Map<string, { type: string, title: string, color: string }[]>()
 
-        // Classes
+        const addToMap = (dateStr: string, item: { type: string, title: string, color: string }) => {
+            if (!map.has(dateStr)) map.set(dateStr, [])
+            map.get(dateStr)?.push(item)
+        }
+
         schedule.forEach(ev => {
-            if (ev.day === dayName || ev.day === dateStr) {
+            if (ev.day.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                addToMap(ev.day, { type: "Class", title: ev.title, color: "bg-blue-500" })
+            } else {
+                // Handling recurring days (Monday, Tuesday etc) is harder with a simple map
+                // We'll handle them separately or generate dates for the view
+            }
+        })
+
+        assignments.forEach(a => {
+            if (a.dueDate) {
+                const dateStr = a.dueDate.split('T')[0]
+                addToMap(dateStr, { type: "Assignment", title: a.title, color: "bg-orange-500" })
+            }
+        })
+
+        exams.forEach(e => {
+            if (e.date) {
+                const dateStr = e.date.split('T')[0]
+                addToMap(dateStr, { type: "Exam", title: e.title, color: "bg-red-500" })
+            }
+        })
+
+        return map
+    }, [schedule, assignments, exams])
+
+    const getDayEvents = React.useCallback((date: Date) => {
+        const dateStr = format(date, "yyyy-MM-dd")
+        const dayName = format(date, "EEEE")
+
+        // Get strict date matches
+        const items = [...(eventsByDate.get(dateStr) || [])]
+
+        // Add recurring schedule events
+        schedule.forEach(ev => {
+            if (ev.day === dayName) {
                 items.push({ type: "Class", title: ev.title, color: "bg-blue-500" })
             }
         })
-        // Assignments
-        assignments.forEach(a => {
-            if (a.dueDate && isSameDay(parseISO(a.dueDate), date)) {
-                items.push({ type: "Assignment", title: a.title, color: "bg-orange-500" })
-            }
-        })
-        // Exams
-        exams.forEach(e => {
-            if (isSameDay(new Date(e.date), date)) {
-                items.push({ type: "Exam", title: e.title, color: "bg-red-500" })
-            }
-        })
+
         return items
-    }, [schedule, assignments, exams])
+    }, [eventsByDate, schedule])
 
     // --- Selected Day Details Helper ---
     const getDetailedEvents = React.useCallback((date: Date) => {

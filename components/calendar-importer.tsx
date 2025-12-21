@@ -1,14 +1,17 @@
 "use client"
 
 import * as React from "react"
+import { IconUpload, IconFileText, IconLoader2, IconX, IconCheck, IconRefresh, IconArrowRight, IconCalendarEvent, IconAlertTriangle, IconSchool, IconFlag } from "@tabler/icons-react"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
-import { Card, CardContent } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import { Card } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Checkbox } from "@/components/ui/checkbox"
-import { IconUpload, IconCalendarEvent, IconLoader2, IconCheck, IconX } from "@tabler/icons-react"
-import { toast } from "sonner"
+import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 
 interface CalendarEvent {
@@ -26,46 +29,42 @@ interface CalendarImporterProps {
 }
 
 export function CalendarImporter({ onImportComplete }: CalendarImporterProps) {
-    const [isOpen, setIsOpen] = React.useState(false)
+    const [file, setFile] = React.useState<File | null>(null)
     const [isParsing, setIsParsing] = React.useState(false)
-    const [isSaving, setIsSaving] = React.useState(false)
     const [events, setEvents] = React.useState<CalendarEvent[]>([])
-    const [fileName, setFileName] = React.useState("")
+    const [step, setStep] = React.useState<"upload" | "review">("upload")
+    const [open, setOpen] = React.useState(false)
     const [showDebug, setShowDebug] = React.useState(false)
-    const [debugText, setDebugText] = React.useState("")
+    const [debugText, setDebugText] = React.useState<string>("")
+    const [isSaving, setIsSaving] = React.useState(false)
     const [isOcrActive, setIsOcrActive] = React.useState(false)
 
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0]
+    const inputRef = React.useRef<HTMLInputElement>(null)
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            setFile(e.target.files[0])
+        }
+    }
+
+    const parseCalendar = async () => {
         if (!file) return
 
-        setFileName(file.name)
         setIsParsing(true)
-        setEvents([])
         setDebugText("")
-        setShowDebug(false)
         setIsOcrActive(false)
 
+        const formData = new FormData()
+        formData.append('file', file)
+
         try {
-            const formData = new FormData()
-            formData.append('file', file)
-
-            const res = await fetch('/api/calendar/parse', {
-                method: 'POST',
-                body: formData
-            })
-
+            const res = await fetch('/api/calendar/parse', { method: 'POST', body: formData })
             const data = await res.json()
 
-            if (!res.ok) {
-                if (data.debugText) setDebugText(data.debugText)
-                throw new Error(data.error || 'Failed to parse calendar')
-            }
+            if (!res.ok) throw new Error(data.details || data.error || 'Failed to parse')
 
-            if (data.debugText) {
-                setDebugText(data.debugText)
-                setIsOcrActive(data.debugText.startsWith('OCR_FALLBACK_ACTIVE'))
-            }
+            if (data.debugText) setDebugText(data.debugText)
+            setIsOcrActive(data.debugText?.startsWith('OCR_FALLBACK_ACTIVE'))
 
             // Mark all events as selected by default
             const parsedEvents = (data.events || []).map((e: CalendarEvent) => ({
@@ -73,29 +72,65 @@ export function CalendarImporter({ onImportComplete }: CalendarImporterProps) {
                 selected: true
             }))
 
-            if (parsedEvents.length === 0) {
-                toast.error("No events found in this file. Check the Debug view.")
-                setShowDebug(true)
-            } else {
+            if (parsedEvents.length > 0) {
+                setEvents(parsedEvents)
+                setStep("review")
                 toast.success(`Found ${parsedEvents.length} events`)
+            } else {
+                toast.error("Could not find any events. Check Debug view.")
+                if (data.debugText) {
+                    setStep("review")
+                    setShowDebug(true)
+                }
             }
-
-            setEvents(parsedEvents)
-
-        } catch (error) {
-            console.error('Parse error:', error)
-            const msg = error instanceof Error ? error.message : 'Failed to parse calendar'
-            if (msg.includes("API Key")) {
+        } catch (error: any) {
+            if (error.message?.includes("API Key")) {
                 toast.error("AI Features Disabled", {
-                    description: "Please configure your Groq API Key in Settings to parse calendars.",
+                    description: "Please configure your Groq API Key in Settings to parse files.",
                     duration: 5000,
                 })
             } else {
-                toast.error(msg)
+                toast.error(`Parsing failed: ${error.message}`)
             }
         } finally {
             setIsParsing(false)
         }
+    }
+
+    const handleSave = async () => {
+        const selectedEvents = events.filter(e => e.selected)
+        if (selectedEvents.length === 0) return
+
+        setIsSaving(true)
+        try {
+            const res = await fetch('/api/calendar/parse', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    events: selectedEvents
+                })
+            })
+
+            const data = await res.json()
+            if (!res.ok) throw new Error(data.error || 'Failed to save to database')
+
+            toast.success(`Added ${data.results.exams} exams, ${data.results.scheduleEvents} events`)
+            setOpen(false)
+            resetState()
+            onImportComplete?.()
+        } catch (error: any) {
+            toast.error("Failed to save calendar: " + error.message)
+        } finally {
+            setIsSaving(false)
+        }
+    }
+
+    const resetState = () => {
+        setStep("upload")
+        setFile(null)
+        setEvents([])
+        setDebugText("")
+        setShowDebug(false)
     }
 
     const toggleEvent = (index: number) => {
@@ -108,43 +143,6 @@ export function CalendarImporter({ onImportComplete }: CalendarImporterProps) {
         setEvents(prev => prev.map(e => ({ ...e, selected })))
     }
 
-    const handleSave = async () => {
-        const selectedEvents = events.filter(e => e.selected)
-        if (selectedEvents.length === 0) {
-            toast.error('No events selected')
-            return
-        }
-
-        setIsSaving(true)
-
-        try {
-            const res = await fetch('/api/calendar/parse', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ events: selectedEvents })
-            })
-
-            const data = await res.json()
-
-            if (!res.ok) {
-                throw new Error(data.error || 'Failed to save events')
-            }
-
-            toast.success(`Added ${data.results.exams} exams, ${data.results.scheduleEvents} events`)
-            setIsOpen(false)
-            setEvents([])
-            setFileName("")
-            setDebugText("")
-            setShowDebug(false)
-            onImportComplete?.()
-
-        } catch (error) {
-            toast.error(error instanceof Error ? error.message : 'Failed to save events')
-        } finally {
-            setIsSaving(false)
-        }
-    }
-
     const getTypeBadge = (type: string) => {
         const styles: Record<string, string> = {
             exam: "bg-red-500/10 text-red-500 border-red-500/20",
@@ -152,209 +150,185 @@ export function CalendarImporter({ onImportComplete }: CalendarImporterProps) {
             event: "bg-blue-500/10 text-blue-500 border-blue-500/20",
             deadline: "bg-orange-500/10 text-orange-500 border-orange-500/20"
         }
-        return styles[type] || "bg-muted"
+        return styles[type] || "bg-muted text-muted-foreground"
+    }
+
+    const getTypeIcon = (type: string) => {
+        switch (type) {
+            case 'exam': return <IconAlertTriangle className="w-3 h-3 text-red-500" />
+            case 'holiday': return <IconCalendarEvent className="w-3 h-3 text-green-500" />
+            case 'event': return <IconSchool className="w-3 h-3 text-blue-500" />
+            case 'deadline': return <IconFlag className="w-3 h-3 text-orange-500" />
+            default: return <IconCalendarEvent className="w-3 h-3" />
+        }
     }
 
     const selectedCount = events.filter(e => e.selected).length
 
     return (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <Dialog open={open} onOpenChange={(isOpen) => { setOpen(isOpen); if (!isOpen) resetState() }}>
             <DialogTrigger asChild>
                 <Button variant="outline" className="gap-2">
-                    <IconUpload className="w-4 h-4" />
-                    Import Calendar
+                    <IconCalendarEvent className="w-4 h-4" />
+                    Import Calendar with AI
                 </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
-                <DialogHeader>
-                    <div className="flex items-center justify-between">
-                        <div className="flex flex-col gap-1">
-                            <DialogTitle className="flex items-center gap-2">
-                                <IconCalendarEvent className="w-5 h-5" />
-                                Import Academic Calendar
-                            </DialogTitle>
-                            {isOcrActive && (
-                                <div className="flex items-center gap-1.5 text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 w-fit">
-                                    <IconLoader2 className="w-3 h-3 animate-spin" />
-                                    AI VISION OCR ACTIVE
-                                </div>
-                            )}
-                        </div>
-                        {debugText && (
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setShowDebug(!showDebug)}
-                                className="text-xs mr-4"
-                            >
-                                {showDebug ? "Show Events" : "Show Debug"}
-                            </Button>
+            <DialogContent className="w-[95vw] max-w-3xl h-[90vh] sm:h-[85vh] p-0 flex flex-col gap-0 overflow-hidden">
+                <DialogHeader className="shrink-0 p-6 pb-4 border-b">
+                    <DialogTitle className="flex items-center gap-2">
+                        <IconCalendarEvent className="w-5 h-5" />
+                        Import Academic Calendar
+                        {isOcrActive && (
+                            <Badge variant="secondary" className="bg-amber-500/10 text-amber-500 text-[10px] ml-2">
+                                <IconLoader2 className="w-3 h-3 mr-1 animate-spin" /> OCR
+                            </Badge>
                         )}
-                    </div>
+                    </DialogTitle>
+                    <DialogDescription>
+                        Upload a PDF or image of your academic calendar. We'll extract events and holidays.
+                    </DialogDescription>
                 </DialogHeader>
 
-                <div className="flex-1 overflow-hidden flex flex-col gap-4">
-                    {showDebug ? (
-                        <div className="flex flex-col gap-2 h-[400px]">
-                            <p className="text-xs text-muted-foreground">
-                                This is the raw text extracted from your PDF. Use this to verify if the text is readable.
-                            </p>
-                            <textarea
-                                className="w-full h-full p-4 bg-muted font-mono text-xs rounded-lg border resize-none focus:outline-none"
-                                value={debugText}
-                                readOnly
-                            />
-                        </div>
-                    ) : (
-                        <>
-                            {/* Upload Area */}
-                            {events.length === 0 && (
-                                <div className="border-2 border-dashed rounded-lg p-12 text-center">
-                                    {isParsing ? (
-                                        <div className="flex flex-col items-center gap-3">
-                                            <IconLoader2 className="w-8 h-8 animate-spin text-primary" />
-                                            <p className="text-sm text-muted-foreground">
-                                                Analyzing document...
-                                            </p>
-                                        </div>
-                                    ) : (
-                                        <label className="cursor-pointer block">
-                                            <input
-                                                type="file"
-                                                accept=".pdf,image/*"
-                                                className="hidden"
-                                                onChange={handleFileUpload}
-                                            />
-                                            <div className="flex flex-col items-center gap-3">
-                                                <IconUpload className="w-10 h-10 text-muted-foreground" />
-                                                <div>
-                                                    <p className="font-semibold text-lg">Upload Calendar</p>
-                                                    <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
-                                                        Select a PDF or image of your academic calendar table. We'll extract events automatically.
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </label>
-                                    )}
+                <div className="flex-1 overflow-hidden p-6">
+                    {step === "upload" ? (
+                        <div className="h-full flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-xl bg-muted/20 hover:bg-muted/30 transition-colors">
+                            {isParsing ? (
+                                <div className="text-center space-y-4 w-full max-w-sm">
+                                    <div className="flex flex-col items-center gap-2">
+                                        <IconLoader2 className="w-12 h-12 animate-spin text-primary" />
+                                        <p className="text-lg font-medium">Analyzing calendar...</p>
+                                        <p className="text-sm text-muted-foreground">This uses AI and may take up to 30 seconds.</p>
+                                    </div>
+                                    <div className="space-y-2 pt-4">
+                                        <Skeleton className="h-12 w-full rounded-lg" />
+                                        <Skeleton className="h-12 w-full rounded-lg opacity-80" />
+                                        <Skeleton className="h-12 w-full rounded-lg opacity-60" />
+                                    </div>
+                                </div>
+                            ) : file ? (
+                                <div className="text-center space-y-4">
+                                    <IconFileText className="w-12 h-12 text-primary mx-auto" />
+                                    <div>
+                                        <p className="text-lg font-medium">{file.name}</p>
+                                        <p className="text-sm text-muted-foreground">{(file.size / 1024).toFixed(1)} KB</p>
+                                    </div>
+                                    <div className="flex gap-3 justify-center">
+                                        <Button variant="outline" onClick={() => setFile(null)}>Change</Button>
+                                        <Button onClick={parseCalendar} className="gap-2">
+                                            Parse <IconArrowRight className="w-4 h-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="text-center space-y-4">
+                                    <IconUpload className="w-12 h-12 text-muted-foreground mx-auto" />
+                                    <div>
+                                        <p className="text-lg font-medium">Drop your file here</p>
+                                        <p className="text-sm text-muted-foreground">PDF or Image (PNG, JPG)</p>
+                                    </div>
+                                    <Button onClick={() => inputRef.current?.click()}>
+                                        Select File
+                                    </Button>
+                                    <input
+                                        type="file"
+                                        accept=".pdf,image/*"
+                                        className="hidden"
+                                        ref={inputRef}
+                                        onChange={handleFileChange}
+                                    />
                                 </div>
                             )}
+                        </div>
+                    ) : (
+                        <div className="h-full flex flex-col gap-4">
+                            <div className="shrink-0 flex items-center justify-between">
+                                <p className="text-sm text-muted-foreground">
+                                    Found <span className="font-semibold text-foreground">{events.length}</span> events
+                                </p>
+                                <div className="flex gap-2">
+                                    <Button variant="ghost" size="sm" onClick={() => toggleAll(true)} className="text-xs">
+                                        Select All
+                                    </Button>
+                                    <Button variant="ghost" size="sm" onClick={() => toggleAll(false)} className="text-xs">
+                                        Deselect All
+                                    </Button>
+                                    <div className="w-px h-4 bg-border my-auto mx-1" />
+                                    <Button variant="ghost" size="sm" onClick={() => setShowDebug(!showDebug)}>
+                                        {showDebug ? "Show Events" : "Debug"}
+                                    </Button>
+                                </div>
+                            </div>
 
-                            {/* Events List */}
-                            {events.length > 0 && (
-                                <>
-                                    <div className="flex items-center justify-between px-1">
-                                        <p className="text-sm text-muted-foreground font-medium">
-                                            <span className="text-primary">{selectedCount}</span> of {events.length} events found
-                                        </p>
-                                        <div className="flex gap-2">
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="h-8 text-xs h-7"
-                                                onClick={() => toggleAll(true)}
+                            {showDebug ? (
+                                <ScrollArea className="h-[calc(90vh-280px)] sm:h-[calc(85vh-280px)] border rounded-lg">
+                                    <pre className="p-4 text-xs font-mono whitespace-pre-wrap">
+                                        {debugText || "No debug text."}
+                                    </pre>
+                                </ScrollArea>
+                            ) : (
+                                <ScrollArea className="h-[calc(90vh-280px)] sm:h-[calc(85vh-280px)]">
+                                    <div className="grid gap-3 sm:grid-cols-2 pr-4 pb-4">
+                                        {events.map((event, i) => (
+                                            <Card
+                                                key={i}
+                                                className={cn(
+                                                    "cursor-pointer transition-all hover:bg-muted/50 relative overflow-hidden",
+                                                    event.selected ? "border-primary/50 shadow-sm" : "opacity-60 border-transparent bg-muted/20"
+                                                )}
+                                                onClick={() => toggleEvent(i)}
                                             >
-                                                Select All
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="h-8 text-xs h-7"
-                                                onClick={() => toggleAll(false)}
-                                            >
-                                                Deselect All
-                                            </Button>
-                                        </div>
-                                    </div>
-
-                                    <ScrollArea className="flex-1 max-h-[500px]">
-                                        <div className="space-y-3 pr-4">
-                                            {events.map((event, index) => (
-                                                <Card
-                                                    key={index}
-                                                    className={cn(
-                                                        "cursor-pointer transition-all hover:bg-muted/50",
-                                                        event.selected
-                                                            ? "border-primary/50 shadow-sm"
-                                                            : "opacity-60 border-transparent bg-muted/20"
-                                                    )}
-                                                    onClick={() => toggleEvent(index)}
-                                                >
-                                                    <div className="p-4 flex items-start gap-4">
+                                                {event.selected && (
+                                                    <div className="absolute top-0 right-0 p-1.5 bg-primary/10 rounded-bl-lg">
+                                                        <IconCheck className="w-3.5 h-3.5 text-primary" />
+                                                    </div>
+                                                )}
+                                                <div className="p-4 flex gap-3">
+                                                    <div className="pt-0.5">
                                                         <Checkbox
                                                             checked={event.selected}
-                                                            className="mt-1"
-                                                            onCheckedChange={() => toggleEvent(index)}
+                                                            onCheckedChange={() => toggleEvent(i)}
                                                         />
-                                                        <div className="flex-1 min-w-0">
-                                                            <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                                                                <Badge
-                                                                    variant="outline"
-                                                                    className={cn("text-[10px] uppercase tracking-wider font-bold py-0 h-4 px-1.5", getTypeBadge(event.type))}
-                                                                >
-                                                                    {event.type}
-                                                                </Badge>
-                                                                <span className="text-xs font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                                                                    {event.startDate}
-                                                                    {event.endDate && event.endDate !== event.startDate && (
-                                                                        <> → {event.endDate}</>
-                                                                    )}
-                                                                </span>
-                                                            </div>
-                                                            <p className="font-semibold text-sm">
-                                                                {event.title}
-                                                            </p>
+                                                    </div>
+                                                    <div className="flex-1 min-w-0 space-y-1.5">
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <Badge
+                                                                variant="outline"
+                                                                className={cn("text-[10px] uppercase font-bold px-1.5 h-5 gap-1", getTypeBadge(event.type))}
+                                                            >
+                                                                {getTypeIcon(event.type)}
+                                                                {event.type}
+                                                            </Badge>
+                                                            <span className="text-xs font-mono text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded border">
+                                                                {event.startDate}
+                                                                {event.endDate && event.endDate !== event.startDate && ` → ${event.endDate}`}
+                                                            </span>
+                                                        </div>
+                                                        <div className="pr-6">
+                                                            <p className="text-sm font-semibold leading-tight">{event.title}</p>
                                                             {event.description && (
-                                                                <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2 leading-relaxed">
-                                                                    {event.description}
-                                                                </p>
+                                                                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{event.description}</p>
                                                             )}
                                                         </div>
                                                     </div>
-                                                </Card>
-                                            ))}
-                                        </div>
-                                    </ScrollArea>
-                                </>
+                                                </div>
+                                            </Card>
+                                        ))}
+                                    </div>
+                                </ScrollArea>
                             )}
-                        </>
+                        </div>
                     )}
                 </div>
 
-                <DialogFooter className="mt-4 pt-4 border-t">
-                    {(events.length > 0 || debugText) && (
-                        <Button
-                            variant="ghost"
-                            onClick={() => {
-                                setEvents([])
-                                setFileName("")
-                                setDebugText("")
-                                setShowDebug(false)
-                            }}
-                        >
-                            Start Over
+                {step === "review" && !showDebug && (
+                    <DialogFooter className="shrink-0 p-6 pt-4 border-t flex-row gap-2 sm:justify-end mt-auto">
+                        <Button variant="outline" onClick={resetState}>Cancel</Button>
+                        <Button onClick={handleSave} disabled={isSaving || selectedCount === 0} className="gap-2">
+                            {isSaving ? <IconLoader2 className="w-4 h-4 animate-spin" /> : <IconCheck className="w-4 h-4" />}
+                            Import {selectedCount} Events
                         </Button>
-                    )}
-                    <div className="flex-1" />
-                    {events.length > 0 && !showDebug && (
-                        <Button
-                            onClick={handleSave}
-                            disabled={isSaving || selectedCount === 0}
-                            className="min-w-[140px]"
-                        >
-                            {isSaving ? (
-                                <>
-                                    <IconLoader2 className="w-4 h-4 mr-2 animate-spin" />
-                                    Saving...
-                                </>
-                            ) : (
-                                <>
-                                    <IconCheck className="w-4 h-4 mr-2" />
-                                    Import {selectedCount} Events
-                                </>
-                            )}
-                        </Button>
-                    )}
-                </DialogFooter>
+                    </DialogFooter>
+                )}
             </DialogContent>
         </Dialog>
     )

@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
+import { SyllabusSkeleton } from "@/components/academics/syllabus-skeleton"
 
 // Status configuration with icons and colors
 const STATUS_CONFIG = {
@@ -129,25 +130,37 @@ export default function SyllabusPage() {
     const [scoutStep, setScoutStep] = React.useState(0) // 0: Idle, 1: Analyzing, 2: Searching, 3: Curating
     const [savedResourceIds, setSavedResourceIds] = React.useState<Set<string>>(new Set())
 
-    // Fetch data on mount
+    // Optimized Data Fetching
     React.useEffect(() => {
         const fetchData = async () => {
+            const startTime = performance.now()
             try {
-                // Fetch subject info
-                const subjectsRes = await fetch('/api/academics')
-                const subjectsData = await subjectsRes.json()
+                // Parallelize requests
+                const [subjectsRes, syllabusRes] = await Promise.all([
+                    fetch('/api/academics'),
+                    fetch(`/api/syllabus?subjectId=${subjectId}`)
+                ])
+
+                const [subjectsData, syllabusData] = await Promise.all([
+                    subjectsRes.json(),
+                    syllabusRes.json()
+                ])
+
                 const found = subjectsData.find((s: Subject) => s.id === subjectId)
                 if (found) setSubject(found)
 
-                // Fetch syllabus modules
-                const syllabusRes = await fetch(`/api/syllabus?subjectId=${subjectId}`)
-                const syllabusData = await syllabusRes.json()
                 setModules(syllabusData)
             } catch (error) {
                 console.error("Failed to fetch data:", error)
                 toast.error("Failed to load syllabus")
             } finally {
-                setIsLoading(false)
+                // Ensure at least 300ms loading state to prevent flash
+                const elapsed = performance.now() - startTime
+                if (elapsed < 300) {
+                    setTimeout(() => setIsLoading(false), 300 - elapsed)
+                } else {
+                    setIsLoading(false)
+                }
             }
         }
         fetchData()
@@ -430,13 +443,7 @@ export default function SyllabusPage() {
     const progress = modules.length > 0 ? (completedCount / modules.length) * 100 : 0
 
     if (isLoading) {
-        return (
-            <Shell>
-                <div className="flex items-center justify-center h-[60vh]">
-                    <IconLoader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-                </div>
-            </Shell>
-        )
+        return <SyllabusSkeleton />
     }
 
     return (
@@ -491,7 +498,7 @@ export default function SyllabusPage() {
                     <CardHeader className="pb-3">
                         <CardTitle className="text-lg flex items-center gap-2">
                             <IconUpload className="w-5 h-5" />
-                            Import Syllabus PDF
+                            Import Syllabus PDF using AI
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -518,7 +525,7 @@ export default function SyllabusPage() {
                                 ) : (
                                     <>
                                         <IconFileText className="w-4 h-4 mr-2" />
-                                        Parse & Import
+                                        Parse & Import with AI
                                     </>
                                 )}
                             </Button>

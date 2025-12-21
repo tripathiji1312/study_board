@@ -120,7 +120,7 @@ export function SyllabusImporter({ subjectId, onImportComplete }: SyllabusImport
             <DialogTrigger asChild>
                 <Button variant="outline" size="sm" className="gap-2">
                     <IconUpload className="w-4 h-4" />
-                    Import Syllabus
+                    Import Syllabus with AI
                 </Button>
             </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 overflow-hidden outline-none bg-background/95 backdrop-blur-xl">
