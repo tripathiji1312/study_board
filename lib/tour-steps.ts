@@ -34,7 +34,7 @@ export const TOUR_STEPS: TourStep[] = [
     {
         targetId: "sidebar-settings",
         title: "Configure AI",
-        description: "Don't forget to visit Settings to add your API keys. StudyBoard needs them to power its AI features.",
+        description: "Visit Settings to add your free Groq and Resend API keys. StudyBoard needs them to power its AI features.",
         position: "right"
     }
 ]

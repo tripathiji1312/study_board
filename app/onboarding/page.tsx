@@ -166,7 +166,7 @@ export default function OnboardingPage() {
                                         <IconInfoCircle className="h-4 w-4" />
                                         <AlertTitle>Required</AlertTitle>
                                         <AlertDescription>
-                                            The Groq API key is required for AI-powered daily briefings, task suggestions, and cron jobs. It's free to get.
+                                            The Groq API key is required for AI-powered daily briefings, task suggestions, and cron jobs. It is completely free to get.
                                         </AlertDescription>
                                     </Alert>
 
