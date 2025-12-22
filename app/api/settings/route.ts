@@ -58,6 +58,7 @@ export async function PUT(request: Request) {
                     notificationEmail: body.notificationEmail,
                     groqApiKey: body.groqApiKey,
                     resendApiKey: body.resendApiKey,
+                    theme: body.theme || "light",
                 }
             })
         } else {
@@ -74,6 +75,7 @@ export async function PUT(request: Request) {
                     notificationEmail: body.notificationEmail,
                     groqApiKey: body.groqApiKey,
                     resendApiKey: body.resendApiKey,
+                    theme: body.theme,
                 }
             })
         }

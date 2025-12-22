@@ -306,6 +306,7 @@ model UserSettings {
   notificationEmail String?  
   groqApiKey     String? 
   resendApiKey   String? // NEW: For BYOK Email
+  theme          String  @default("light")
   hasSeenWalkthrough Boolean @default(false)
   
   user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)

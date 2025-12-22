@@ -27,7 +27,7 @@ import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { ModeToggle } from "@/components/mode-toggle"
+import { ThemeSwitcher } from "@/components/theme-switcher"
 import { XPWidget } from "@/components/xp-widget"
 import { GlobalSearch } from "@/components/global-search"
 import { Logo } from "@/components/ui/logo"
@@ -103,7 +103,7 @@ export function AppSidebar({ className }: SidebarProps) {
                     <Logo />
                 </Link>
                 <div className="flex items-center gap-2">
-                    <ModeToggle />
+                    <ThemeSwitcher />
                     <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setIsOpen(false)}>
                         <IconMenu2 className="h-5 w-5 rotate-90" />
                     </Button>

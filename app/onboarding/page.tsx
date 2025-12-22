@@ -16,6 +16,18 @@ import Link from "next/link"
 import { Logo } from "@/components/ui/logo"
 import { motion, AnimatePresence } from "framer-motion"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { useTheme } from "next-themes"
+import { cn } from "@/lib/utils"
+import { IconPalette } from "@tabler/icons-react"
+
+const themes = [
+    { name: "Amethyst (Pro)", value: "theme-purple", color: "bg-[#12081d] border-[#3d1a6d]" },
+    { name: "Sakura (Light)", value: "theme-pink", color: "bg-[#fff5f7] border-[#ffb6c1]" },
+    { name: "Rose Noir (Dark)", value: "theme-pink-dark", color: "bg-[#1a0a14] border-[#3a1a2a]" },
+    { name: "Midnight", value: "theme-midnight", color: "bg-[#0a0a23] border-[#1a1a3a]" },
+    { name: "Forest", value: "theme-forest", color: "bg-[#0b1a0b] border-[#1a3a1a]" },
+    { name: "Sunset", value: "theme-sunset", color: "bg-[#1a0b0b] border-[#3a1a1a]" },
+]
 
 export default function OnboardingPage() {
     const { data: session, status } = useSession({ required: true })
@@ -29,7 +41,9 @@ export default function OnboardingPage() {
         currentSemId: 1,
         groqApiKey: "",
         resendApiKey: "",
+        theme: "light",
     })
+    const { theme: currentTheme, setTheme } = useTheme()
 
     React.useEffect(() => {
         if (session?.user?.name) {
@@ -38,8 +52,8 @@ export default function OnboardingPage() {
     }, [session])
 
     const handleNext = () => {
-        // Validate step 2 - Groq API key is required
-        if (step === 2 && !formData.groqApiKey.trim()) {
+        // Validate step 3 - Groq API key is required (previously step 2)
+        if (step === 3 && !formData.groqApiKey.trim()) {
             toast.error("Groq API key is required for AI features. Get a free key from the link above.")
             return
         }
@@ -74,7 +88,7 @@ export default function OnboardingPage() {
         </div>
     )
 
-    const totalSteps = 3
+    const totalSteps = 4
     const progressPercent = (step / totalSteps) * 100
 
     return (
@@ -153,6 +167,59 @@ export default function OnboardingPage() {
                                     <div className="space-y-2">
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                                                <IconPalette className="w-5 h-5 text-primary" />
+                                            </div>
+                                            <div>
+                                                <h2 className="text-xl font-bold tracking-tight">Vibe Check</h2>
+                                                <p className="text-sm text-muted-foreground">Pick a theme that matches your personality</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {themes.map((t) => (
+                                            <button
+                                                key={t.value}
+                                                onClick={() => {
+                                                    setFormData({ ...formData, theme: t.value })
+                                                    setTheme(t.value)
+                                                }}
+                                                className={cn(
+                                                    "flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all duration-200 text-left",
+                                                    formData.theme === t.value
+                                                        ? "border-primary bg-primary/5 ring-2 ring-primary/20"
+                                                        : "border-border hover:border-border/80 hover:bg-muted/50"
+                                                )}
+                                            >
+                                                <div className={cn("h-10 w-10 rounded-full border shadow-sm", t.color)} />
+                                                <div className="flex flex-col items-center">
+                                                    <span className="text-sm font-semibold">{t.name}</span>
+                                                    {formData.theme === t.value && (
+                                                        <motion.span
+                                                            layoutId="selected"
+                                                            className="text-[10px] text-primary font-bold uppercase tracking-wider mt-1"
+                                                        >
+                                                            Active
+                                                        </motion.span>
+                                                    )}
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </motion.div>
+                            )}
+
+                            {step === 3 && (
+                                <motion.div
+                                    key="step3"
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -20 }}
+                                    className="space-y-6"
+                                >
+                                    <div className="space-y-2">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                                                 <IconBrain className="w-5 h-5 text-primary" />
                                             </div>
                                             <div>
@@ -201,9 +268,9 @@ export default function OnboardingPage() {
                                 </motion.div>
                             )}
 
-                            {step === 3 && (
+                            {step === 4 && (
                                 <motion.div
-                                    key="step3"
+                                    key="step4"
                                     initial={{ opacity: 0, x: 20 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     exit={{ opacity: 0, x: -20 }}

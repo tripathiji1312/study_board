@@ -57,6 +57,7 @@ export default async function RootLayout({
             defaultTheme="system"
             enableSystem
             disableTransitionOnChange
+            themes={["light", "dark", "system", "theme-purple", "theme-pink", "theme-pink-dark", "theme-midnight", "theme-forest", "theme-sunset"]}
           >
             <XPProvider>
               <SWRProvider>
