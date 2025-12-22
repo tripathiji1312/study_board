@@ -134,34 +134,6 @@ export default function SignInPage() {
                             </Button>
                         </form>
 
-                        <Button
-                            variant="ghost"
-                            className="w-full text-muted-foreground hover:text-primary text-sm"
-                            onClick={async () => {
-                                setIsLoading(true)
-                                try {
-                                    await fetch('/api/demo/seed', { method: 'POST' })
-                                    const res = await signIn("credentials", {
-                                        redirect: false,
-                                        email: "demo@example.com",
-                                        password: "password",
-                                    })
-                                    if (res?.ok) {
-                                        toast.success("Welcome to the demo!")
-                                        router.push("/")
-                                        router.refresh()
-                                    }
-                                } catch (e) {
-                                    toast.error("Demo login failed")
-                                } finally {
-                                    setIsLoading(false)
-                                }
-                            }}
-                            disabled={isLoading}
-                        >
-                            <IconSparkles className="mr-2 h-4 w-4" />
-                            Try Demo Account
-                        </Button>
                     </div>
 
                     <p className="text-center text-sm text-muted-foreground">
