@@ -137,9 +137,17 @@ export async function GET(req: Request) {
                 else if (hasCriticalExam) { urgencyEmoji = '📚'; subjectLine = `EXAM SOON! Get ready` }
                 else { urgencyEmoji = '☀️'; subjectLine = `Your day ahead - ${totalItems} items` }
             } else if (emailType === 'evening') {
-                shouldSend = overdue.length > 0 || dueTomorrow.length > 0
-                if (overdue.length > 0) { urgencyEmoji = '🚨'; subjectLine = `${overdue.length} items overdue!` }
-                else { urgencyEmoji = '🌙'; subjectLine = `Prep for tomorrow: ${dueTomorrow.length} items` }
+                shouldSend = overdue.length > 0 || dueTodayUrgent.length > 0 || dueToday.length > 0 || dueTomorrow.length > 0
+                if (overdue.length > 0) {
+                    urgencyEmoji = '🚨';
+                    subjectLine = `${overdue.length} items overdue!`
+                } else if (dueTodayUrgent.length > 0 || dueToday.length > 0) {
+                    urgencyEmoji = '🔥';
+                    subjectLine = `Due TONIGHT: ${dueTodayUrgent.length + dueToday.length} items`
+                } else {
+                    urgencyEmoji = '🌙';
+                    subjectLine = `Prep for tomorrow: ${dueTomorrow.length} items`
+                }
             } else {
                 // Default for other times
                 shouldSend = overdue.length > 0
@@ -147,7 +155,9 @@ export async function GET(req: Request) {
             }
 
             if (!shouldSend) {
-                const reason = emailType === 'morning' ? 'No items or exams' : 'No overdue or tomorrow items'
+                const reason = emailType === 'morning'
+                    ? `No items (Overdue: ${overdue.length}, Today: ${dueToday.length + dueTodayUrgent.length}, Tomorrow: ${dueTomorrow.length}, Exams: ${upcomingExams.length})`
+                    : `No items (Overdue: ${overdue.length}, Today: ${dueToday.length + dueTodayUrgent.length}, Tomorrow: ${dueTomorrow.length})`
                 console.log(`[Cron] Skipping user ${setting.notificationEmail}: ${reason}`)
                 results.push({ email: setting.notificationEmail, status: 'skipped_no_urgent', reason })
                 continue
