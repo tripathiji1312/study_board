@@ -11,7 +11,7 @@ import { Logo } from "@/components/ui/logo"
 import { toast } from "sonner"
 import { motion } from "framer-motion"
 
-export default function NewPasswordPage() {
+function NewPasswordContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const token = searchParams.get("token")
@@ -56,7 +56,6 @@ export default function NewPasswordPage() {
             if (res.ok) {
                 setIsSuccess(true)
                 toast.success("Password updated successfully!")
-                // Redirect happened automatically after delay? Or we show success state.
             } else {
                 toast.error(data.error || "Something went wrong")
             }
@@ -147,5 +146,17 @@ export default function NewPasswordPage() {
                 </div>
             </motion.div>
         </div>
+    )
+}
+
+export default function NewPasswordPage() {
+    return (
+        <React.Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-background p-4">
+                <IconLoader className="w-8 h-8 animate-spin text-primary" />
+            </div>
+        }>
+            <NewPasswordContent />
+        </React.Suspense>
     )
 }
