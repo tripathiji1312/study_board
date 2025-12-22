@@ -39,7 +39,9 @@ export async function POST() {
                 department: "Computer Science",
                 focusDuration: 25,
                 breakDuration: 5,
-                currentSemId: 1 // Placeholder
+                currentSemId: 1, // Placeholder
+                hasSeenWalkthrough: true,
+                theme: "light"
             }
         })
 

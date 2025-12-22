@@ -51,6 +51,26 @@ export default function OnboardingPage() {
         }
     }, [session])
 
+    // Auto-redirect if already onboarded
+    React.useEffect(() => {
+        const checkStatus = async () => {
+            if (status === "authenticated") {
+                try {
+                    const res = await fetch('/api/settings')
+                    if (res.ok) {
+                        const settings = await res.json()
+                        if (settings?.hasSeenWalkthrough) {
+                            router.push('/')
+                        }
+                    }
+                } catch (e) {
+                    console.error("Failed to check onboarding status", e)
+                }
+            }
+        }
+        checkStatus()
+    }, [status, router])
+
     const handleNext = () => {
         // Validate step 3 - Groq API key is required (previously step 2)
         if (step === 3 && !formData.groqApiKey.trim()) {
@@ -67,7 +87,10 @@ export default function OnboardingPage() {
             const res = await fetch('/api/settings', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
+                body: JSON.stringify({
+                    ...formData,
+                    hasSeenWalkthrough: true
+                })
             })
 
             if (!res.ok) throw new Error("Failed to save settings")
