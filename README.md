@@ -1,6 +1,5 @@
 <div align="center">
-  <img src="image.png" alt="StudyBoard Logo" width="180" />
-  <h1>StudyBoard</h1>
+  <img src="image.png" alt="StudyBoard Logo" width="300" />
   <p><strong>The ultimate AI-powered command center for academic excellence.</strong></p>
 
   <p>
