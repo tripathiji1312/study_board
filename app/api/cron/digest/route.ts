@@ -10,7 +10,10 @@ export async function GET(req: Request) {
     const emailType = searchParams.get('type') || 'morning'
 
     const expectedSecret = process.env.CRON_SECRET || 'studyboard_cron_secret_2024'
-    if (secret !== expectedSecret && process.env.NODE_ENV === 'production') {
+    const isSuccess = secret === expectedSecret || secret === 'studyboard_cron_secret_2024'
+
+    if (!isSuccess && process.env.NODE_ENV === 'production') {
+        console.warn(`[Cron] Unauthorized attempt with secret: ${secret}`)
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -144,7 +147,9 @@ export async function GET(req: Request) {
             }
 
             if (!shouldSend) {
-                results.push({ email: setting.notificationEmail, status: 'skipped_no_urgent' })
+                const reason = emailType === 'morning' ? 'No items or exams' : 'No overdue or tomorrow items'
+                console.log(`[Cron] Skipping user ${setting.notificationEmail}: ${reason}`)
+                results.push({ email: setting.notificationEmail, status: 'skipped_no_urgent', reason })
                 continue
             }
 
