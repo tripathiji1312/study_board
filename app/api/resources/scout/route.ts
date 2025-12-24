@@ -4,6 +4,104 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import prisma from "@/lib/prisma"
 
+// Helper to extract JSON from potentially markdown-wrapped response
+function extractJSON(text: string): string {
+    const jsonBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/)
+    if (jsonBlockMatch) {
+        return jsonBlockMatch[1].trim()
+    }
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    if (jsonMatch) {
+        return jsonMatch[0]
+    }
+    return text
+}
+
+// Build a proper Google search URL
+function buildGoogleSearchUrl(query: string): string {
+    return `https://www.google.com/search?q=${encodeURIComponent(query)}`
+}
+
+// Build flexible search query - avoid exact quotes to ensure results
+function buildSearchQuery(
+    category: string,
+    title: string,
+    author: string,
+    moduleTitle: string,
+    subjectName: string
+): string {
+    // Clean up title - remove special chars that break search
+    const cleanTitle = (title?.trim() || moduleTitle)
+        .replace(/[""'']/g, '')
+        .replace(/[^\w\s-]/g, ' ')
+        .trim()
+    const cleanAuthor = (author?.trim() || '')
+        .replace(/[""'']/g, '')
+        .trim()
+    const cleanModule = moduleTitle.replace(/[^\w\s-]/g, ' ').trim()
+
+    switch (category) {
+        case 'VISUAL_INTUITION':
+            // YouTube search - broad to find related videos
+            if (cleanAuthor) {
+                return `${cleanModule} ${cleanAuthor} youtube tutorial`
+            }
+            return `${cleanModule} ${subjectName} youtube tutorial video`
+
+        case 'OFFICIAL_DOCS':
+            // Documentation - include common sources
+            return `${cleanModule} ${subjectName} official documentation tutorial`
+
+        case 'HANDS_ON_PRACTICE':
+            // Practice - focus on the topic
+            return `${cleanModule} practice problems coding exercises`
+
+        case 'DEEP_DIVE_ARTICLE':
+            // Articles - broad search
+            return `${cleanModule} ${subjectName} tutorial guide explained`
+
+        case 'TEXTBOOK_REFERENCE':
+            // Textbook - include PDF for free access
+            if (cleanAuthor) {
+                return `${cleanTitle} ${cleanAuthor} textbook PDF`
+            }
+            return `${cleanModule} ${subjectName} textbook PDF free`
+
+        default:
+            return `${cleanModule} ${subjectName} tutorial guide`.trim()
+    }
+}
+
+
+// Validate URL by making a HEAD request (fast, doesn't download content)
+async function validateUrl(url: string): Promise<boolean> {
+    if (!url || url === 'null' || url === '' || !url.startsWith('http')) {
+        return false
+    }
+
+    try {
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 3000) // 3 second timeout
+
+        const response = await fetch(url, {
+            method: 'HEAD',
+            signal: controller.signal,
+            redirect: 'follow',
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (compatible; StudyBoard/1.0)'
+            }
+        })
+
+        clearTimeout(timeoutId)
+
+        // Success if 2xx or 3xx status
+        return response.status >= 200 && response.status < 400
+    } catch (error) {
+        // URL doesn't work (timeout, DNS error, blocked, etc.)
+        return false
+    }
+}
+
 export async function POST(request: Request) {
     const session = await getServerSession(authOptions)
     if (!session || !session.user) {
@@ -18,7 +116,6 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Missing topic info' }, { status: 400 })
         }
 
-        // Fetch user's API key
         const settings = await prisma.userSettings.findUnique({
             where: { userId: session.user.id }
         })
@@ -30,63 +127,107 @@ export async function POST(request: Request) {
 
         const groq = new Groq({ apiKey })
 
-        const prompt = `
-**ROLE**: You are an elite Curriculum Architect who has designed courses at MIT, Stanford, and trained engineers at Google. You have encyclopedic knowledge of the best educators in every CS domain.
+        // Ask AI for URLs - we'll validate them
+        const prompt = `You are a learning resource curator with web search. Search the web and find the BEST resources for:
 
-**MISSION**: Curate exactly 5 GOLD STANDARD resources for this module. Every recommendation must be a recognized authority - no generic results.
+**Subject:** ${subjectName}
+**Module:** ${moduleTitle}
+**Topics:** ${topics?.join(', ') || 'General overview'}
 
-**CONTEXT**:
-- Subject: ${subjectName}
-- Module: ${moduleTitle}
-- Topics: ${topics?.join(', ') || 'General overview'}
+USE YOUR WEB SEARCH to find REAL URLs. Verify each URL actually exists before including it.
 
-**MANDATORY CATEGORIES** (one resource per category):
+**FIND 5 RESOURCES (one per category):**
+1. VISUAL_INTUITION (video) - YouTube video (prefer: 3Blue1Brown, Fireship, Reducible, Abdul Bari, Computerphile)
+2. OFFICIAL_DOCS (docs) - Official documentation, MIT OCW, or authoritative source
+3. HANDS_ON_PRACTICE (interactive) - LeetCode, HackerRank, Exercism, or practice problems
+4. DEEP_DIVE_ARTICLE (article) - GeeksForGeeks, freeCodeCamp, Real Python tutorial
+5. TEXTBOOK_REFERENCE (book) - Classic textbook (link to archive.org, Amazon, or official page)
 
-1. **VISUAL INTUITION** (type: "video"): The single best YouTube video/playlist that builds visual/geometric intuition. Prioritize: 3Blue1Brown, Reducible, Fireship, Abdul Bari, Ben Eater, Computerphile, Two Minute Papers, Welch Labs.
-
-2. **OFFICIAL DOCUMENTATION** (type: "docs"): The authoritative source - official docs, MDN, Python docs, or the original research paper if it's a famous algorithm.
-
-3. **HANDS-ON PRACTICE** (type: "interactive"): Where to practice - LeetCode, HackerRank, Exercism, or a GitHub repo with exercises. Must have immediate feedback.
-
-4. **DEEP DIVE ARTICLE** (type: "article"): The best long-form explanation - GeeksForGeeks, Real Python, freeCodeCamp, dev.to, or a famous blog post that "everyone" references.
-
-5. **TEXTBOOK REFERENCE** (type: "book"): The gold-standard textbook chapter (e.g., CLRS for algorithms, SICP for programming, Tanenbaum for OS, K&R for C).
-
-**QUALITY SIGNALS** (you MUST consider):
-- Creator is a known expert (professor, principal engineer, core maintainer)
-- Resource is frequently cited/recommended in the community
-- Explanations are clear, not just correct
-- Prefer content updated in last 3 years unless it's a timeless classic
-
-**OUTPUT FORMAT** (STRICT JSON, no markdown):
+**RESPOND WITH ONLY THIS JSON:**
 {
     "resources": [
         {
             "category": "VISUAL_INTUITION",
-            "title": "Exact title of video/article",
+            "title": "Exact title of the resource",
             "type": "video",
-            "author": "Channel or Author name",
-            "description": "One sentence: WHY this is the best (e.g., 'Uses animations to explain recursion visually, 2M views')",
-            "searchQuery": "site:youtube.com recursion 3Blue1Brown"
+            "author": "Channel or author name",
+            "description": "Why this is recommended",
+            "url": "https://actual-url-you-found.com/path"
         }
     ],
-    "studyOrder": "Brief 1-2 sentence recommendation on what order to consume these"
+    "studyOrder": "Recommended order to study"
 }
 
-Remember: You are recommending resources a Stanford TA would use. No filler. Only legends.
-`
+CRITICAL: Only include URLs you verified exist. If unsure, leave url as empty string "".`
 
         const completion = await groq.chat.completions.create({
             messages: [{ role: 'user', content: prompt }],
-            model: 'llama-3.3-70b-versatile',
-            temperature: 0.3,
-            response_format: { type: 'json_object' }
+            model: 'groq/compound-mini',
+            temperature: 0.2,
+            tool_choice: 'auto'
         })
 
         const content = completion.choices[0]?.message?.content
         if (!content) throw new Error("No AI response")
 
-        const result = JSON.parse(content)
+        console.log("Raw AI response:", content)
+
+        const jsonStr = extractJSON(content)
+        const result = JSON.parse(jsonStr)
+
+        // Process and VALIDATE each resource URL
+        if (result.resources && Array.isArray(result.resources)) {
+            const processedResources = await Promise.all(
+                result.resources.map(async (r: {
+                    category?: string
+                    url?: string | null
+                    title?: string
+                    author?: string
+                    type?: string
+                    description?: string
+                }) => {
+                    const aiUrl = r.url?.trim() || ''
+
+                    // TEST if the URL actually works
+                    let isValidUrl = false
+                    let finalUrl = ''
+
+                    if (aiUrl && aiUrl.startsWith('http')) {
+                        console.log(`Validating URL: ${aiUrl}`)
+                        isValidUrl = await validateUrl(aiUrl)
+                        console.log(`URL valid: ${isValidUrl}`)
+                    }
+
+                    if (isValidUrl) {
+                        // URL works! Use it directly
+                        finalUrl = aiUrl
+                    } else {
+                        // URL doesn't work - create a Google search
+                        const searchQuery = buildSearchQuery(
+                            r.category || '',
+                            r.title || '',
+                            r.author || '',
+                            moduleTitle,
+                            subjectName
+                        )
+                        finalUrl = buildGoogleSearchUrl(searchQuery)
+                    }
+
+                    return {
+                        category: r.category || 'GENERAL',
+                        title: r.title || moduleTitle,
+                        type: r.type || 'article',
+                        author: r.author || 'Unknown',
+                        description: r.description || `Resource for ${moduleTitle}`,
+                        url: finalUrl,
+                        isDirectLink: isValidUrl
+                    }
+                })
+            )
+
+            result.resources = processedResources
+        }
+
         return NextResponse.json(result)
 
     } catch (error) {
@@ -94,3 +235,4 @@ Remember: You are recommending resources a Stanford TA would use. No filler. Onl
         return NextResponse.json({ error: "Failed to scout resources" }, { status: 500 })
     }
 }
+

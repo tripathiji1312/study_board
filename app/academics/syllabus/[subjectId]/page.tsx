@@ -426,7 +426,7 @@ export default function SyllabusPage() {
                 body: JSON.stringify({
                     title: res.title,
                     type: res.type,
-                    url: `https://www.google.com/search?q=${encodeURIComponent(res.searchQuery)}`,
+                    url: res.url, // Use the processed URL from API (direct link or Google search)
                     category: "Learning",
                     subjectId: subjectId,
                     syllabusModuleId: scoutingModule?.id,
@@ -848,9 +848,9 @@ export default function SyllabusPage() {
                                                     </div>
                                                     <div className="flex flex-col gap-2 shrink-0">
                                                         <Button size="sm" variant="outline" asChild className="h-8 w-24 justify-start bg-zinc-900 border-zinc-800 hover:bg-zinc-800 text-zinc-300">
-                                                            <a href={`https://www.google.com/search?q=${encodeURIComponent(res.searchQuery)}`} target="_blank" rel="noopener noreferrer">
+                                                            <a href={res.url} target="_blank" rel="noopener noreferrer">
                                                                 <IconExternalLink className="w-3.5 h-3.5 mr-2" />
-                                                                Open
+                                                                {res.isDirectLink ? 'Visit' : 'Search'}
                                                             </a>
                                                         </Button>
                                                         <Button
