@@ -197,7 +197,7 @@ export function StudyGraph() {
                             {daysData.map((day, i) => (
                                 <TooltipProvider key={i}>
                                     <Tooltip delayDuration={50}>
-                                        <TooltipTrigger>
+                                        <TooltipTrigger asChild>
                                             <div
                                                 className={`w-3.5 h-3.5 rounded-sm transition-colors ${getIntensityClass(day.score)}`}
                                             />

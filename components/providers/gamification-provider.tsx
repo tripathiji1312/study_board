@@ -92,22 +92,22 @@ export function GamificationProvider({ children }: { children: React.ReactNode }
         const check = () => {
             const mappedTodos = todos.map(t => ({ ...t, title: t.text }))
             const allItems = [...assignments, ...mappedTodos]
-            const newNotified = checkDeadlines(allItems, notifiedIds)
 
-            if (newNotified.length > 0) {
-                setNotifiedIds(prev => {
-                    const next = new Set(prev)
-                    newNotified.forEach(id => next.add(id))
-                    return next
-                })
-            }
+            setNotifiedIds(prev => {
+                const newNotified = checkDeadlines(allItems, prev)
+                if (newNotified.length === 0) return prev
+
+                const next = new Set(prev)
+                newNotified.forEach(id => next.add(id))
+                return next
+            })
         }
 
         // Check immediately and then every 15 minutes
         check()
         const interval = setInterval(check, 15 * 60 * 1000)
         return () => clearInterval(interval)
-    }, [assignments, todos, notifiedIds])
+    }, [assignments, todos])
 
     // Load from local storage
     React.useEffect(() => {
