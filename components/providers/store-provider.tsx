@@ -302,69 +302,38 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     // --- Initial Data Fetch ---
     useEffect(() => {
         if (status === "authenticated") {
-            fetchData()
+            void fetchData()
         }
     }, [status])
 
-    const fetchData = async () => {
+    const fetchCoreData = async () => {
+        // Keep first paint fast: only fetch what the dashboard needs immediately.
         try {
-            // Fetch all data in parallel
-            const [settingsRes, semsRes, todosRes, assignsRes, projectsRes, subjectsRes, scheduleRes, resourcesRes, examsRes, logsRes, booksRes, ideasRes, snippetsRes] = await Promise.all([
+            const [settingsRes, todosRes, assignsRes, subjectsRes] = await Promise.all([
                 fetch('/api/settings'),
-                fetch('/api/semesters'),
                 fetch('/api/todos'),
                 fetch('/api/assignments'),
-                fetch('/api/projects'),
                 fetch('/api/academics'),
-                fetch('/api/schedule'),
-                fetch('/api/resources'),
-                fetch('/api/exams'),
-                fetch('/api/logs'),
-                fetch('/api/library'),
-                fetch('/api/ideas'),
-                fetch('/api/snippets')
             ])
 
-            // Parse each response safely
             const settingsData = settingsRes.ok ? await settingsRes.json() : null
-            const semsData = semsRes.ok ? await semsRes.json() : []
             const todosData = todosRes.ok ? await todosRes.json() : []
             const rawAssigns = assignsRes.ok ? await assignsRes.json() : []
+            const subjectsData = subjectsRes.ok ? await subjectsRes.json() : []
+
             // Map backend fields (subject, due) to frontend (course, dueDate)
             const assignsData = rawAssigns.map((a: any) => ({
                 ...a,
                 course: a.subject,
                 dueDate: a.due
             }))
-            const projectsData = projectsRes.ok ? await projectsRes.json() : []
-            const subjectsData = subjectsRes.ok ? await subjectsRes.json() : []
-            const scheduleData = scheduleRes.ok ? await scheduleRes.json() : []
-            const resourcesData = resourcesRes.ok ? await resourcesRes.json() : []
-            const examsData = examsRes.ok ? await examsRes.json() : []
-            const logsData = logsRes.ok ? await logsRes.json() : []
 
             if (settingsData) {
                 setSettings(settingsData)
-            } else if (status === "authenticated") {
-                // Retry once if settings are missing but user is authenticated
-                setTimeout(fetchData, 1000)
             }
-            setSemesters(semsData)
             setTodos(todosData)
             setAssignments(assignsData)
-            setSchedule(scheduleData)
-            setResources(resourcesData)
-            setExams(examsData)
-            setDailyLogs(logsData)
 
-            // Transform projects tech
-            const formattedProjects = projectsData.map((p: any) => ({
-                ...p,
-                tech: p.tech ? p.tech.split(',') : []
-            }))
-            setProjects(formattedProjects)
-
-            // Transform subjects marks
             const formattedSubjects = subjectsData.map((s: any) => ({
                 ...s,
                 marks: {
@@ -377,20 +346,66 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
                 }
             }))
             setSubjects(formattedSubjects)
+        } catch (error) {
+            console.error("Failed to fetch core data:", error)
+        } finally {
+            setIsLoading(false)
+        }
+    }
 
-            // NEW DATA
+    const fetchSecondaryData = async () => {
+        try {
+            const [semsRes, projectsRes, scheduleRes, resourcesRes, examsRes, logsRes, booksRes, ideasRes, snippetsRes, tagsRes] = await Promise.all([
+                fetch('/api/semesters'),
+                fetch('/api/projects'),
+                fetch('/api/schedule'),
+                fetch('/api/resources'),
+                fetch('/api/exams'),
+                fetch('/api/logs'),
+                fetch('/api/library'),
+                fetch('/api/ideas'),
+                fetch('/api/snippets'),
+                fetch('/api/tags')
+            ])
+
+            const semsData = semsRes.ok ? await semsRes.json() : []
+            const projectsData = projectsRes.ok ? await projectsRes.json() : []
+            const scheduleData = scheduleRes.ok ? await scheduleRes.json() : []
+            const resourcesData = resourcesRes.ok ? await resourcesRes.json() : []
+            const examsData = examsRes.ok ? await examsRes.json() : []
+            const logsData = logsRes.ok ? await logsRes.json() : []
+
+            setSemesters(semsData)
+            setSchedule(scheduleData)
+            setResources(resourcesData)
+            setExams(examsData)
+            setDailyLogs(logsData)
+
+            const formattedProjects = projectsData.map((p: any) => ({
+                ...p,
+                tech: p.tech ? p.tech.split(',') : []
+            }))
+            setProjects(formattedProjects)
+
             if (booksRes.ok) setBooks(await booksRes.json())
             if (ideasRes.ok) setIdeas(await ideasRes.json())
             if (snippetsRes.ok) setSnippets(await snippetsRes.json())
-
-            // Fetch tags
-            const tagsRes = await fetch('/api/tags')
             if (tagsRes.ok) setTags(await tagsRes.json())
-
         } catch (error) {
-            console.error("Failed to fetch data:", error)
-        } finally {
-            setIsLoading(false)
+            console.error("Failed to fetch secondary data:", error)
+        }
+    }
+
+    const fetchData = async () => {
+        // Backwards-compatible entrypoint
+        await fetchCoreData()
+        // Defer big fetches until browser is idle-ish.
+        if (typeof window !== 'undefined') {
+            const idle = (window as any).requestIdleCallback as undefined | ((cb: () => void) => void)
+            if (idle) idle(() => { void fetchSecondaryData() })
+            else setTimeout(() => { void fetchSecondaryData() }, 500)
+        } else {
+            void fetchSecondaryData()
         }
     }
 

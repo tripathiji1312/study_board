@@ -17,16 +17,29 @@ import {
 } from "@tabler/icons-react"
 import { useRouter } from "next/navigation"
 import { useStore } from "@/components/providers/store-provider"
-import { SpotifyWidget } from "@/components/spotify-widget"
+import dynamic from "next/dynamic"
 import { StudyGraph } from "@/components/dashboard/study-graph"
 import { ExamWidget } from "@/components/dashboard/exam-widget"
 import { MoodWidget } from "@/components/dashboard/mood-widget"
 import { SmartScheduleWidget } from "@/components/dashboard/smart-schedule"
 import { AssignmentsWidget } from "@/components/dashboard/assignments-widget"
 import { ResourcesWidget } from "@/components/dashboard/resources-widget"
-import { FocusAnalytics } from "@/components/dashboard/focus-analytics"
-import { MemoryLeaksWidget } from "@/components/dashboard/memory-leaks-widget"
 import { StreakWidget, BadgesWidget } from "@/components/dashboard/gamification-widgets"
+
+const FocusAnalytics = dynamic(() => import("@/components/dashboard/focus-analytics").then(m => m.FocusAnalytics), {
+    loading: () => <ChartSkeleton />,
+    ssr: false
+})
+
+const SpotifyWidget = dynamic(() => import("@/components/spotify-widget").then(m => m.SpotifyWidget), {
+    loading: () => <WidgetSkeleton className="h-[200px]" />,
+    ssr: false
+})
+
+const MemoryLeaksWidget = dynamic(() => import("@/components/dashboard/memory-leaks-widget").then(m => m.MemoryLeaksWidget), {
+    loading: () => <WidgetSkeleton className="h-full" />,
+    ssr: false
+})
 import { WidgetSkeleton, StatCardSkeleton, ChartSkeleton } from "@/components/ui/skeleton-loaders"
 import { Skeleton } from "@/components/ui/skeleton"
 import { isToday, parseISO, differenceInDays, format } from "date-fns"
