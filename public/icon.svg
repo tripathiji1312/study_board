@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Study Board" fill="none">
+  <defs>
+    <linearGradient id="g" x1="96" y1="96" x2="416" y2="416" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#A855F7"/>
+      <stop offset="0.5" stop-color="#6366F1"/>
+      <stop offset="1" stop-color="#22C55E"/>
+    </linearGradient>
+    <filter id="s" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#0B1220" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <rect x="64" y="64" width="384" height="384" rx="96" fill="url(#g)" filter="url(#s)"/>
+
+  <!-- Stylized "SB" monogram -->
+  <path fill="#FFFFFF" fill-rule="evenodd" clip-rule="evenodd"
+    d="M176 168c0-17.673 14.327-32 32-32h72c44.183 0 80 35.817 80 80 0 26.51-12.9 49.99-32.82 64C349.1 294.01 362 317.49 362 344c0 44.183-35.817 80-80 80h-80c-14.359 0-26-11.641-26-26 0-14.359 11.641-26 26-26h80c15.464 0 28-12.536 28-28s-12.536-28-28-28h-72c-17.673 0-32-14.327-32-32s14.327-32 32-32h72c15.464 0 28-12.536 28-28s-12.536-28-28-28h-72c-17.673 0-32-14.327-32-32Z"/>
+
+  <!-- Small checkmark accent -->
+  <path d="M218 260l20 20 56-56" stroke="#FFFFFF" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" opacity="0.92"/>
+</svg>
