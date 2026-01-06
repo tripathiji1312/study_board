@@ -10,9 +10,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
   return (
     <Sonner
       theme={theme as ToasterProps["theme"]}
-      className="toaster group"
-      position="top-center"
-      offset={16}
+      className="toaster group mb-20 md:mb-0"
+      position="bottom-right"
       icons={{
         success: (
           <IconCircleCheck className="size-4" />

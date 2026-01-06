@@ -178,7 +178,7 @@ export function AppSidebar({ className, isOpen, onOpenChange }: SidebarProps) {
         <>
             {/* Mobile Sidebar - triggered by bottom nav More button */}
             <Sheet open={isOpen} onOpenChange={onOpenChange}>
-                <SheetContent side="left" className="p-0 w-64 bg-card">
+                <SheetContent side="left" className="p-0 w-64 bg-card" showCloseButton={false}>
                     <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
                     {content}
                 </SheetContent>

@@ -138,7 +138,7 @@ export function GradesImporter({ onImportComplete }: GradesImporterProps) {
             <DialogTrigger asChild>
                 <Button variant="outline" className="gap-2">
                     <IconTrophy className="w-4 h-4" />
-                    Import Grades with AI
+                    <span>Import Grades <span className="hidden sm:inline">with AI</span></span>
                 </Button>
             </DialogTrigger>
             <DialogContent className="w-[95vw] max-w-3xl h-[90vh] sm:h-[85vh] p-0 flex flex-col gap-0">
