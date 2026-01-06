@@ -7,7 +7,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { IconBrandGoogle, IconBrandGithub, IconLoader, IconSparkles } from "@tabler/icons-react"
+import { IconBrandGithub, IconLoader, IconSparkles } from "@tabler/icons-react"
 import { toast } from "sonner"
 import { Logo } from "@/components/ui/logo"
 import { motion } from "framer-motion"
@@ -77,16 +77,10 @@ export default function SignInPage() {
                     </div>
 
                     <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-3">
-                            <Button variant="outline" onClick={() => handleOAuthLogin("github")} disabled={isLoading} className="h-11 rounded-xl hover:bg-accent/50">
-                                <IconBrandGithub className="mr-2 h-4 w-4" />
-                                GitHub
-                            </Button>
-                            <Button variant="outline" onClick={() => handleOAuthLogin("google")} disabled={isLoading} className="h-11 rounded-xl hover:bg-accent/50">
-                                <IconBrandGoogle className="mr-2 h-4 w-4" />
-                                Google
-                            </Button>
-                        </div>
+                        <Button variant="outline" onClick={() => handleOAuthLogin("github")} disabled={isLoading} className="w-full h-11 rounded-xl hover:bg-accent/50">
+                            <IconBrandGithub className="mr-2 h-4 w-4" />
+                            Continue with GitHub
+                        </Button>
 
                         <div className="relative">
                             <div className="absolute inset-0 flex items-center">

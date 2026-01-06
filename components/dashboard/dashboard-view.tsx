@@ -13,7 +13,11 @@ import {
     IconCalendarEvent,
     IconPlus,
     IconTargetArrow,
-    IconFlame
+    IconFlame,
+    IconTrophy,
+    IconTarget,
+    IconTrendingUp,
+    IconCalendar
 } from "@tabler/icons-react"
 import { useRouter } from "next/navigation"
 import { useStore } from "@/components/providers/store-provider"
@@ -152,33 +156,28 @@ export function DashboardView() {
             >
                 {/* Header - Beautiful Greeting Card */}
                 <motion.header variants={item}>
-                    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/10 p-4 md:p-6">
-                        {/* Decorative background elements */}
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-                        <div className="absolute bottom-0 left-0 w-24 h-24 bg-accent/10 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2" />
+                    <div className="relative overflow-hidden rounded-3xl bg-primary/5 border border-primary/10 shadow-lg p-6 md:p-8">
+                        {/* Mesh Gradient Background - Toned down to match solid vibe */}
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl opacity-50 -translate-y-1/2 translate-x-1/2 animate-pulse" />
+                        <div className="absolute bottom-0 left-0 w-48 h-48 bg-primary/5 rounded-full blur-3xl opacity-50 translate-y-1/2 -translate-x-1/2" />
 
-                        <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div className="flex items-start gap-3 md:gap-4">
-                                {/* Greeting emoji */}
-                                <div className="hidden md:flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 text-2xl shrink-0">
-                                    {new Date().getHours() < 12 ? "🌅" : new Date().getHours() < 18 ? "☀️" : "🌙"}
-                                </div>
-
-                                <div className="flex-1">
+                        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                            <div className="flex items-center gap-5">
+                                <div className="space-y-1">
                                     {isLoading ? (
                                         <div className="space-y-2">
-                                            <Skeleton className="h-7 md:h-9 w-48 md:w-64" />
-                                            <Skeleton className="h-4 w-32 md:w-48" />
+                                            <Skeleton className="h-8 w-64" />
+                                            <Skeleton className="h-5 w-40" />
                                         </div>
                                     ) : (
                                         <>
-                                            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight">
-                                                {getGreeting()}, <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">{settings?.displayName || "Student"}</span>
+                                            <h1 className="text-2xl md:text-3xl lg:text-4xl font-extrabold tracking-tight text-foreground">
+                                                {getGreeting()}, <span className="text-primary">{settings?.displayName || "Student"}</span>
                                             </h1>
-                                            <p className="text-sm md:text-base text-muted-foreground mt-0.5 md:mt-1">
-                                                {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-                                                <span className="hidden md:inline"> · Here's your daily briefing</span>
-                                            </p>
+                                            <div className="flex items-center gap-2 text-muted-foreground text-sm md:text-base font-medium">
+                                                <IconCalendar className="w-4 h-4" />
+                                                <span>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</span>
+                                            </div>
                                         </>
                                     )}
                                 </div>
