@@ -600,106 +600,110 @@ export default function SyllabusPage() {
                                         )}>
                                             <div
                                                 onClick={() => toggleExpand(mod.id)}
-                                                className="flex items-center gap-4 p-4 cursor-pointer select-none"
+                                                className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 cursor-pointer select-none"
                                             >
-                                                {/* Expand Icon */}
-                                                <div className="text-muted-foreground">
-                                                    {expanded.has(mod.id) ? (
-                                                        <IconChevronDown className="w-5 h-5" />
-                                                    ) : (
-                                                        <IconChevronRight className="w-5 h-5" />
-                                                    )}
-                                                </div>
-
                                                 {/* Module Info */}
-                                                {/* Module Info */}
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                        <h4 className="font-medium text-base truncate">{mod.title}</h4>
-                                                        {/* Retention Indicator */}
-                                                        {(() => {
-                                                            if (mod.status === 'Completed' || mod.status === 'Revised') {
-                                                                const retention = calculateRetention(mod.lastStudiedAt, mod.strength)
-                                                                let color = "bg-emerald-500" // > 80%
-                                                                if (retention < 50) color = "bg-red-500"
-                                                                else if (retention < 80) color = "bg-amber-500"
-
-                                                                return (
-                                                                    <div className="flex items-center bg-muted/50 rounded-full px-1.5 py-0.5">
-                                                                        <div className={cn("w-1.5 h-1.5 rounded-full", color)} />
-                                                                        <span className="ml-1 text-[10px] text-muted-foreground font-mono">{retention}%</span>
-                                                                    </div>
-                                                                )
-                                                            } else if (mod.status === 'InProgress') {
-                                                                return (
-                                                                    <div className="flex items-center bg-amber-500/10 rounded-full px-1.5 py-0.5">
-                                                                        <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                                                                        <span className="ml-1 text-[10px] text-amber-600 font-medium">Learning</span>
-                                                                    </div>
-                                                                )
-                                                            }
-                                                            return null
-                                                        })()}
+                                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-1 min-w-0">
+                                                    {/* Expand Icon */}
+                                                    <div className="hidden sm:block text-muted-foreground shrink-0">
+                                                        {expanded.has(mod.id) ? (
+                                                            <IconChevronDown className="w-5 h-5" />
+                                                        ) : (
+                                                            <IconChevronRight className="w-5 h-5" />
+                                                        )}
                                                     </div>
-                                                    <p className="text-sm text-muted-foreground">
-                                                        {mod.topics?.length || 0} topics
-                                                    </p>
+
+                                                    <div className="flex-1">
+                                                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                                                            <h4 className="font-medium text-base break-words">{mod.title}</h4>
+                                                            {/* Retention Indicator */}
+                                                            {(() => {
+                                                                if (mod.status === 'Completed' || mod.status === 'Revised') {
+                                                                    const retention = calculateRetention(mod.lastStudiedAt, mod.strength)
+                                                                    let color = "bg-emerald-500" // > 80%
+                                                                    if (retention < 50) color = "bg-red-500"
+                                                                    else if (retention < 80) color = "bg-amber-500"
+
+                                                                    return (
+                                                                        <div className="flex items-center bg-muted/50 rounded-full px-1.5 py-0.5">
+                                                                            <div className={cn("w-1.5 h-1.5 rounded-full", color)} />
+                                                                            <span className="ml-1 text-[10px] text-muted-foreground font-mono">{retention}%</span>
+                                                                        </div>
+                                                                    )
+                                                                } else if (mod.status === 'InProgress') {
+                                                                    return (
+                                                                        <div className="flex items-center bg-amber-500/10 rounded-full px-1.5 py-0.5">
+                                                                            <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                                                            <span className="ml-1 text-[10px] text-amber-600 font-medium">Learning</span>
+                                                                        </div>
+                                                                    )
+                                                                }
+                                                                return null
+                                                            })()}
+                                                        </div>
+                                                        <p className="text-sm text-muted-foreground">
+                                                            {mod.topics?.length || 0} topics
+                                                        </p>
+                                                    </div>
                                                 </div>
 
-                                                {/* Action Buttons (Edit/Delete) */}
-                                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                {/* Actions and Status row */}
+                                                <div className="flex items-center justify-between sm:justify-end gap-2 mt-2 sm:mt-0 shrink-0">
+                                                    {/* Action Buttons */}
+                                                    <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-9 w-9 sm:h-8 sm:w-8 text-indigo-500 hover:text-indigo-600 hover:bg-indigo-500/10"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation()
+                                                                openScoutDefault(mod)
+                                                            }}
+                                                            title="Scout Resources"
+                                                        >
+                                                            <IconTelescope className="w-4 h-4" />
+                                                        </Button>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-9 w-9 sm:h-8 sm:w-8 text-muted-foreground hover:text-foreground"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation()
+                                                                openEditDialog(mod)
+                                                            }}
+                                                        >
+                                                            <IconPencil className="w-4 h-4" />
+                                                        </Button>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-9 w-9 sm:h-8 sm:w-8 text-muted-foreground hover:text-destructive"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation()
+                                                                handleDeleteModule(mod.id)
+                                                            }}
+                                                        >
+                                                            <IconTrash className="w-4 h-4" />
+                                                        </Button>
+                                                    </div>
+
+                                                    {/* Status Button */}
                                                     <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 text-indigo-500 hover:text-indigo-600 hover:bg-indigo-500/10"
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className={cn(
+                                                            "min-w-[100px] sm:min-w-[120px] h-9 rounded-lg transition-all text-xs sm:text-sm",
+                                                            config.bg
+                                                        )}
                                                         onClick={(e) => {
                                                             e.stopPropagation()
-                                                            openScoutDefault(mod)
-                                                        }}
-                                                        title="Scout Resources"
-                                                    >
-                                                        <IconTelescope className="w-4 h-4" />
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation()
-                                                            openEditDialog(mod)
+                                                            updateStatus(mod.id, mod.status)
                                                         }}
                                                     >
-                                                        <IconPencil className="w-4 h-4" />
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation()
-                                                            handleDeleteModule(mod.id)
-                                                        }}
-                                                    >
-                                                        <IconTrash className="w-4 h-4" />
+                                                        <Icon className="w-4 h-4 mr-1 sm:mr-2" />
+                                                        {config.label}
                                                     </Button>
                                                 </div>
-
-                                                {/* Status Button */}
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    className={cn(
-                                                        "min-w-[120px] h-9 rounded-lg transition-all",
-                                                        config.bg
-                                                    )}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation()
-                                                        updateStatus(mod.id, mod.status)
-                                                    }}
-                                                >
-                                                    <Icon className="w-4 h-4 mr-2" />
-                                                    {config.label}
-                                                </Button>
                                             </div>
 
                                             {/* Expanded Topics */}

@@ -150,37 +150,52 @@ export function DashboardView() {
                 animate="show"
                 className="space-y-6 max-w-[1600px] mx-auto"
             >
-                {/* Header */}
-                <motion.header variants={item} className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4">
-                    <div className="flex items-center justify-between md:block">
-                        {isLoading ? (
-                            <div className="space-y-2">
-                                <Skeleton className="h-8 md:h-10 w-48 md:w-64" />
-                                <Skeleton className="h-4 md:h-5 w-32 md:w-48 hidden md:block" />
+                {/* Header - Beautiful Greeting Card */}
+                <motion.header variants={item}>
+                    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/10 p-4 md:p-6">
+                        {/* Decorative background elements */}
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+                        <div className="absolute bottom-0 left-0 w-24 h-24 bg-accent/10 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2" />
+
+                        <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div className="flex items-start gap-3 md:gap-4">
+                                {/* Greeting emoji */}
+                                <div className="hidden md:flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 text-2xl shrink-0">
+                                    {new Date().getHours() < 12 ? "🌅" : new Date().getHours() < 18 ? "☀️" : "🌙"}
+                                </div>
+
+                                <div className="flex-1">
+                                    {isLoading ? (
+                                        <div className="space-y-2">
+                                            <Skeleton className="h-7 md:h-9 w-48 md:w-64" />
+                                            <Skeleton className="h-4 w-32 md:w-48" />
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight">
+                                                {getGreeting()}, <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">{settings?.displayName || "Student"}</span>
+                                            </h1>
+                                            <p className="text-sm md:text-base text-muted-foreground mt-0.5 md:mt-1">
+                                                {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                                                <span className="hidden md:inline"> · Here's your daily briefing</span>
+                                            </p>
+                                        </>
+                                    )}
+                                </div>
                             </div>
-                        ) : (
-                            <>
-                                <h1 className="text-xl md:text-3xl font-semibold md:font-light tracking-tight text-foreground/90">
-                                    {getGreeting()}, <span className="font-semibold text-primary">{settings?.displayName || "Student"}</span>
-                                </h1>
-                                <p className="text-muted-foreground mt-1 hidden md:block">Here is your daily briefing.</p>
-                            </>
-                        )}
-                        {/* Mobile gamification widgets */}
-                        <div className="flex items-center gap-2 md:hidden">
-                            <StreakWidget />
-                            <BadgesWidget />
+
+                            {/* Right side - widgets and CTA */}
+                            <div className="flex items-center gap-2 md:gap-3">
+                                <StreakWidget />
+                                <BadgesWidget />
+                                <Button variant="default" size="default" className="hidden md:flex rounded-full px-5 gap-2 shadow-lg shadow-primary/20" asChild>
+                                    <Link href="/focus">
+                                        <IconTargetArrow className="w-4 h-4" />
+                                        <span>Laser Mode</span>
+                                    </Link>
+                                </Button>
+                            </div>
                         </div>
-                    </div>
-                    <div className="hidden md:flex items-center gap-3">
-                        <StreakWidget />
-                        <BadgesWidget />
-                        <Button variant="default" size="lg" className="rounded-full px-6 transition-all" asChild>
-                            <Link href="/focus">
-                                <IconTargetArrow className="w-5 h-5 mr-2" />
-                                Laser Mode
-                            </Link>
-                        </Button>
                     </div>
                 </motion.header>
 

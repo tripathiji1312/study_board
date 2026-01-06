@@ -101,16 +101,26 @@ export function AppSidebar({ className, isOpen, onOpenChange }: SidebarProps) {
     const content = (
         <div className="flex h-screen flex-col bg-card/50 backdrop-blur-sm border-r">
             {/* Header - Fixed */}
-            <div className="flex h-14 items-center justify-between border-b px-4 shrink-0 bg-background/50">
-                <Link className="flex items-center gap-2 font-bold text-lg hover:opacity-80 transition-opacity" href="/" onClick={() => onOpenChange?.(false)}>
+            <div className="flex h-14 items-center justify-between border-b px-3 shrink-0 bg-background/50">
+                {/* Close button for mobile */}
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="md:hidden h-9 w-9 shrink-0"
+                    onClick={() => onOpenChange?.(false)}
+                >
+                    <IconX className="h-5 w-5" />
+                </Button>
+
+                <Link
+                    className="flex items-center gap-2 font-bold text-lg hover:opacity-80 transition-opacity"
+                    href="/"
+                    onClick={() => onOpenChange?.(false)}
+                >
                     <Logo />
                 </Link>
-                <div className="flex items-center gap-2">
-                    <ThemeSwitcher />
-                    <Button variant="ghost" size="icon" className="md:hidden" onClick={() => onOpenChange?.(false)}>
-                        <IconMenu2 className="h-5 w-5 rotate-90" />
-                    </Button>
-                </div>
+
+                <ThemeSwitcher />
             </div>
 
             {/* Scrollable Content - Navigation */}

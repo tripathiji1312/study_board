@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 import {
     IconLayoutDashboard,
     IconChecklist,
-    IconTargetArrow,
+    IconClipboardList,
     IconCalendarEvent,
     IconMenu2,
 } from "@tabler/icons-react"
@@ -31,13 +31,13 @@ const navItems: NavItem[] = [
         label: "Tasks",
         href: "/todos",
         icon: IconChecklist,
-        matchPaths: ["/todos", "/assignments", "/projects"]
+        matchPaths: ["/todos", "/projects"]
     },
     {
-        label: "Focus",
-        href: "/focus",
-        icon: IconTargetArrow,
-        matchPaths: ["/focus"]
+        label: "Work",
+        href: "/assignments",
+        icon: IconClipboardList,
+        matchPaths: ["/assignments"]
     },
     {
         label: "Schedule",
