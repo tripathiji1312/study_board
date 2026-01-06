@@ -21,7 +21,8 @@ import {
     IconClipboardList,
     IconFlame,
     IconSparkles,
-    IconUserBolt
+    IconUserBolt,
+    IconX
 } from "@tabler/icons-react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -36,7 +37,10 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 import { signOut } from "next-auth/react"
 
-interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> { }
+interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
+    isOpen?: boolean
+    onOpenChange?: (open: boolean) => void
+}
 
 // Route Groups
 const mainRoutes = [
@@ -63,9 +67,8 @@ const toolRoutes = [
     { label: "Snippets", icon: IconCode, href: "/snippets" },
 ]
 
-export function AppSidebar({ className }: SidebarProps) {
+export function AppSidebar({ className, isOpen, onOpenChange }: SidebarProps) {
     const pathname = usePathname()
-    const [isOpen, setIsOpen] = React.useState(false)
     const { settings, isLoading } = useStore()
 
     const NavItem = ({ route }: { route: typeof mainRoutes[0] & { highlight?: boolean } }) => (
@@ -77,7 +80,7 @@ export function AppSidebar({ className }: SidebarProps) {
                 route.highlight && pathname !== route.href && "text-primary/80 hover:text-primary hover:bg-primary/5"
             )}
             asChild
-            onClick={() => setIsOpen(false)}
+            onClick={() => onOpenChange?.(false)}
         >
             <Link href={route.href}>
                 <route.icon className={cn("h-4 w-4", pathname === route.href && "text-primary")} />
@@ -99,12 +102,12 @@ export function AppSidebar({ className }: SidebarProps) {
         <div className="flex h-screen flex-col bg-card/50 backdrop-blur-sm border-r">
             {/* Header - Fixed */}
             <div className="flex h-14 items-center justify-between border-b px-4 shrink-0 bg-background/50">
-                <Link className="flex items-center gap-2 font-bold text-lg hover:opacity-80 transition-opacity" href="/" onClick={() => setIsOpen(false)}>
+                <Link className="flex items-center gap-2 font-bold text-lg hover:opacity-80 transition-opacity" href="/" onClick={() => onOpenChange?.(false)}>
                     <Logo />
                 </Link>
                 <div className="flex items-center gap-2">
                     <ThemeSwitcher />
-                    <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setIsOpen(false)}>
+                    <Button variant="ghost" size="icon" className="md:hidden" onClick={() => onOpenChange?.(false)}>
                         <IconMenu2 className="h-5 w-5 rotate-90" />
                     </Button>
                 </div>
@@ -148,7 +151,7 @@ export function AppSidebar({ className }: SidebarProps) {
                             <div className="flex items-center justify-between">
                                 <span className="text-xs font-bold truncate leading-none">{settings?.displayName || "Student"}</span>
                                 <Button variant="ghost" size="icon" className="h-4 w-4 rounded-md hover:bg-muted" asChild id="sidebar-settings">
-                                    <Link href="/settings" onClick={() => setIsOpen(false)}>
+                                    <Link href="/settings" onClick={() => onOpenChange?.(false)}>
                                         <IconSettings className="w-3 h-3 text-muted-foreground group-hover:text-foreground transition-colors" />
                                     </Link>
                                 </Button>
@@ -163,20 +166,8 @@ export function AppSidebar({ className }: SidebarProps) {
 
     return (
         <>
-            {/* Mobile Trigger */}
-            <div className="md:hidden fixed top-3 left-4 z-50">
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="bg-background/80 backdrop-blur-md border shadow-sm rounded-full"
-                    onClick={() => setIsOpen(true)}
-                >
-                    <IconMenu2 className="h-5 w-5" />
-                </Button>
-            </div>
-
-            {/* Mobile Sidebar */}
-            <Sheet open={isOpen} onOpenChange={setIsOpen}>
+            {/* Mobile Sidebar - triggered by bottom nav More button */}
+            <Sheet open={isOpen} onOpenChange={onOpenChange}>
                 <SheetContent side="left" className="p-0 w-64 bg-card">
                     <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
                     {content}

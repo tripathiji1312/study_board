@@ -151,23 +151,28 @@ export function DashboardView() {
                 className="space-y-6 max-w-[1600px] mx-auto"
             >
                 {/* Header */}
-                <motion.header variants={item} className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
+                <motion.header variants={item} className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4">
+                    <div className="flex items-center justify-between md:block">
                         {isLoading ? (
                             <div className="space-y-2">
-                                <Skeleton className="h-10 w-64" />
-                                <Skeleton className="h-5 w-48" />
+                                <Skeleton className="h-8 md:h-10 w-48 md:w-64" />
+                                <Skeleton className="h-4 md:h-5 w-32 md:w-48 hidden md:block" />
                             </div>
                         ) : (
                             <>
-                                <h1 className="text-3xl font-light tracking-tight text-foreground/90">
+                                <h1 className="text-xl md:text-3xl font-semibold md:font-light tracking-tight text-foreground/90">
                                     {getGreeting()}, <span className="font-semibold text-primary">{settings?.displayName || "Student"}</span>
                                 </h1>
-                                <p className="text-muted-foreground mt-1">Here is your daily briefing.</p>
+                                <p className="text-muted-foreground mt-1 hidden md:block">Here is your daily briefing.</p>
                             </>
                         )}
+                        {/* Mobile gamification widgets */}
+                        <div className="flex items-center gap-2 md:hidden">
+                            <StreakWidget />
+                            <BadgesWidget />
+                        </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="hidden md:flex items-center gap-3">
                         <StreakWidget />
                         <BadgesWidget />
                         <Button variant="default" size="lg" className="rounded-full px-6 transition-all" asChild>
@@ -209,32 +214,34 @@ export function DashboardView() {
                     <FocusAnalytics />
                 </motion.div>
 
-                {/* Key Metrics Row */}
-                <motion.div variants={item} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    {isLoading ? (
-                        Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
-                    ) : (
-                        [
-                            { label: "Pending", val: pendingAssignments, icon: IconClipboardList, color: "text-orange-500", bg: "bg-orange-500/10", href: "/assignments" },
-                            { label: "Tasks", val: todayTodos, icon: IconChecklist, color: "text-blue-500", bg: "bg-blue-500/10", href: "/todos" },
-                            { label: "Projects", val: activeProjects, icon: IconRocket, color: "text-purple-500", bg: "bg-purple-500/10", href: "/projects" },
-                            { label: "Schedule", val: todayEvents, icon: IconCalendarEvent, color: "text-emerald-500", bg: "bg-emerald-500/10", href: "/schedule" },
-                        ].map((stat, i) => (
-                            <Link key={i} href={stat.href}>
-                                <Card className="hover:bg-muted/50 hover:border-primary/20 transition-all cursor-pointer group">
-                                    <CardContent className="p-4 flex items-center gap-4">
-                                        <div className={`p-3 rounded-xl ${stat.bg} ${stat.color} group-hover:scale-110 transition-transform`}>
-                                            <stat.icon className="w-6 h-6" />
-                                        </div>
-                                        <div>
-                                            <p className="text-3xl font-bold tracking-tight text-foreground">{stat.val}</p>
-                                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{stat.label}</p>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </Link>
-                        ))
-                    )}
+                {/* Key Metrics Row - Horizontal scroll on mobile */}
+                <motion.div variants={item} className="-mx-4 px-4 md:mx-0 md:px-0">
+                    <div className="flex gap-3 overflow-x-auto scrollbar-hide md:grid md:grid-cols-4 md:gap-4 pb-2 md:pb-0">
+                        {isLoading ? (
+                            Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
+                        ) : (
+                            [
+                                { label: "Pending", val: pendingAssignments, icon: IconClipboardList, color: "text-orange-500", bg: "bg-orange-500/10", href: "/assignments" },
+                                { label: "Tasks", val: todayTodos, icon: IconChecklist, color: "text-blue-500", bg: "bg-blue-500/10", href: "/todos" },
+                                { label: "Projects", val: activeProjects, icon: IconRocket, color: "text-purple-500", bg: "bg-purple-500/10", href: "/projects" },
+                                { label: "Schedule", val: todayEvents, icon: IconCalendarEvent, color: "text-emerald-500", bg: "bg-emerald-500/10", href: "/schedule" },
+                            ].map((stat, i) => (
+                                <Link key={i} href={stat.href} className="flex-shrink-0 w-[140px] md:w-auto">
+                                    <Card className="hover:bg-muted/50 hover:border-primary/20 transition-all cursor-pointer group touch-manipulation active:scale-[0.98]">
+                                        <CardContent className="p-3 md:p-4 flex items-center gap-3 md:gap-4">
+                                            <div className={`p-2 md:p-3 rounded-xl ${stat.bg} ${stat.color} group-hover:scale-110 transition-transform`}>
+                                                <stat.icon className="w-5 h-5 md:w-6 md:h-6" />
+                                            </div>
+                                            <div>
+                                                <p className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">{stat.val}</p>
+                                                <p className="text-[10px] md:text-xs font-medium text-muted-foreground uppercase tracking-wide">{stat.label}</p>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </Link>
+                            ))
+                        )}
+                    </div>
                 </motion.div>
 
                 {/* Quick Add Input */}

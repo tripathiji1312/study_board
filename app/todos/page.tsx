@@ -517,26 +517,46 @@ export default function TodosPage() {
 
     return (
         <Shell>
-            <div className="flex flex-col md:flex-row gap-4 md:gap-6 h-[calc(100vh-8rem)]">
+            <div className="flex flex-col md:flex-row gap-4 md:gap-6 min-h-[calc(100vh-12rem)] md:h-[calc(100vh-8rem)]">
                 {/* Mobile Navigation */}
-                <div className="md:hidden flex flex-col gap-4 mb-4">
-                    <ScrollArea className="w-full whitespace-nowrap">
-                        <div className="flex w-max space-x-2 p-1">
+                <div className="md:hidden flex flex-col gap-3">
+                    {/* Mobile Search */}
+                    <div className="relative">
+                        <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Search tasks..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-9 pr-8 h-10"
+                        />
+                        {searchQuery && (
+                            <button
+                                onClick={() => setSearchQuery("")}
+                                className="absolute right-3 top-1/2 -translate-y-1/2"
+                            >
+                                <IconX className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+                            </button>
+                        )}
+                    </div>
+
+                    <ScrollArea className="w-full whitespace-nowrap -mx-4 px-4">
+                        <div className="flex w-max space-x-2 py-1">
                             {views.map(view => (
                                 <button
                                     key={view.id}
                                     onClick={() => setActiveView(view.id)}
                                     className={cn(
-                                        "flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors border",
+                                        "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all touch-manipulation",
+                                        "active:scale-95",
                                         activeView === view.id
-                                            ? "bg-primary text-primary-foreground border-primary"
-                                            : "bg-background text-muted-foreground border-border hover:bg-muted"
+                                            ? "bg-primary text-primary-foreground shadow-sm"
+                                            : "bg-muted/50 text-muted-foreground hover:bg-muted"
                                     )}
                                 >
-                                    <view.icon className="w-3.5 h-3.5" />
+                                    <view.icon className="w-4 h-4" />
                                     {view.label}
                                     {view.count !== undefined && view.count > 0 && (
-                                        <Badge variant="secondary" className="ml-1.5 h-4 text-[10px] px-1">
+                                        <Badge variant={activeView === view.id ? "secondary" : "outline"} className="ml-1 h-5 text-[10px] px-1.5">
                                             {view.count}
                                         </Badge>
                                     )}
@@ -677,7 +697,7 @@ export default function TodosPage() {
 
                         <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
                             <DialogTrigger asChild>
-                                <Button className="gap-2">
+                                <Button className="gap-2 hidden md:flex">
                                     <IconPlus className="w-4 h-4" />
                                     Add Task
                                 </Button>
@@ -996,6 +1016,14 @@ export default function TodosPage() {
                     </ScrollArea>
                 </div>
             </div>
+
+            {/* Mobile Floating Action Button */}
+            <Button
+                className="md:hidden mobile-fab h-14 w-14 shadow-xl"
+                onClick={() => setShowAddDialog(true)}
+            >
+                <IconPlus className="w-6 h-6" />
+            </Button>
         </Shell>
     )
 }

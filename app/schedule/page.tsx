@@ -209,26 +209,28 @@ export default function SchedulePage() {
 
     return (
         <Shell>
-            <div className="max-w-[1600px] mx-auto h-auto lg:h-[calc(100vh-6rem)] flex flex-col lg:flex-row gap-6 p-2">
+            <div className="max-w-[1600px] mx-auto min-h-[calc(100vh-12rem)] md:h-[calc(100vh-6rem)] flex flex-col lg:flex-row gap-4 md:gap-6">
 
                 {/* BIG CALENDAR AREA */}
-                <div className="flex-1 flex flex-col gap-4 min-h-[500px]">
+                <div className="flex-1 flex flex-col gap-3 md:gap-4 min-h-[400px] lg:min-h-[500px]">
                     {/* Header */}
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                        <div className="flex items-center gap-4">
-                            <h2 className="text-2xl md:text-3xl font-bold tracking-tight">{format(currentMonth, "MMMM yyyy")}</h2>
-                            <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-0.5">
-                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={prevMonth}>
+                    <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 md:gap-4">
+                            <h2 className="text-xl md:text-3xl font-bold tracking-tight">{format(currentMonth, "MMMM yyyy")}</h2>
+                            <div className="flex items-center gap-0.5 bg-muted/50 rounded-lg p-0.5">
+                                <Button variant="ghost" size="icon" className="h-7 w-7 md:h-8 md:w-8" onClick={prevMonth}>
                                     <IconChevronLeft className="w-4 h-4" />
                                 </Button>
-                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={nextMonth}>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 md:h-8 md:w-8" onClick={nextMonth}>
                                     <IconChevronRight className="w-4 h-4" />
                                 </Button>
                             </div>
                         </div>
-                        <div className="flex items-center gap-2 w-full sm:w-auto">
-                            <Button variant="outline" size="sm" onClick={jumpToToday}>Today</Button>
-                            <CalendarImporter onImportComplete={refreshData} />
+                        <div className="flex items-center gap-2">
+                            <Button variant="outline" size="sm" onClick={jumpToToday} className="h-8 text-xs md:text-sm">Today</Button>
+                            <div className="hidden md:block">
+                                <CalendarImporter onImportComplete={refreshData} />
+                            </div>
                         </div>
                     </div>
 
@@ -254,9 +256,10 @@ export default function SchedulePage() {
                                         key={date.toString()}
                                         onClick={() => setSelectedDate(date)}
                                         className={cn(
-                                            "relative bg-card p-1 md:p-2 flex flex-col gap-1 transition-colors hover:bg-muted/50 cursor-pointer min-h-[60px] md:min-h-[100px]",
+                                            "relative bg-card p-1.5 md:p-2 flex flex-col gap-1 transition-colors cursor-pointer min-h-[50px] md:min-h-[100px]",
+                                            "touch-manipulation active:bg-accent/60",
                                             !isCurrentMonth && "bg-muted/10 text-muted-foreground/50",
-                                            isSelected && "ring-2 ring-primary ring-inset z-10"
+                                            isSelected && "ring-2 ring-primary ring-inset z-10 bg-primary/5"
                                         )}
                                     >
                                         <div className="flex justify-between items-start">
@@ -266,8 +269,8 @@ export default function SchedulePage() {
                                             )}>
                                                 {format(date, "d")}
                                             </span>
+                                            {dayEvents.length > 0 && <div className="md:hidden w-2 h-2 rounded-full bg-primary animate-pulse" />}
                                             {dayEvents.length > 0 && <span className="hidden md:inline text-[10px] text-muted-foreground font-mono">{dayEvents.length}</span>}
-                                            {dayEvents.length > 0 && <div className="md:hidden w-1.5 h-1.5 rounded-full bg-primary" />}
                                         </div>
 
                                         <div className="flex-1 flex flex-col justify-end gap-1 overflow-hidden">
@@ -293,7 +296,7 @@ export default function SchedulePage() {
                 </div>
 
                 {/* RIGHT: Selected Day Agenda */}
-                <Card className="w-full lg:w-[400px] flex flex-col shadow-lg border-l-0 lg:border-l-4 border-t-4 lg:border-t-0 border-primary/20 h-[600px] lg:h-full">
+                <Card className="w-full lg:w-[380px] flex flex-col shadow-lg border-t-4 lg:border-t-0 lg:border-l-4 border-primary/20 min-h-[350px] lg:min-h-0 lg:h-full">
                     <CardHeader className="py-4 border-b bg-muted/10">
                         <div className="flex justify-between items-center">
                             <div>
