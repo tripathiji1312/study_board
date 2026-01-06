@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/lib/auth"
+import prisma from '@/lib/prisma'
 
 const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID
 const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET
@@ -25,9 +28,50 @@ async function refreshAccessToken(refreshToken: string) {
 }
 
 export async function GET() {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) {
+        return NextResponse.json({ connected: false })
+    }
+
     const cookieStore = await cookies()
     let accessToken = cookieStore.get('spotify_access_token')?.value
-    const refreshToken = cookieStore.get('spotify_refresh_token')?.value
+    let refreshToken = cookieStore.get('spotify_refresh_token')?.value
+
+    // If no tokens in cookies, check database
+    if (!refreshToken) {
+        try {
+            const account = await prisma.account.findFirst({
+                where: {
+                    userId: session.user.id,
+                    provider: 'spotify'
+                }
+            })
+
+            if (account && account.refresh_token) {
+                refreshToken = account.refresh_token
+                accessToken = account.access_token || undefined
+
+                // Restore cookies for this device
+                cookieStore.set('spotify_refresh_token', refreshToken, {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === 'production',
+                    maxAge: 60 * 60 * 24 * 30, // 30 days
+                    path: '/'
+                })
+
+                if (accessToken) {
+                    cookieStore.set('spotify_access_token', accessToken, {
+                        httpOnly: true,
+                        secure: process.env.NODE_ENV === 'production',
+                        maxAge: 3600,
+                        path: '/'
+                    })
+                }
+            }
+        } catch (error) {
+            console.error("Failed to fetch Spotify tokens from DB:", error)
+        }
+    }
 
     // Check if connected
     if (!refreshToken) {
@@ -40,6 +84,20 @@ export async function GET() {
             const tokens = await refreshAccessToken(refreshToken)
             accessToken = tokens.access_token
 
+            // Update database with new tokens
+            await prisma.account.updateMany({
+                where: {
+                    userId: session.user.id,
+                    provider: 'spotify'
+                },
+                data: {
+                    access_token: tokens.access_token,
+                    expires_at: Math.floor(Date.now() / 1000) + tokens.expires_in,
+                    // Some providers rotate refresh tokens
+                    ...(tokens.refresh_token && { refresh_token: tokens.refresh_token })
+                }
+            })
+
             // Update the access token cookie
             cookieStore.set('spotify_access_token', tokens.access_token, {
                 httpOnly: true,
@@ -47,6 +105,15 @@ export async function GET() {
                 maxAge: tokens.expires_in,
                 path: '/'
             })
+
+            if (tokens.refresh_token) {
+                cookieStore.set('spotify_refresh_token', tokens.refresh_token, {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === 'production',
+                    maxAge: 60 * 60 * 24 * 30,
+                    path: '/'
+                })
+            }
         } catch (error) {
             return NextResponse.json({ connected: false, error: 'refresh_failed' })
         }
@@ -72,12 +139,33 @@ export async function GET() {
         if (response.status === 401 && refreshToken) {
             try {
                 const tokens = await refreshAccessToken(refreshToken)
+                accessToken = tokens.access_token
+
+                // Update database
+                await prisma.account.updateMany({
+                    where: { userId: session.user.id, provider: 'spotify' },
+                    data: {
+                        access_token: tokens.access_token,
+                        expires_at: Math.floor(Date.now() / 1000) + tokens.expires_in,
+                        ...(tokens.refresh_token && { refresh_token: tokens.refresh_token })
+                    }
+                })
+
                 cookieStore.set('spotify_access_token', tokens.access_token, {
                     httpOnly: true,
                     secure: process.env.NODE_ENV === 'production',
                     maxAge: tokens.expires_in,
                     path: '/'
                 })
+
+                if (tokens.refresh_token) {
+                    cookieStore.set('spotify_refresh_token', tokens.refresh_token, {
+                        httpOnly: true,
+                        secure: process.env.NODE_ENV === 'production',
+                        maxAge: 60 * 60 * 24 * 30,
+                        path: '/'
+                    })
+                }
 
                 // Retry the request
                 const retryResponse = await fetch('https://api.spotify.com/v1/me/player/currently-playing', {
