@@ -13,16 +13,49 @@ export async function requestNotificationPermission() {
         return true
     }
 
-    const permission = await Notification.requestPermission()
-    return permission === "granted"
+    try {
+        const permission = await Notification.requestPermission()
+        return permission === "granted"
+    } catch (error) {
+        console.warn("Failed to request notification permission:", error)
+        return false
+    }
 }
 
-export function sendNotification(title: string, options?: NotificationOptions) {
-    if (Notification.permission === "granted") {
-        new Notification(title, {
-            icon: "/favicon.ico", // Assuming standard Next.js favicon
-            ...options
-        })
+export async function sendNotification(title: string, options?: NotificationOptions) {
+    // SSR safety check
+    if (typeof window === "undefined") {
+        return
+    }
+
+    if (!("Notification" in window) || Notification.permission !== "granted") {
+        return
+    }
+
+    try {
+        // Try using Service Worker notifications first (required on mobile)
+        if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
+            const registration = await navigator.serviceWorker.ready
+            await registration.showNotification(title, {
+                icon: "/favicon.ico",
+                ...options
+            })
+        } else {
+            // Fallback to regular Notification API (works on desktop)
+            // Wrap in try-catch as mobile browsers throw on `new Notification()`
+            try {
+                new Notification(title, {
+                    icon: "/favicon.ico",
+                    ...options
+                })
+            } catch (e) {
+                // Mobile browser - Notification constructor not allowed
+                // Silently fail since we can't show notifications without SW
+                console.warn("Notifications require Service Worker on this device")
+            }
+        }
+    } catch (error) {
+        console.warn("Failed to send notification:", error)
     }
 }
 
