@@ -28,10 +28,16 @@ export function SpotifyWidget() {
     const fetchNowPlaying = React.useCallback(async () => {
         try {
             const res = await fetch('/api/spotify/now-playing')
+            if (!res.ok) {
+                // API returned error status - treat as not connected
+                setData({ connected: false, isPlaying: false })
+                return
+            }
             const json = await res.json()
             setData(json)
         } catch (error) {
             console.error('Failed to fetch Spotify data:', error)
+            setData({ connected: false, isPlaying: false })
         } finally {
             setLoading(false)
         }

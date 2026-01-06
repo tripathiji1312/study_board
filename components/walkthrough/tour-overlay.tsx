@@ -74,7 +74,7 @@ export function TourOverlay({ step, stepIndex, totalSteps, onNext, onSkip }: Tou
         }
 
         const popoverHeight = 250
-        const windowHeight = typeof window !== 'undefined' ? window.innerHeight : 1000
+        const viewportHeight = windowSize.height
         const gap = 12
 
         // Helper to keep within viewport
@@ -90,7 +90,7 @@ export function TourOverlay({ step, stepIndex, totalSteps, onNext, onSkip }: Tou
                 }
             case "bottom":
                 // Check if bottom overflow
-                if (targetRect.bottom + gap + popoverHeight > windowHeight) {
+                if (targetRect.bottom + gap + popoverHeight > viewportHeight) {
                     return {
                         top: targetRect.top - gap,
                         left: targetRect.left + targetRect.width / 2,
@@ -112,7 +112,7 @@ export function TourOverlay({ step, stepIndex, totalSteps, onNext, onSkip }: Tou
                     y: "-50%"
                 }
             case "right":
-                const isNearBottom = targetRect.top + popoverHeight / 2 > windowHeight - 100
+                const isNearBottom = targetRect.top + popoverHeight / 2 > viewportHeight - 100
                 if (isNearBottom) {
                     return {
                         top: targetRect.bottom,
@@ -142,8 +142,20 @@ export function TourOverlay({ step, stepIndex, totalSteps, onNext, onSkip }: Tou
     // M x y v h h w v -h Z (inner counter-clock-wise to create hole)
     // Or just use fill-rule="evenodd" and two Rects
 
-    const windowWidth = typeof window !== 'undefined' ? window.innerWidth : 1920
-    const windowHeight = typeof window !== 'undefined' ? window.innerHeight : 1080
+    // SSR-safe: track window dimensions in state
+    const [windowSize, setWindowSize] = useState({ width: 1920, height: 1080 })
+
+    useEffect(() => {
+        const updateSize = () => {
+            setWindowSize({ width: window.innerWidth, height: window.innerHeight })
+        }
+        updateSize()
+        window.addEventListener("resize", updateSize)
+        return () => window.removeEventListener("resize", updateSize)
+    }, [])
+
+    const windowWidth = windowSize.width
+    const windowHeight = windowSize.height
 
     return (
         <div className="fixed inset-0 z-[100] overflow-hidden">
