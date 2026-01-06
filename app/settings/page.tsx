@@ -63,6 +63,7 @@ export default function SettingsPage() {
     // Profile State
     const [displayName, setDisplayName] = React.useState("")
     const [email, setEmail] = React.useState("")
+    const [avatarUrl, setAvatarUrl] = React.useState("")
     const [department, setDepartment] = React.useState("")
     const [focusDuration, setFocusDuration] = React.useState(25)
     const [breakDuration, setBreakDuration] = React.useState(5)
@@ -98,6 +99,7 @@ export default function SettingsPage() {
         if (settings) {
             setDisplayName(settings.displayName || "")
             setEmail(settings.email || "")
+            setAvatarUrl(settings.avatarUrl || "")
             setDepartment(settings.department || "")
             setFocusDuration(settings.focusDuration || 25)
             setBreakDuration(settings.breakDuration || 5)
@@ -112,6 +114,7 @@ export default function SettingsPage() {
         updateSettings({
             displayName,
             email,
+            avatarUrl,
             department,
             focusDuration,
             breakDuration,
@@ -229,6 +232,10 @@ export default function SettingsPage() {
                                     <div className="space-y-2">
                                         <Label htmlFor="dept">Department</Label>
                                         <Input id="dept" value={department} onChange={e => setDepartment(e.target.value)} placeholder="CSE" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="avatar">Avatar URL</Label>
+                                        <Input id="avatar" value={avatarUrl} onChange={e => setAvatarUrl(e.target.value)} placeholder="https://example.com/me.jpg" />
                                     </div>
                                 </div>
 

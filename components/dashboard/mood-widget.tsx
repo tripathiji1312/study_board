@@ -181,11 +181,11 @@ export function MoodWidget() {
                     ) : (
                         <ScrollArea className="max-h-[300px]">
                             <div className="space-y-3 p-1">
-                                {recommendations.map(rec => {
+                                {recommendations.map((rec, index) => {
                                     const todo = todos.find(t => t.id === rec.id)
                                     if (!todo) return null
                                     return (
-                                        <div key={rec.id} className="group bg-muted/30 p-3 rounded-lg border hover:border-primary/30 transition-colors">
+                                        <div key={`${rec.id}-${index}`} className="group bg-muted/30 p-3 rounded-lg border hover:border-primary/30 transition-colors">
                                             <div className="flex items-start gap-3">
                                                 <button
                                                     onClick={() => toggleTodo(todo.id, !todo.completed)}

@@ -11,7 +11,8 @@ export async function GET() {
 
     // Get or create settings for the logged-in user
     let settings = await prisma.userSettings.findUnique({
-        where: { userId: session.user.id }
+        where: { userId: session.user.id },
+        include: { user: { select: { image: true } } }
     })
 
     if (!settings) {
@@ -23,10 +24,16 @@ export async function GET() {
                 department: "CSE",
                 focusDuration: 25,
                 breakDuration: 5
-            }
+            },
+            include: { user: { select: { image: true } } }
         })
     }
-    return NextResponse.json(settings)
+
+    // Flatten structure for frontend
+    return NextResponse.json({
+        ...settings,
+        avatarUrl: settings.user?.image
+    })
 }
 
 export async function PUT(request: Request) {
@@ -38,6 +45,14 @@ export async function PUT(request: Request) {
 
         const body = await request.json()
         const userId = session.user.id
+
+        // Update User image if provided
+        if (body.avatarUrl !== undefined) {
+            await prisma.user.update({
+                where: { id: userId },
+                data: { image: body.avatarUrl }
+            })
+        }
 
         // Get or create settings
         let settings = await prisma.userSettings.findUnique({
@@ -82,7 +97,10 @@ export async function PUT(request: Request) {
             })
         }
 
-        return NextResponse.json(settings)
+        return NextResponse.json({
+            ...settings,
+            avatarUrl: body.avatarUrl
+        })
     } catch (error: any) {
         console.error("Settings Update Error:", error)
         return NextResponse.json({ error: "Internal Server Error", details: error.message }, { status: 500 })

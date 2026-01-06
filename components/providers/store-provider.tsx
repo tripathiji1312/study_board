@@ -20,6 +20,7 @@ export interface UserSettings {
     notificationEmail?: string
     groqApiKey?: string
     resendApiKey?: string
+    avatarUrl?: string
 }
 
 export interface Semester {

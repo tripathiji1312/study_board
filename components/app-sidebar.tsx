@@ -154,9 +154,18 @@ export function AppSidebar({ className, isOpen, onOpenChange }: SidebarProps) {
                     </div>
                 ) : (
                     <div className="flex items-center gap-2 px-1 group">
-                        <div className="h-7 w-7 rounded-full bg-gradient-to-tr from-sky-400 to-blue-600 flex items-center justify-center shadow-sm shrink-0">
-                            <IconUserBolt className="h-3.5 w-3.5 text-white" strokeWidth={2} />
-                        </div>
+                        {settings?.avatarUrl ? (
+                            <Avatar className="h-8 w-8 border border-white/10 shadow-sm shrink-0">
+                                <AvatarImage src={settings.avatarUrl} alt={settings.displayName} />
+                                <AvatarFallback className="bg-gradient-to-tr from-sky-400 to-blue-600 text-[10px] text-white">
+                                    {settings.displayName.substring(0, 2).toUpperCase()}
+                                </AvatarFallback>
+                            </Avatar>
+                        ) : (
+                            <div className="h-7 w-7 rounded-full bg-gradient-to-tr from-sky-400 to-blue-600 flex items-center justify-center shadow-sm shrink-0">
+                                <IconUserBolt className="h-3.5 w-3.5 text-white" strokeWidth={2} />
+                            </div>
+                        )}
                         <div className="flex flex-col flex-1 min-w-0">
                             <div className="flex items-center justify-between">
                                 <span className="text-xs font-bold truncate leading-none">{settings?.displayName || "Student"}</span>
@@ -171,7 +180,7 @@ export function AppSidebar({ className, isOpen, onOpenChange }: SidebarProps) {
                     </div>
                 )}
             </div>
-        </div>
+        </div >
     )
 
     return (
