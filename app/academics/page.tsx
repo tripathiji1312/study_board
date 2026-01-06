@@ -162,12 +162,12 @@ export default function AcademicsPage() {
                     </div>
 
                     {/* Action Toolbar */}
-                    <div className="flex items-center gap-3 bg-background/50 backdrop-blur-xl p-2 rounded-2xl border shadow-sm">
+                    <div className="flex items-center gap-2 sm:gap-3 bg-background/50 backdrop-blur-xl p-2 rounded-2xl border shadow-sm overflow-x-auto max-w-full">
                         <TimetableImporter onImportComplete={refreshData} />
-                        <div className="w-px h-6 bg-border/50" />
+                        <div className="w-px h-6 bg-border/50 shrink-0 hidden sm:block" />
                         <GradesImporter onImportComplete={refreshData} />
-                        <div className="w-px h-6 bg-border/50" />
-                        <Button asChild variant="ghost" size="sm" className="h-9 gap-2 rounded-xl hover:bg-muted/60">
+                        <div className="w-px h-6 bg-border/50 shrink-0 hidden sm:block" />
+                        <Button asChild variant="ghost" size="sm" className="h-9 gap-2 rounded-xl hover:bg-muted/60 shrink-0">
                             <Link href="/academics/exams">
                                 <IconCalendarEvent className="w-4 h-4 text-orange-500" />
                                 <span className="hidden sm:inline">Exams</span>
