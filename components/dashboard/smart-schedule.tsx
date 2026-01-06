@@ -133,10 +133,19 @@ export function SmartScheduleWidget() {
     React.useEffect(() => {
         if (session) {
             fetch('/api/gcal/sync')
-                .then(res => res.json())
+                .then(async (res) => {
+                    if (!res.ok) {
+                        // Silently ignore if user hasn't connected Google Calendar yet
+                        // or if backend rejects the request.
+                        return []
+                    }
+                    return res.json()
+                })
                 .then(data => {
                     if (Array.isArray(data)) {
                         setGoogleEvents(data)
+                    } else {
+                        setGoogleEvents([])
                     }
                 })
                 .catch(err => console.error("Failed to fetch GCal", err))
