@@ -4,6 +4,7 @@ import * as React from "react"
 import Link from "next/link"
 import { Shell } from "@/components/ui/shell"
 import { Card, CardContent } from "@/components/ui/card"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -17,7 +18,8 @@ import {
     IconTrophy,
     IconTarget,
     IconTrendingUp,
-    IconCalendar
+    IconCalendar,
+    IconUserBolt
 } from "@tabler/icons-react"
 import { useRouter } from "next/navigation"
 import { useStore } from "@/components/providers/store-provider"
@@ -163,6 +165,18 @@ export function DashboardView() {
 
                         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                             <div className="flex items-center gap-5">
+                                {settings?.avatarUrl ? (
+                                    <Avatar className="h-14 w-14 md:h-20 md:w-20 border-2 border-primary/20 shadow-lg">
+                                        <AvatarImage src={settings.avatarUrl} alt={settings.displayName} className="object-cover" />
+                                        <AvatarFallback className="text-lg md:text-2xl bg-gradient-to-tr from-sky-400 to-blue-600 text-white">
+                                            {settings.displayName.substring(0, 2).toUpperCase()}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                ) : (
+                                    <div className="h-14 w-14 md:h-20 md:w-20 rounded-full bg-gradient-to-tr from-sky-400 to-blue-600 flex items-center justify-center shadow-lg border-2 border-primary/20">
+                                        <IconUserBolt className="h-7 w-7 md:h-10 md:w-10 text-white" strokeWidth={2} />
+                                    </div>
+                                )}
                                 <div className="space-y-1">
                                     {isLoading ? (
                                         <div className="space-y-2">
