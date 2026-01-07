@@ -10,6 +10,7 @@ import { AuthProvider } from "@/components/providers/auth-provider"
 import { GamificationProvider } from "@/components/providers/gamification-provider"
 import { SmartReminders } from "@/components/smart-reminders"
 import { WalkthroughProvider } from "@/components/providers/walkthrough-provider"
+import { StarfieldBackground } from "@/components/starfield-background"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import prisma from "@/lib/prisma"
@@ -66,8 +67,9 @@ export default async function RootLayout({
             defaultTheme="system"
             enableSystem
             disableTransitionOnChange
-            themes={["light", "dark", "system", "theme-purple", "theme-pink", "theme-pink-dark", "theme-midnight", "theme-forest", "theme-sunset"]}
+            themes={["light", "dark", "system", "theme-purple", "theme-pink", "theme-pink-dark", "theme-midnight", "theme-forest", "theme-sunset", "theme-cyberpunk", "theme-coffee", "theme-nordic", "theme-cosmic"]}
           >
+            <StarfieldBackground />
             <XPProvider>
               <SWRProvider>
                 <StoreProvider>
