@@ -15,7 +15,14 @@ export function Shell({ children, className, ...props }: ShellProps) {
     return (
         <div className="min-h-screen bg-background">
             <AppSidebar isOpen={sidebarOpen} onOpenChange={setSidebarOpen} />
-            <main className={cn("md:pl-64 min-h-screen transition-all duration-300 ease-in-out", className)} {...props}>
+            <main
+                className={cn(
+                    "min-h-screen transition-all duration-300 ease-in-out",
+                    "md:ml-64 md:w-[calc(100%-16rem)]",
+                    className
+                )}
+                {...props}
+            >
                 <div className="container mx-auto p-4 md:p-8 pt-16 md:pt-8 pb-24 md:pb-8 max-w-7xl">
                     {children}
                 </div>
