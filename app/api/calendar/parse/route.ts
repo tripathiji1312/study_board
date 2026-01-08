@@ -83,7 +83,23 @@ export async function POST(req: Request) {
                         await fs.writeFile(inputPdf, buffer)
 
                         try {
-                            await execAsync(`pdftoppm -jpeg -r 150 -f 1 -l 2 "${inputPdf}" "${tempDir}/page"`)
+                            try {
+                                await execAsync(`pdftoppm -jpeg -r 150 -f 1 -l 2 \"${inputPdf}\" \"${tempDir}/page\"`)
+                            } catch (err: any) {
+                                const stderr = String(err?.stderr || '')
+                                const message = String(err?.message || '')
+                                const missing = err?.code === 127 || /pdftoppm: command not found/i.test(stderr) || /pdftoppm: not found/i.test(stderr) || /spawn pdftoppm/i.test(message)
+
+                                if (missing) {
+                                    return NextResponse.json({
+                                        error: 'PDF needs OCR, but the server is missing `pdftoppm` (poppler-utils).',
+                                        details: 'Install poppler-utils (provides pdftoppm) or upload the calendar as images (JPG/PNG) instead of PDF.'
+                                    }, { status: 500 })
+                                }
+
+                                throw err
+                            }
+
                             const files = await fs.readdir(tempDir)
                             const pageImages = files
                                 .filter(f => f.startsWith('page-') && f.endsWith('.jpg'))
