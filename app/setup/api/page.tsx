@@ -36,7 +36,7 @@ export default function ApiSetupPage() {
                         <div className="space-y-4 mb-6">
                             <h3 className="font-semibold">Why Groq?</h3>
                             <p className="text-muted-foreground">
-                                Groq provides ultra-fast AI inference with their LPU (Language Processing Unit) technology. It's <strong>completely free</strong> for personal use with generous rate limits—perfect for StudyBoard's AI features.
+                                Groq provides ultra-fast AI inference with their LPU (Language Processing Unit) technology. It&apos;s <strong>completely free</strong> for personal use with generous rate limits—perfect for StudyBoard&apos;s AI features.
                             </p>
                         </div>
 
@@ -46,7 +46,7 @@ export default function ApiSetupPage() {
                                 <li>Go to <Link href="https://console.groq.com" target="_blank" className="text-primary hover:underline">console.groq.com</Link></li>
                                 <li>Create a free account or sign in with Google/GitHub.</li>
                                 <li>Navigate to <strong>API Keys</strong> in the sidebar.</li>
-                                <li>Click <strong>Create API Key</strong> and give it a name (e.g., "StudyBoard").</li>
+                                <li>Click <strong>Create API Key</strong> and give it a name (e.g., &quot;StudyBoard&quot;).</li>
                                 <li>Copy the key (starts with <code className="bg-muted px-1 rounded">gsk_</code>).</li>
                                 <li>Paste it in your StudyBoard settings or during onboarding.</li>
                             </ol>

@@ -37,10 +37,16 @@ const FocusAnalytics = dynamic(() => import("@/components/dashboard/focus-analyt
     ssr: false
 })
 
-const SpotifyWidget = dynamic(() => import("@/components/spotify-widget").then(m => m.SpotifyWidget), {
-    loading: () => <WidgetSkeleton className="h-[200px]" />,
-    ssr: false
-})
+const SpotifyWidget = dynamic(
+    () =>
+        import("@/components/spotify-widget").then(
+            (m) => m.SpotifyWidget
+        ),
+    {
+        loading: () => <WidgetSkeleton className="h-[200px]" />,
+        ssr: false,
+    }
+)
 
 const MemoryLeaksWidget = dynamic(() => import("@/components/dashboard/memory-leaks-widget").then(m => m.MemoryLeaksWidget), {
     loading: () => <WidgetSkeleton className="h-full" />,
@@ -344,7 +350,7 @@ export function DashboardView() {
                     <div className="md:col-span-2 h-full">
                         <ResourcesWidget />
                     </div>
-                    <div className="md:col-span-1 h-full [&>*]:h-full">
+                    <div className="md:col-span-1 min-h-0">
                         <MemoryLeaksWidget />
                     </div>
                 </motion.div>

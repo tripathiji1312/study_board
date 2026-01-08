@@ -21,7 +21,7 @@ export default function PrivacyPage() {
                     <section>
                         <h2 className="text-2xl font-semibold mb-4">1. Introduction</h2>
                         <p className="text-muted-foreground leading-relaxed">
-                            StudyBoard ("we", "our", "us") respects your privacy and is committed to protecting your personal data. This privacy policy explains how we collect, use, and safeguard your information when you use our application.
+                            StudyBoard (&quot;we&quot;, &quot;our&quot;, &quot;us&quot;) respects your privacy and is committed to protecting your personal data. This privacy policy explains how we collect, use, and safeguard your information when you use our application.
                         </p>
                     </section>
 

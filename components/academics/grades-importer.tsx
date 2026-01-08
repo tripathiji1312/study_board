@@ -75,14 +75,16 @@ export function GradesImporter({ onImportComplete }: GradesImporterProps) {
                     setShowDebug(true)
                 }
             }
-        } catch (error: any) {
-            if (error.message?.includes("API Key")) {
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Unknown error"
+
+            if (message.includes("API Key")) {
                 toast.error("AI Features Disabled", {
                     description: "Please configure your Groq API Key in Settings to parse files.",
                     duration: 5000,
                 })
             } else {
-                toast.error(`Parsing failed: ${error.message}`)
+                toast.error(`Parsing failed: ${message}`)
             }
         } finally {
             setIsParsing(false)
@@ -107,8 +109,9 @@ export function GradesImporter({ onImportComplete }: GradesImporterProps) {
             setOpen(false)
             resetState()
             onImportComplete?.()
-        } catch (error: any) {
-            toast.error("Failed to save grades: " + error.message)
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Unknown error"
+            toast.error("Failed to save grades: " + message)
         } finally {
             setIsSaving(false)
         }
@@ -122,9 +125,8 @@ export function GradesImporter({ onImportComplete }: GradesImporterProps) {
         setShowDebug(false)
     }
 
-    const updateGrade = (index: number, field: keyof ParsedGrades, value: any) => {
+    const updateGrade = (index: number, field: keyof ParsedGrades, value: number | undefined) => {
         const newGrades = [...parsedGrades]
-        // @ts-ignore
         newGrades[index] = { ...newGrades[index], [field]: value }
         setParsedGrades(newGrades)
     }
@@ -153,7 +155,7 @@ export function GradesImporter({ onImportComplete }: GradesImporterProps) {
                         )}
                     </DialogTitle>
                     <DialogDescription>
-                        Upload a PDF or screenshot of your marks. We'll extract scores automatically.
+                        Upload a PDF or screenshot of your marks. We&apos;ll extract scores automatically.
                     </DialogDescription>
                 </DialogHeader>
 

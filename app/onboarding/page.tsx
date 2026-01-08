@@ -95,7 +95,7 @@ export default function OnboardingPage() {
 
             if (!res.ok) throw new Error("Failed to save settings")
 
-            toast.success("You're all set! Welcome to StudyBoard.")
+            toast.success("You’re all set! Welcome to StudyBoard.")
             router.push('/')
         } catch (error) {
             toast.error("Something went wrong. Please try again.")
@@ -152,7 +152,7 @@ export default function OnboardingPage() {
                                 >
                                     <div className="space-y-2">
                                         <h2 className="text-2xl font-bold tracking-tight">Welcome to StudyBoard</h2>
-                                        <p className="text-muted-foreground">Let's set up your profile to personalize your experience.</p>
+                                        <p className="text-muted-foreground">Let&apos;s set up your profile to personalize your experience.</p>
                                     </div>
 
                                     <div className="space-y-4">
@@ -164,7 +164,7 @@ export default function OnboardingPage() {
                                                 onChange={e => setFormData({ ...formData, displayName: e.target.value })}
                                                 placeholder="Your name"
                                             />
-                                            <p className="text-xs text-muted-foreground">This is how you'll appear in the app.</p>
+                                            <p className="text-xs text-muted-foreground">This is how you&apos;ll appear in the app.</p>
                                         </div>
                                         <div className="space-y-2">
                                             <Label htmlFor="dept">Department / Major</Label>
@@ -347,7 +347,7 @@ export default function OnboardingPage() {
                                                 <IconCheck className="w-5 h-5 text-primary mt-0.5" />
                                                 <div>
                                                     <p className="font-medium text-sm">Ready to launch!</p>
-                                                    <p className="text-xs text-muted-foreground">Click "Launch Dashboard" to start using StudyBoard.</p>
+                                                    <p className="text-xs text-muted-foreground">Click &quot;Launch Dashboard&quot; to start using StudyBoard.</p>
                                                 </div>
                                             </div>
                                         </CardContent>

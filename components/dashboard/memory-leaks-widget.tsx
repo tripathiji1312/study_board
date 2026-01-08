@@ -46,10 +46,11 @@ export function MemoryLeaksWidget() {
     if (loading) return <Skeleton className="h-[200px] w-full rounded-xl" />
 
     // If no leaks, show a happy state or return null
-    if (items.length === 0) {
-        return (
-            <Card className="bg-gradient-to-br from-emerald-500/5 to-emerald-500/10 border-emerald-500/20">
-                <CardContent className="flex flex-col items-center justify-center p-6 text-center h-full min-h-[180px]">
+     if (items.length === 0) {
+         return (
+             <Card className="bg-gradient-to-br from-emerald-500/5 to-emerald-500/10 border-emerald-500/20 h-full">
+                 <CardContent className="flex flex-col items-center justify-center p-6 text-center h-full min-h-[180px]">
+
                     <IconBrain className="w-10 h-10 text-emerald-500 mb-2" />
                     <h3 className="font-semibold text-emerald-700 dark:text-emerald-400">Memory Optimized!</h3>
                     <p className="text-sm text-muted-foreground">Your retention is high across all topics. Great job!</p>
@@ -59,11 +60,11 @@ export function MemoryLeaksWidget() {
     }
 
     return (
-        <Card className="border-red-500/10 shadow-sm relative overflow-hidden group">
+        <Card className="border-red-500/10 shadow-sm relative overflow-hidden group h-full">
             {/* Background Gradient for urgency */}
             <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 via-background to-background pointer-events-none" />
 
-            <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
+            <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0 relative z-10">
                 <div className="flex items-center gap-2">
                     <div className="p-2 bg-red-500/10 rounded-lg">
                         <IconBrain className="w-5 h-5 text-red-500" />
@@ -78,7 +79,8 @@ export function MemoryLeaksWidget() {
                 </Button>
             </CardHeader>
 
-            <CardContent className="space-y-4 pt-2">
+            <CardContent className="space-y-4 pt-2 relative z-10 flex flex-col min-h-0">
+                <div className="flex-1 min-h-0 space-y-4">
                 {items.map((item, i) => (
                     <motion.div
                         key={item.id}
@@ -114,10 +116,10 @@ export function MemoryLeaksWidget() {
                     </motion.div>
                 ))}
 
-                <Button variant="outline" size="sm" className="w-full text-xs h-8 mt-2" asChild>
-                    <Link href="/academics">
-                        Review Studies
-                    </Link>
+                </div>
+
+                <Button variant="outline" size="sm" className="w-full text-xs h-8" asChild>
+                    <Link href="/academics">Review Studies</Link>
                 </Button>
             </CardContent>
         </Card>

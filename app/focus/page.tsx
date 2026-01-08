@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
 import { IconPlayerPlay, IconPlayerPause, IconPlayerStop, IconMaximize, IconMinimize, IconArrowLeft, IconVolume } from "@tabler/icons-react"
 import { useStore } from "@/components/providers/store-provider"
 import { cn } from "@/lib/utils"
@@ -164,7 +165,7 @@ export default function FocusPage() {
             <div className="flex flex-wrap items-center justify-between gap-4 p-4 md:p-8 z-20">
                 <div className="flex items-center gap-3 md:gap-6 flex-wrap">
                     <Button variant="ghost" size="sm" asChild className="text-muted-foreground/60 hover:text-white hover:bg-white/5 transition-all text-xs tracking-widest uppercase">
-                        <a href="/"><IconArrowLeft className="w-3 h-3 mr-2" />Dashboard</a>
+                        <Link href="/"><IconArrowLeft className="w-3 h-3 mr-2" />Dashboard</Link>
                     </Button>
                     <div className="hidden md:block h-4 w-[1px] bg-white/5" />
                     <div className="hidden md:block h-4 w-[1px] bg-white/5" />
@@ -275,7 +276,7 @@ export default function FocusPage() {
                 {/* Mobile: Quick Task Selection (visible on mobile only) */}
                 <div className="md:hidden w-full mb-4">
                     <div className="bg-black/40 backdrop-blur-xl rounded-xl border border-white/10 p-4">
-                        <h4 className="text-xs font-medium tracking-widest uppercase opacity-50 mb-3">Today's Tasks</h4>
+                        <h4 className="text-xs font-medium tracking-widest uppercase opacity-50 mb-3">Today&apos;s Tasks</h4>
                         <div className="space-y-2 max-h-[150px] overflow-y-auto">
                             {todos.filter(t => t.dueDate === new Date().toISOString().split('T')[0] && !t.completed).slice(0, 5).map(todo => (
                                 <button

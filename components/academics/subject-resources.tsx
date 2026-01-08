@@ -35,7 +35,7 @@ export function SubjectResources({ subjectId }: SubjectResourcesProps) {
         addResource({
             title,
             url,
-            type: type as any,
+            type: type as Resource["type"],
             category: "General",
             subjectId
         })

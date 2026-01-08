@@ -21,6 +21,8 @@ import { cn } from "@/lib/utils"
 import ReactMarkdown from "react-markdown"
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism"
+import type { Components } from "react-markdown"
+import type { CSSProperties } from "react"
 
 const LANGUAGES = [
     { value: "javascript", label: "JavaScript", color: "bg-yellow-500" },
@@ -104,25 +106,28 @@ export default function SnippetsPage() {
                 <div className="prose prose-sm dark:prose-invert max-w-none">
                     <ReactMarkdown
                         components={{
-                            code({ node, inline, className, children, ...props }: any) {
+                            code({ className, children, ...props }) {
                                 const match = /language-(\w+)/.exec(className || "")
-                                return !inline && match ? (
+                                const syntaxStyle = oneDark as unknown as Record<string, CSSProperties>
+                                const commonProps = props as unknown as Record<string, unknown>
+
+                                return match ? (
                                     <SyntaxHighlighter
-                                        style={oneDark as any}
+                                        style={syntaxStyle}
                                         language={match[1]}
                                         PreTag="div"
                                         className="rounded-lg !bg-muted/50 !p-4"
-                                        {...props}
+                                        {...commonProps}
                                     >
                                         {String(children).replace(/\n$/, "")}
                                     </SyntaxHighlighter>
                                 ) : (
-                                    <code className="bg-muted px-1.5 py-0.5 rounded text-sm" {...props}>
+                                    <code className="bg-muted px-1.5 py-0.5 rounded text-sm" {...commonProps}>
                                         {children}
                                     </code>
                                 )
                             },
-                        }}
+                        } satisfies Components}
                     >
                         {snippet.content}
                     </ReactMarkdown>
@@ -141,7 +146,7 @@ export default function SnippetsPage() {
         // Code with syntax highlighting
         return (
             <SyntaxHighlighter
-                style={oneDark as any}
+                style={oneDark as unknown as Record<string, CSSProperties>}
                 language={snippet.language}
                 showLineNumbers
                 wrapLines

@@ -73,14 +73,15 @@ export function TimetableImporter({ onImportComplete }: TimetableImporterProps) 
                     setShowDebug(true)
                 }
             }
-        } catch (error: any) {
-            if (error.message?.includes("API Key")) {
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : ""
+            if (errorMessage.includes("API Key")) {
                 toast.error("AI Features Disabled", {
                     description: "Please configure your Groq API Key in Settings to parse files.",
                     duration: 5000,
                 })
             } else {
-                toast.error(`Parsing failed: ${error.message}`)
+                toast.error(`Parsing failed: ${errorMessage || "Unknown error"}`)
             }
         } finally {
             setIsParsing(false)
@@ -105,8 +106,9 @@ export function TimetableImporter({ onImportComplete }: TimetableImporterProps) 
             setOpen(false)
             resetState()
             onImportComplete?.()
-        } catch (error: any) {
-            toast.error("Failed to save timetable: " + error.message)
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : "Unknown error"
+            toast.error("Failed to save timetable: " + errorMessage)
         } finally {
             setIsSaving(false)
         }
@@ -150,7 +152,7 @@ export function TimetableImporter({ onImportComplete }: TimetableImporterProps) 
                         )}
                     </DialogTitle>
                     <DialogDescription>
-                        Upload a PDF or image of your timetable. We'll extract course details automatically.
+                        Upload a PDF or image of your timetable. We&apos;ll extract course details automatically.
                     </DialogDescription>
                 </DialogHeader>
 

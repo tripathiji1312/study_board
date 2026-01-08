@@ -72,7 +72,7 @@ export default function TermsPage() {
                     <section>
                         <h2 className="text-2xl font-semibold mb-4">7. Limitation of Liability</h2>
                         <p className="text-muted-foreground leading-relaxed">
-                            StudyBoard is provided "as is" without warranties of any kind. We are not liable for any indirect, incidental, or consequential damages arising from your use of the service.
+                            StudyBoard is provided &quot;as is&quot; without warranties of any kind. We are not liable for any indirect, incidental, or consequential damages arising from your use of the service.
                         </p>
                     </section>
 

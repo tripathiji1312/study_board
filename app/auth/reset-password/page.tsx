@@ -58,7 +58,7 @@ export default function ResetPasswordPage() {
                         <div className="space-y-2">
                             <h1 className="text-2xl font-bold">Check your email</h1>
                             <p className="text-muted-foreground text-sm">
-                                We've sent a password reset link to <br />
+                                We&apos;ve sent a password reset link to <br />
                                 <span className="font-medium text-foreground">{email}</span>
                             </p>
                         </div>
@@ -94,7 +94,7 @@ export default function ResetPasswordPage() {
                         <div className="text-center space-y-2">
                             <h1 className="text-2xl font-bold tracking-tight">Forgot password?</h1>
                             <p className="text-muted-foreground text-sm">
-                                Enter your email address and we'll send you a link to reset your password.
+                                Enter your email address and we&apos;ll send you a link to reset your password.
                             </p>
                         </div>
                     </div>

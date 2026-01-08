@@ -83,8 +83,8 @@ export function StudyPlannerDialog({ open, onOpenChange, examDate, subjectId, ex
 
             setGeneratedPlan(data.plan)
             setStep("review")
-        } catch (error: any) {
-            const msg = error instanceof Error ? error.message : 'Failed to generate plan'
+        } catch (error: unknown) {
+            const msg = error instanceof Error ? error.message : "Failed to generate plan"
             if (msg.includes("API")) {
                 toast.error("AI Features Disabled", {
                     description: "Please configure your Groq API Key in Settings to generate study plans.",
@@ -157,7 +157,7 @@ export function StudyPlannerDialog({ open, onOpenChange, examDate, subjectId, ex
                     {step === "config" ? (
                         <div className="space-y-8">
                             <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-lg p-4 text-sm text-indigo-600 dark:text-indigo-400">
-                                <p>This exam is in <strong>{daysLeft} days</strong>. I'll help you distribute the workload intelligently.</p>
+                                <p>This exam is in <strong>{daysLeft} days</strong>. I&apos;ll help you distribute the workload intelligently.</p>
                             </div>
 
                             <div className="space-y-4">
@@ -205,7 +205,7 @@ export function StudyPlannerDialog({ open, onOpenChange, examDate, subjectId, ex
                                     className="w-full"
                                 />
                                 <p className="text-xs text-muted-foreground">
-                                    We'll try not to exceed this, but heavy modules might require it.
+                                    We&apos;ll try not to exceed this, but heavy modules might require it.
                                 </p>
                             </div>
                         </div>
@@ -239,7 +239,7 @@ export function StudyPlannerDialog({ open, onOpenChange, examDate, subjectId, ex
                                                         Focus: {session.topic}
                                                     </p>
                                                     <div className="text-xs bg-secondary/50 p-2 rounded text-secondary-foreground italic">
-                                                        "{session.notes}"
+                                                        &quot;{session.notes}&quot;
                                                     </div>
                                                 </Card>
                                             ))}

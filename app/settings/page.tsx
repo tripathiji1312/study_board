@@ -302,7 +302,7 @@ export default function SettingsPage() {
                                                         </Button>
                                                     </div>
                                                     <p className="text-xs text-muted-foreground">
-                                                        We'll send reminders here. Make sure it's valid!
+                                                        We&apos;ll send reminders here. Make sure it&apos;s valid!
                                                     </p>
                                                 </div>
                                             </div>
@@ -556,7 +556,7 @@ export default function SettingsPage() {
                                                 </div>
                                                 <div className="space-y-2">
                                                     <Label>Type</Label>
-                                                    <Select value={subType} onValueChange={(v: any) => setSubType(v)}>
+                                                    <Select value={subType} onValueChange={(value) => setSubType(value as typeof subType)}>
                                                         <SelectTrigger><SelectValue /></SelectTrigger>
                                                         <SelectContent>
                                                             <SelectItem value="Theory">Theory</SelectItem>

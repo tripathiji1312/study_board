@@ -100,7 +100,7 @@ export function SyllabusTracker({ subjectId }: SyllabusTrackerProps) {
                     <div>
                         <h4 className="text-lg font-semibold tracking-tight">Your Progress</h4>
                         <p className="text-sm text-muted-foreground mt-1">
-                            You've completed <span className="font-medium text-foreground">{completed}</span> out of <span className="font-medium text-foreground">{total}</span> modules.
+                            You&apos;ve completed <span className="font-medium text-foreground">{completed}</span> out of <span className="font-medium text-foreground">{total}</span> modules.
                         </p>
                     </div>
                     <div className="text-right min-w-[120px] flex justify-end">

@@ -20,7 +20,7 @@ export function AcademicHeatmap() {
         const log = logs.find(l => l.date && isSameDay(new Date(l.date), date))
         if (!log) return 0
         // Calculate based on study time
-        const studyTime = (log as any).studyTime || 0
+        const studyTime = "studyTime" in log && typeof log.studyTime === "number" ? log.studyTime : 0
         if (studyTime > 240) return 4
         if (studyTime > 120) return 3
         if (studyTime > 60) return 2
