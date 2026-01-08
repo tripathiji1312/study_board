@@ -92,9 +92,9 @@ export async function POST(req: Request) {
 
                                 if (missing) {
                                     return NextResponse.json({
-                                        error: 'PDF needs OCR, but the server is missing `pdftoppm` (poppler-utils).',
-                                        details: 'Install poppler-utils (provides pdftoppm) or upload the calendar as images (JPG/PNG) instead of PDF.'
-                                    }, { status: 500 })
+                                        error: 'This PDF appears to be scanned/non-searchable, and the hosted server cannot OCR PDFs.',
+                                        details: 'Please upload the calendar as images (PNG/JPG) instead of PDF (or use a searchable/text-based PDF).'
+                                    }, { status: 400 })
                                 }
 
                                 throw err
