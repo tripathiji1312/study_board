@@ -22,8 +22,11 @@ export default function FocusPage() {
     const logs = dailyLogs || []
 
     // Timer State
-    const [seconds, setSeconds] = React.useState(0)
+    const [seconds, setSeconds] = React.useState(0) // displayed seconds
     const [isActive, setIsActive] = React.useState(false)
+    const [startedAtMs, setStartedAtMs] = React.useState<number | null>(null)
+    const [savedSeconds, setSavedSeconds] = React.useState(0)
+    const [lastAutosavedMinute, setLastAutosavedMinute] = React.useState(0)
     const [selectedTaskId, setSelectedTaskId] = React.useState<string | null>(null)
     const [selectedTaskText, setSelectedTaskText] = React.useState<string>("Just Focusing")
     const [selectedSubjectId, setSelectedSubjectId] = React.useState<string | "none">("none") // Subject state
@@ -64,18 +67,85 @@ export default function FocusPage() {
         return logs.reduce((acc, log) => acc + (log.studyTime || 0), 0)
     }, [logs])
 
-    // Timer Logic
+    const FOCUS_SESSION_STORAGE_KEY = "focus_session_v1"
+
+    const computeSeconds = React.useCallback(() => {
+        if (!isActive || !startedAtMs) return savedSeconds
+        const elapsed = Math.floor((Date.now() - startedAtMs) / 1000)
+        return savedSeconds + Math.max(0, elapsed)
+    }, [isActive, savedSeconds, startedAtMs])
+
+    const syncSeconds = React.useCallback(() => {
+        setSeconds(computeSeconds())
+    }, [computeSeconds])
+
+    // Persist/restore session (survives tab suspension + refresh)
     React.useEffect(() => {
-        let interval: NodeJS.Timeout | null = null;
-        if (isActive) {
-            interval = setInterval(() => {
-                setSeconds(prev => prev + 1)
-            }, 1000)
+        try {
+            const raw = localStorage.getItem(FOCUS_SESSION_STORAGE_KEY)
+            if (!raw) return
+            const session = JSON.parse(raw) as {
+                isActive?: boolean
+                startedAtMs?: number | null
+                savedSeconds?: number
+                lastAutosavedMinute?: number
+                selectedTaskId?: string | null
+                selectedTaskText?: string
+                selectedSubjectId?: string | "none"
+            }
+
+            setIsActive(Boolean(session.isActive))
+            setStartedAtMs(session.startedAtMs ?? null)
+            setSavedSeconds(typeof session.savedSeconds === "number" ? session.savedSeconds : 0)
+            setLastAutosavedMinute(typeof session.lastAutosavedMinute === "number" ? session.lastAutosavedMinute : 0)
+            if (typeof session.selectedTaskId !== "undefined") setSelectedTaskId(session.selectedTaskId)
+            if (typeof session.selectedTaskText === "string") setSelectedTaskText(session.selectedTaskText)
+            if (typeof session.selectedSubjectId !== "undefined") setSelectedSubjectId(session.selectedSubjectId)
+        } catch {
+            // ignore corrupted storage
         }
-        return () => {
-            if (interval) clearInterval(interval)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+
+    React.useEffect(() => {
+        try {
+            localStorage.setItem(
+                FOCUS_SESSION_STORAGE_KEY,
+                JSON.stringify({
+                    isActive,
+                    startedAtMs,
+                    savedSeconds,
+                    lastAutosavedMinute,
+                    selectedTaskId,
+                    selectedTaskText,
+                    selectedSubjectId,
+                })
+            )
+        } catch {
+            // ignore quota / storage errors
         }
-    }, [isActive])
+    }, [isActive, startedAtMs, savedSeconds, lastAutosavedMinute, selectedTaskId, selectedTaskText, selectedSubjectId])
+
+    // Timer display refresh (uses real elapsed time)
+    React.useEffect(() => {
+        if (!isActive) {
+            setSeconds(savedSeconds)
+            return
+        }
+
+        syncSeconds()
+        const interval = setInterval(syncSeconds, 1000)
+        return () => clearInterval(interval)
+    }, [isActive, savedSeconds, syncSeconds])
+
+    // When returning to the tab, resync immediately
+    React.useEffect(() => {
+        const onVisibility = () => {
+            if (document.visibilityState === "visible") syncSeconds()
+        }
+        document.addEventListener("visibilitychange", onVisibility)
+        return () => document.removeEventListener("visibilitychange", onVisibility)
+    }, [syncSeconds])
 
     const formatTime = (totalSeconds: number) => {
         const h = Math.floor(totalSeconds / 3600)
@@ -86,12 +156,25 @@ export default function FocusPage() {
     }
 
     const toggleTimer = () => {
-        setIsActive(!isActive)
+        if (isActive) {
+            // pause
+            setSavedSeconds(computeSeconds())
+            setStartedAtMs(null)
+            setIsActive(false)
+            return
+        }
+
+        // resume/start
+        setStartedAtMs(Date.now())
+        setIsActive(true)
     }
 
     const handleTaskSelect = (id: string, text: string) => {
         if (selectedTaskId !== id) {
-            if (!isActive) setIsActive(true)
+            if (!isActive) {
+                setStartedAtMs(Date.now())
+                setIsActive(true)
+            }
         }
         setSelectedTaskId(id)
         setSelectedTaskText(text)
@@ -103,10 +186,28 @@ export default function FocusPage() {
     }
 
     const stopSession = async () => {
+        const finalSeconds = computeSeconds()
         setIsActive(false)
-        const minutes = Math.round(seconds / 60)
+        setStartedAtMs(null)
+        setSavedSeconds(0)
+        setLastAutosavedMinute(0)
 
-        if (minutes >= 1) {
+        try {
+            localStorage.removeItem(FOCUS_SESSION_STORAGE_KEY)
+        } catch {
+            // ignore
+        }
+
+        const minutes = Math.floor(finalSeconds / 60)
+        const remainderSeconds = finalSeconds % 60
+
+        // If we autosaved some whole minutes already, only save the remainder here.
+        const minutesAlreadySaved = lastAutosavedMinute
+        const remainingWholeMinutes = Math.max(0, minutes - minutesAlreadySaved)
+        const shouldSaveSecondsAsMinute = remainderSeconds >= 30 ? 1 : 0
+        const additionalMinutes = remainingWholeMinutes + shouldSaveSecondsAsMinute
+
+        if (additionalMinutes >= 1) {
             confetti({
                 particleCount: 150,
                 spread: 100,
@@ -116,8 +217,8 @@ export default function FocusPage() {
 
             await addDailyLog({
                 mood: 3,
-                studyTime: minutes,
-                note: `Deep Work: ${selectedTaskText}`,
+                studyTime: additionalMinutes,
+                note: `Deep Work: ${selectedTaskText}${minutesAlreadySaved > 0 ? " (continued)" : ""}`,
                 date: new Date().toISOString(),
                 subjectId: selectedSubjectId === "none" ? undefined : selectedSubjectId
             })
@@ -142,6 +243,41 @@ export default function FocusPage() {
             }
         }
     }
+
+    // Autosave: every completed minute, write to daily log
+    React.useEffect(() => {
+        if (!isActive) return
+
+        const maybeAutosave = async () => {
+            const currentSeconds = computeSeconds()
+            const minutesCompleted = Math.floor(currentSeconds / 60)
+
+            if (minutesCompleted <= 0) return
+            if (minutesCompleted <= lastAutosavedMinute) return
+
+            const minutesToSave = minutesCompleted - lastAutosavedMinute
+            setLastAutosavedMinute(minutesCompleted)
+
+            await addDailyLog({
+                mood: 3,
+                studyTime: minutesToSave,
+                note: `Deep Work: ${selectedTaskText}${lastAutosavedMinute > 0 ? " (continued)" : ""}`,
+                date: new Date().toISOString(),
+                subjectId: selectedSubjectId === "none" ? undefined : selectedSubjectId
+            })
+        }
+
+        // check every 15s so the log stays near-real-time,
+        // but only writes when a new minute completes
+        const interval = setInterval(() => {
+            maybeAutosave().catch(() => { })
+        }, 15000)
+
+        // also check immediately when we start/resume
+        maybeAutosave().catch(() => { })
+
+        return () => clearInterval(interval)
+    }, [addDailyLog, computeSeconds, isActive, lastAutosavedMinute, selectedSubjectId, selectedTaskText])
 
     const currentTheme = THEMES[theme]
 
