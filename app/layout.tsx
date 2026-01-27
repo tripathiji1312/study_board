@@ -50,11 +50,15 @@ export default async function RootLayout({
   let hasSeenWalkthrough = false
 
   if (session?.user?.id) {
-    const settings = await prisma.userSettings.findUnique({
-      where: { userId: session.user.id },
-      select: { hasSeenWalkthrough: true }
-    })
-    hasSeenWalkthrough = !!settings?.hasSeenWalkthrough
+    try {
+      const settings = await prisma.userSettings.findUnique({
+        where: { userId: session.user.id },
+        select: { hasSeenWalkthrough: true }
+      })
+      hasSeenWalkthrough = !!settings?.hasSeenWalkthrough
+    } catch (error) {
+      console.warn("Failed to fetch user settings for walkthrough, defaulting to false", error)
+    }
   }
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
