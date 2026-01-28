@@ -36,11 +36,11 @@ function DialogOverlay({
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Overlay>) {
   return (
-    <DialogPrimitive.Overlay
-      data-slot="dialog-overlay"
-      className={cn("data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs fixed inset-0 isolate z-50", className)}
-      {...props}
-    />
+      <DialogPrimitive.Overlay
+        data-slot="dialog-overlay"
+        className={cn("data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 bg-scrim/30 duration-300 supports-backdrop-filter:backdrop-blur-sm fixed inset-0 isolate z-50", className)}
+        {...props}
+      />
   )
 }
 
@@ -67,7 +67,7 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "bg-surface-container-high text-card-foreground data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 grid max-w-[calc(100%-2rem)] gap-6 rounded-[28px] p-6 text-sm shadow-xl duration-100 !fixed !top-1/2 !left-1/2 z-50 w-full !-translate-x-1/2 !-translate-y-1/2",
+          "bg-surface-container-high text-on-surface data-open:animate-enter data-closed:animate-exit grid max-w-[calc(100%-2rem)] gap-6 rounded-[2.5rem] p-8 text-sm shadow-expressive-md !fixed !top-1/2 !left-1/2 z-50 w-full !-translate-x-1/2 !-translate-y-1/2 border border-outline-variant/30",
           sizeClasses[size],
           className
         )}
@@ -145,7 +145,7 @@ function DialogDescription({
   return (
     <DialogPrimitive.Description
       data-slot="dialog-description"
-      className={cn("text-muted-foreground *:[a]:hover:text-foreground text-sm *:[a]:underline *:[a]:underline-offset-3", className)}
+      className={cn("text-on-surface-variant *:[a]:hover:text-on-surface text-sm *:[a]:underline *:[a]:underline-offset-3", className)}
       {...props}
     />
   )

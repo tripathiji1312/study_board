@@ -137,7 +137,7 @@ export default function SchedulePage() {
 
         schedule.forEach(ev => {
             if (ev.day.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                addToMap(ev.day, { type: "Class", title: ev.title, color: "bg-blue-500" })
+                addToMap(ev.day, { type: "Class", title: ev.title, color: "bg-tertiary" })
             } else {
                 // Handling recurring days (Monday, Tuesday etc) is harder with a simple map
                 // We'll handle them separately or generate dates for the view
@@ -147,14 +147,14 @@ export default function SchedulePage() {
         assignments.forEach(a => {
             if (a.dueDate) {
                 const dateStr = a.dueDate.split('T')[0]
-                addToMap(dateStr, { type: "Assignment", title: a.title, color: "bg-orange-500" })
+                addToMap(dateStr, { type: "Assignment", title: a.title, color: "bg-primary" })
             }
         })
 
         exams.forEach(e => {
             if (e.date) {
                 const dateStr = e.date.split('T')[0]
-                addToMap(dateStr, { type: "Exam", title: e.title, color: "bg-red-500" })
+                addToMap(dateStr, { type: "Exam", title: e.title, color: "bg-error" })
             }
         })
 
@@ -171,7 +171,7 @@ export default function SchedulePage() {
         // Add recurring schedule events
         schedule.forEach(ev => {
             if (ev.day === dayName) {
-                items.push({ type: "Class", title: ev.title, color: "bg-blue-500" })
+                items.push({ type: "Class", title: ev.title, color: "bg-tertiary" })
             }
         })
 
@@ -209,25 +209,25 @@ export default function SchedulePage() {
 
     return (
         <Shell>
-            <div className="max-w-[1600px] mx-auto min-h-[calc(100vh-12rem)] md:h-[calc(100vh-6rem)] flex flex-col lg:flex-row gap-4 md:gap-6">
+            <div className="max-w-[1800px] mx-auto min-h-[calc(100vh-8rem)] flex flex-col lg:flex-row gap-6">
 
                 {/* BIG CALENDAR AREA */}
-                <div className="flex-1 flex flex-col gap-3 md:gap-4 min-h-[400px] lg:min-h-[500px]">
+                <div className="flex-1 flex flex-col gap-6">
                     {/* Header */}
-                    <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2 md:gap-4">
-                            <h2 className="text-xl md:text-3xl font-bold tracking-tight">{format(currentMonth, "MMMM yyyy")}</h2>
-                            <div className="flex items-center gap-0.5 bg-muted/50 rounded-lg p-0.5">
-                                <Button variant="ghost" size="icon" className="h-7 w-7 md:h-8 md:w-8" onClick={prevMonth}>
-                                    <IconChevronLeft className="w-4 h-4" />
+                    <div className="flex items-center justify-between pl-2">
+                        <div className="flex items-center gap-4">
+                            <h2 className="text-3xl md:text-4xl font-normal tracking-tight text-on-surface">{format(currentMonth, "MMMM yyyy")}</h2>
+                            <div className="flex items-center gap-1 bg-surface-container-high rounded-full p-1">
+                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-surface-container-highest" onClick={prevMonth}>
+                                    <IconChevronLeft className="w-5 h-5" />
                                 </Button>
-                                <Button variant="ghost" size="icon" className="h-7 w-7 md:h-8 md:w-8" onClick={nextMonth}>
-                                    <IconChevronRight className="w-4 h-4" />
+                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-surface-container-highest" onClick={nextMonth}>
+                                    <IconChevronRight className="w-5 h-5" />
                                 </Button>
                             </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <Button variant="outline" size="sm" onClick={jumpToToday} className="h-8 text-xs md:text-sm">Today</Button>
+                        <div className="flex items-center gap-3">
+                            <Button variant="outline" onClick={jumpToToday} className="rounded-full px-6 border-border/40 hover:bg-surface-container-high">Today</Button>
                             <div className="hidden md:block">
                                 <CalendarImporter onImportComplete={refreshData} />
                             </div>
@@ -235,16 +235,16 @@ export default function SchedulePage() {
                     </div>
 
                     {/* Calendar Grid */}
-                    <Card className="flex-1 flex flex-col shadow-sm border-muted min-h-[400px] lg:min-h-0 overflow-hidden">
-                        <div className="grid grid-cols-7 border-b bg-muted/40 text-center py-2">
+                    <div className="flex-1 flex flex-col bg-surface-container-lowest rounded-[2rem] p-6 shadow-sm border border-border/20">
+                        <div className="grid grid-cols-7 text-center mb-4">
                             {weeks.map(day => (
-                                <div key={day} className="text-[10px] md:text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                <div key={day} className="text-xs font-medium text-on-surface-variant/70 uppercase tracking-widest py-2">
                                     {day}
                                 </div>
                             ))}
                         </div>
 
-                        <div className="grid grid-cols-7 flex-1 auto-rows-fr bg-muted/20 gap-[1px]">
+                        <div className="grid grid-cols-7 flex-1 auto-rows-fr gap-2">
                             {calendarDays.map((date, i) => {
                                 const isSelected = isSameDay(date, selectedDate)
                                 const isCurrentMonth = isSameMonth(date, currentMonth)
@@ -256,33 +256,32 @@ export default function SchedulePage() {
                                         key={date.toString()}
                                         onClick={() => setSelectedDate(date)}
                                         className={cn(
-                                            "relative bg-card p-1.5 md:p-2 flex flex-col gap-1 transition-colors cursor-pointer min-h-[50px] md:min-h-[100px]",
-                                            "touch-manipulation active:bg-accent/60",
-                                            !isCurrentMonth && "bg-muted/10 text-muted-foreground/50",
-                                            isSelected && "ring-2 ring-primary ring-inset z-10 bg-primary/5"
+                                            "relative p-2 md:p-3 flex flex-col gap-1 transition-all cursor-pointer rounded-2xl min-h-[80px] md:min-h-[120px] group border border-transparent",
+                                            !isCurrentMonth && "opacity-30 grayscale",
+                                            isSelected ? "bg-primary-container/30 ring-2 ring-primary ring-inset shadow-inner" : "hover:bg-surface-container-high hover:border-border/20 bg-surface/50"
                                         )}
                                     >
                                         <div className="flex justify-between items-start">
                                             <span className={cn(
-                                                "text-xs md:text-sm font-medium w-6 h-6 md:w-7 md:h-7 flex items-center justify-center rounded-full",
-                                                isToday && "bg-primary text-primary-foreground"
+                                                "text-sm font-medium w-8 h-8 flex items-center justify-center rounded-full transition-colors",
+                                                isToday ? "bg-primary text-on-primary shadow-md" : "text-on-surface-variant group-hover:bg-surface-container"
                                             )}>
                                                 {format(date, "d")}
                                             </span>
-                                            {dayEvents.length > 0 && <div className="md:hidden w-2 h-2 rounded-full bg-primary animate-pulse" />}
-                                            {dayEvents.length > 0 && <span className="hidden md:inline text-[10px] text-muted-foreground font-mono">{dayEvents.length}</span>}
+                                            {dayEvents.length > 0 && <div className="md:hidden w-1.5 h-1.5 rounded-full bg-primary" />}
+                                            {dayEvents.length > 0 && <span className="hidden md:inline text-[10px] text-on-surface-variant/70 font-mono bg-surface-container px-1.5 py-0.5 rounded-full">{dayEvents.length}</span>}
                                         </div>
 
-                                        <div className="flex-1 flex flex-col justify-end gap-1 overflow-hidden">
+                                        <div className="flex-1 flex flex-col justify-end gap-1.5 overflow-hidden mt-1">
                                             <div className="hidden md:block space-y-1">
                                                 {dayEvents.slice(0, 3).map((ev, idx) => (
-                                                    <div key={idx} className="flex items-center gap-1.5 px-1.5 py-0.5 rounded-sm bg-muted/50 border border-transparent hover:border-border transition-colors truncate">
+                                                    <div key={idx} className="flex items-center gap-2 px-2 py-1 rounded-md bg-surface-container/50 border border-transparent group-hover:border-border/10 transition-colors truncate">
                                                         <div className={cn("w-1.5 h-1.5 rounded-full shrink-0", ev.color)} />
-                                                        <span className="text-[10px] truncate font-medium leading-tight">{ev.title}</span>
+                                                        <span className="text-[10px] truncate font-medium text-on-surface-variant leading-none">{ev.title}</span>
                                                     </div>
                                                 ))}
                                                 {dayEvents.length > 3 && (
-                                                    <div className="text-[10px] text-muted-foreground pl-1">
+                                                    <div className="text-[10px] text-on-surface-variant/50 pl-2 font-medium">
                                                         + {dayEvents.length - 3} more
                                                     </div>
                                                 )}
@@ -292,150 +291,155 @@ export default function SchedulePage() {
                                 )
                             })}
                         </div>
-                    </Card>
+                    </div>
                 </div>
 
                 {/* RIGHT: Selected Day Agenda */}
-                <Card className="w-full lg:w-[380px] flex flex-col shadow-lg border-t-4 lg:border-t-0 lg:border-l-4 border-primary/20 min-h-[350px] lg:min-h-0 lg:h-full">
-                    <CardHeader className="py-4 border-b bg-muted/10">
-                        <div className="flex justify-between items-center">
-                            <div>
-                                <CardTitle>{format(selectedDate, "EEEE")}</CardTitle>
-                                <p className="text-sm text-muted-foreground">{format(selectedDate, "MMMM do")}</p>
-                            </div>
+                <div className="w-full lg:w-[400px] flex flex-col gap-4">
+                    <div className="bg-surface-container rounded-[2.5rem] p-1 flex-1 flex flex-col shadow-expressive">
+                        <div className="p-6 pb-2">
+                            <div className="flex justify-between items-center mb-6">
+                                <div>
+                                    <h3 className="text-2xl font-semibold text-on-surface">{format(selectedDate, "EEEE")}</h3>
+                                    <p className="text-on-surface-variant">{format(selectedDate, "MMMM do")}</p>
+                                </div>
 
-                            <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-                                <DialogTrigger asChild>
-                                    <Button size="icon" className="h-8 w-8 rounded-full shadow-sm">
-                                        <IconPlus className="w-4 h-4" />
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                    <DialogHeader>
-                                        <DialogTitle>{editingEvent ? "Edit Event" : `Add to Schedule (${format(selectedDate, "MMM d")})`}</DialogTitle>
-                                    </DialogHeader>
-                                    <div className="grid gap-4 py-4">
-                                        <div className="grid gap-2">
-                                            <Label>Title</Label>
-                                            <Input
-                                                placeholder="Study Session, Gym, etc."
-                                                value={newEventTitle}
-                                                onChange={(e) => setNewEventTitle(e.target.value)}
-                                            />
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4">
+                                <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+                                    <DialogTrigger asChild>
+                                        <Button size="icon" className="h-12 w-12 rounded-2xl shadow-md bg-primary text-on-primary hover:bg-primary/90 transition-transform active:scale-95">
+                                            <IconPlus className="w-6 h-6" />
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="sm:max-w-[425px] rounded-[2rem] border-none bg-surface-container-high shadow-xl">
+                                        <DialogHeader>
+                                            <DialogTitle className="text-xl font-medium">{editingEvent ? "Edit Event" : `Add to Schedule`}</DialogTitle>
+                                        </DialogHeader>
+                                        <div className="grid gap-5 py-4">
                                             <div className="grid gap-2">
-                                                <Label>Type</Label>
-                                                <Select value={newEventType} onValueChange={(v: any) => setNewEventType(v)}>
-                                                    <SelectTrigger>
-                                                        <SelectValue />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="Personal">Personal</SelectItem>
-                                                        <SelectItem value="Study">Study Block</SelectItem>
-                                                        <SelectItem value="Lecture">Lecture</SelectItem>
-                                                        <SelectItem value="Lab">Lab</SelectItem>
-                                                        <SelectItem value="Exam">📝 Exam</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                            <div className="grid gap-2">
-                                                <Label>{newEventType === "Exam" ? "Notes" : "Location"}</Label>
+                                                <Label className="text-on-surface-variant">Title</Label>
                                                 <Input
-                                                    placeholder={newEventType === "Exam" ? "Modules 1-3..." : "Room / Online"}
-                                                    value={newEventLocation}
-                                                    onChange={(e) => setNewEventLocation(e.target.value)}
+                                                    className="bg-surface border-transparent rounded-xl h-12"
+                                                    placeholder="Study Session, Gym, etc."
+                                                    value={newEventTitle}
+                                                    onChange={(e) => setNewEventTitle(e.target.value)}
                                                 />
                                             </div>
-                                        </div>
-                                        {newEventType === "Exam" && (
-                                            <div className="grid gap-2">
-                                                <Label>Subject (Optional)</Label>
-                                                <Select value={newExamSubjectId} onValueChange={setNewExamSubjectId}>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select subject..." />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {subjects.map(s => (
-                                                            <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                        )}
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="grid gap-2">
-                                                <Label>{newEventType === "Exam" ? "Time" : "Start Time"}</Label>
-                                                <Input
-                                                    type="time"
-                                                    value={newEventTime}
-                                                    onChange={(e) => setNewEventTime(e.target.value)}
-                                                />
-                                            </div>
-                                            {newEventType !== "Exam" && (
+                                            <div className="grid grid-cols-2 gap-4">
                                                 <div className="grid gap-2">
-                                                    <Label>End Time</Label>
+                                                    <Label className="text-on-surface-variant">Type</Label>
+                                                    <Select value={newEventType} onValueChange={(v: any) => setNewEventType(v)}>
+                                                        <SelectTrigger className="bg-surface border-transparent rounded-xl h-12">
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                        <SelectContent className="rounded-xl">
+                                                            <SelectItem value="Personal">Personal</SelectItem>
+                                                            <SelectItem value="Study">Study Block</SelectItem>
+                                                            <SelectItem value="Lecture">Lecture</SelectItem>
+                                                            <SelectItem value="Lab">Lab</SelectItem>
+                                                            <SelectItem value="Exam">📝 Exam</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                                <div className="grid gap-2">
+                                                    <Label className="text-on-surface-variant">{newEventType === "Exam" ? "Notes" : "Location"}</Label>
                                                     <Input
-                                                        type="time"
-                                                        value={newEventEndTime}
-                                                        onChange={(e) => setNewEventEndTime(e.target.value)}
+                                                        className="bg-surface border-transparent rounded-xl h-12"
+                                                        placeholder={newEventType === "Exam" ? "Modules 1-3..." : "Room / Online"}
+                                                        value={newEventLocation}
+                                                        onChange={(e) => setNewEventLocation(e.target.value)}
                                                     />
                                                 </div>
-                                            )}
-                                        </div>
-                                        {newEventType !== "Exam" && (
-                                            <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
-                                                <p>This will add a <b>Schedule Event</b> for this specific date.</p>
                                             </div>
-                                        )}
-                                    </div>
-                                    <DialogFooter>
-                                        <Button variant="outline" onClick={() => { setIsAddOpen(false); setEditingEvent(null); }}>Cancel</Button>
-                                        <Button onClick={handleAddEvent}>{editingEvent ? "Update Event" : "Add Event"}</Button>
-                                    </DialogFooter>
-                                </DialogContent>
-                            </Dialog>
+                                            {newEventType === "Exam" && (
+                                                <div className="grid gap-2">
+                                                    <Label>Subject (Optional)</Label>
+                                                    <Select value={newExamSubjectId} onValueChange={setNewExamSubjectId}>
+                                                        <SelectTrigger className="bg-surface border-transparent rounded-xl h-12">
+                                                            <SelectValue placeholder="Select subject..." />
+                                                        </SelectTrigger>
+                                                        <SelectContent className="rounded-xl">
+                                                            {subjects.map(s => (
+                                                                <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                            )}
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="grid gap-2">
+                                                    <Label className="text-on-surface-variant">{newEventType === "Exam" ? "Time" : "Start Time"}</Label>
+                                                    <Input
+                                                        type="time"
+                                                        className="bg-surface border-transparent rounded-xl h-12"
+                                                        value={newEventTime}
+                                                        onChange={(e) => setNewEventTime(e.target.value)}
+                                                    />
+                                                </div>
+                                                {newEventType !== "Exam" && (
+                                                    <div className="grid gap-2">
+                                                        <Label className="text-on-surface-variant">End Time</Label>
+                                                        <Input
+                                                            type="time"
+                                                            className="bg-surface border-transparent rounded-xl h-12"
+                                                            value={newEventEndTime}
+                                                            onChange={(e) => setNewEventEndTime(e.target.value)}
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <DialogFooter>
+                                            <Button variant="ghost" onClick={() => { setIsAddOpen(false); setEditingEvent(null); }} className="rounded-full">Cancel</Button>
+                                            <Button onClick={handleAddEvent} className="rounded-full px-6">{editingEvent ? "Update Event" : "Add Event"}</Button>
+                                        </DialogFooter>
+                                    </DialogContent>
+                                </Dialog>
+                            </div>
+                            <div className="h-px w-full bg-border/10 mb-2" />
                         </div>
-                    </CardHeader>
 
-                    <CardContent className="flex-1 p-0 overflow-hidden relative">
-                        <ScrollArea className="h-full">
-                            <div className="p-4 space-y-4">
+                        <ScrollArea className="flex-1 h-[400px]">
+                            <div className="px-4 pb-6 space-y-3">
                                 {selectedDayEvents.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center h-[300px] text-muted-foreground opacity-50">
-                                        <IconClock className="w-12 h-12 mb-3" />
-                                        <p>No events</p>
+                                    <div className="flex flex-col items-center justify-center h-[300px] text-on-surface-variant/40">
+                                        <div className="p-4 bg-surface rounded-full mb-3">
+                                            <IconClock className="w-8 h-8" />
+                                        </div>
+                                        <p>No events scheduled</p>
                                     </div>
                                 ) : (
                                     selectedDayEvents.map((item: any, i) => {
                                         const isCompleted = item.type === "Todo" && item.completed
                                         return (
-                                            <div key={i} className="group relative flex gap-3 pb-4 last:pb-0">
-                                                <div className="flex flex-col items-center">
+                                            <div key={i} className="group relative flex gap-4">
+                                                {/* Timeline */}
+                                                <div className="flex flex-col items-center pt-2">
                                                     <div className={cn(
-                                                        "w-2.5 h-2.5 rounded-full ring-4 ring-background z-10",
-                                                        item.type === "Exam" ? "bg-red-500" :
-                                                            item.type === "Assignment" ? "bg-orange-500" :
-                                                                item.type === "Class" ? "bg-blue-500" : "bg-slate-400"
+                                                        "w-3 h-3 rounded-full ring-4 ring-surface-container z-10",
+                                                        item.type === "Exam" ? "bg-error" :
+                                                            item.type === "Assignment" ? "bg-primary" :
+                                                                item.type === "Class" ? "bg-tertiary" : "bg-secondary"
                                                     )} />
-                                                    <div className="w-[1px] bg-border h-full absolute top-2.5" />
+                                                    <div className="w-[2px] bg-surface-container-high h-full absolute top-4 bottom-[-1rem] left-[5px]" />
                                                 </div>
 
-                                                <div className="flex-1 min-w-0 pb-2">
+                                                <div className="flex-1 min-w-0 pb-4">
                                                     <div className={cn(
-                                                        "p-3 rounded-lg border bg-card transition-all hover:bg-accent/40",
+                                                        "p-4 rounded-2xl bg-surface border border-transparent transition-all hover:border-border/20 hover:shadow-sm",
                                                         isCompleted && "opacity-60 grayscale"
                                                     )}>
-                                                        <div className="flex justify-between items-start mb-1">
+                                                        <div className="flex justify-between items-start mb-2">
                                                             <div className="flex items-center gap-2">
-                                                                <Badge variant="secondary" className="text-[10px] h-4 px-1">{item.time || "All Day"}</Badge>
-                                                                <span className="text-xs text-muted-foreground font-medium uppercase tracking-tight">{item.type}</span>
+                                                                <span className="text-xs font-mono text-on-surface-variant">{item.time || "All Day"}</span>
+                                                                <Badge variant="secondary" className="text-[10px] rounded-md px-1.5 py-0 bg-surface-container-high text-on-surface-variant font-normal">
+                                                                    {item.type}
+                                                                </Badge>
                                                             </div>
-                                                            <div className="flex items-center gap-1">
+                                                            <div className="flex items-center gap-1 -mr-2 -mt-2">
                                                                 {item.type === "Todo" && (
                                                                     <Checkbox
                                                                         checked={isCompleted}
-                                                                        className="w-4 h-4 rounded-full"
+                                                                        className="w-5 h-5 rounded-full border-2 border-on-surface-variant/50 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                                                                         onCheckedChange={(c) => toggleTodo(item.id.toString(), !!c)}
                                                                     />
                                                                 )}
@@ -444,7 +448,7 @@ export default function SchedulePage() {
                                                                         <Button
                                                                             variant="ghost"
                                                                             size="icon"
-                                                                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary"
+                                                                            className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-on-surface-variant hover:text-primary hover:bg-surface-container-high rounded-full"
                                                                             onClick={(e) => {
                                                                                 e.stopPropagation()
                                                                                 setEditingEvent(item)
@@ -456,26 +460,26 @@ export default function SchedulePage() {
                                                                                 setIsAddOpen(true)
                                                                             }}
                                                                         >
-                                                                            <IconEdit className="w-3 h-3" />
+                                                                            <IconEdit className="w-3.5 h-3.5" />
                                                                         </Button>
                                                                         <Button
                                                                             variant="ghost"
                                                                             size="icon"
-                                                                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                                                                            className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-on-surface-variant hover:text-error hover:bg-surface-container-high rounded-full"
                                                                             onClick={(e) => {
                                                                                 e.stopPropagation()
                                                                                 deleteScheduleEvent(item.id)
                                                                             }}
                                                                         >
-                                                                            <IconTrash className="w-3 h-3" />
+                                                                            <IconTrash className="w-3.5 h-3.5" />
                                                                         </Button>
                                                                     </>
                                                                 )}
                                                             </div>
                                                         </div>
-                                                        <h4 className={cn("font-semibold text-sm truncate", isCompleted && "line-through")}>{item.title || item.text}</h4>
-                                                        {item.location && <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1"><IconMapPin className="w-3 h-3" /> {item.location}</p>}
-                                                        {item.course && <p className="text-xs text-muted-foreground mt-1">{item.course}</p>}
+                                                        <h4 className={cn("font-medium text-base text-on-surface truncate", isCompleted && "line-through")}>{item.title || item.text}</h4>
+                                                        {item.location && <p className="text-xs text-on-surface-variant flex items-center gap-1.5 mt-2"><IconMapPin className="w-3.5 h-3.5" /> {item.location}</p>}
+                                                        {item.course && <p className="text-xs text-on-surface-variant mt-1 bg-surface-container-high/50 inline-block px-2 py-0.5 rounded-md">{item.course}</p>}
                                                     </div>
                                                 </div>
                                             </div>
@@ -484,8 +488,8 @@ export default function SchedulePage() {
                                 )}
                             </div>
                         </ScrollArea>
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
             </div>
         </Shell>
     )

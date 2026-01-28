@@ -63,32 +63,32 @@ export function ExamWidget() {
 
     const getUrgencyColor = (dateStr: string) => {
         const days = differenceInDays(new Date(dateStr), new Date())
-        if (days <= 3) return "bg-red-500 text-white animate-pulse"
-        if (days <= 7) return "bg-orange-500 text-white"
-        if (days <= 14) return "bg-yellow-500 text-black"
-        return "bg-primary text-primary-foreground"
+        if (days <= 3) return "bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/20"
+        if (days <= 7) return "bg-orange-500 text-white shadow-lg shadow-orange-500/20"
+        if (days <= 14) return "bg-yellow-500 text-black shadow-lg shadow-yellow-500/20"
+        return "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
     }
 
     return (
-        <Card className="flex flex-col h-full shadow-sm hover:shadow-md transition-shadow duration-200">
+        <Card className="flex flex-col h-full bg-surface-container-low shadow-none border-0 overflow-hidden">
             <CardHeader className="pb-2 flex flex-row items-center justify-between">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    <IconClock className="w-4 h-4" /> Exam Countdown
+                    <IconClock className="w-4 h-4 text-primary" /> Exam Countdown
                 </CardTitle>
                 <Dialog open={open} onOpenChange={setOpen}>
                     <DialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-6 w-6"><IconPlus className="w-3 h-3" /></Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-surface-container-high rounded-full"><IconPlus className="w-4 h-4" /></Button>
                     </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent className="bg-surface-container-high border-none shadow-expressive-md">
                         <DialogHeader><DialogTitle>Add Exam</DialogTitle></DialogHeader>
                         <div className="space-y-4 py-4">
                             <div className="space-y-2">
                                 <Label>Subject</Label>
                                 <Select value={subjectId} onValueChange={setSubjectId}>
-                                    <SelectTrigger>
+                                    <SelectTrigger className="bg-surface-container-highest border-none">
                                         <SelectValue placeholder="Select subject..." />
                                     </SelectTrigger>
-                                    <SelectContent>
+                                    <SelectContent className="bg-surface-container-highest border-none">
                                         {subjects.map(s => (
                                             <SelectItem key={s.id} value={s.id}>{s.name} ({s.code})</SelectItem>
                                         ))}
@@ -98,10 +98,10 @@ export function ExamWidget() {
                             <div className="space-y-2">
                                 <Label>Title</Label>
                                 <Select value={title} onValueChange={setTitle}>
-                                    <SelectTrigger>
+                                    <SelectTrigger className="bg-surface-container-highest border-none">
                                         <SelectValue placeholder="Exam Type" />
                                     </SelectTrigger>
-                                    <SelectContent>
+                                    <SelectContent className="bg-surface-container-highest border-none">
                                         <SelectItem value="CAT 1">CAT 1</SelectItem>
                                         <SelectItem value="CAT 2">CAT 2</SelectItem>
                                         <SelectItem value="FAT">FAT</SelectItem>
@@ -111,31 +111,34 @@ export function ExamWidget() {
                             </div>
                             <div className="space-y-2">
                                 <Label>Date</Label>
-                                <Input type="date" value={date} onChange={e => setDate(e.target.value)} />
+                                <Input type="date" value={date} onChange={e => setDate(e.target.value)} className="bg-surface-container-highest border-none" />
                             </div>
-                            <Button onClick={handleAdd} disabled={!date}>Add Exam</Button>
+                            <Button onClick={handleAdd} disabled={!date} className="w-full shadow-primary-md">Add Exam</Button>
                         </div>
                     </DialogContent>
                 </Dialog>
             </CardHeader>
-            <CardContent className="flex-1 flex flex-col gap-4">
+            <CardContent className="flex-1 flex flex-col gap-4 p-4 pt-0">
                 {nextExam ? (
                     <div className={cn(
-                        "rounded-xl p-4 flex flex-col items-center justify-center text-center shadow-lg transition-all overflow-hidden",
+                        "rounded-2xl p-5 flex flex-col items-center justify-center text-center transition-all overflow-hidden relative isolate",
                         getUrgencyColor(nextExam.date)
                     )}>
-                        <h3 className="text-3xl font-black tracking-tighter mb-1 leading-none">
+                        {/* Pattern overlay for texture */}
+                        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white to-transparent" />
+                        
+                        <h3 className="text-4xl font-black tracking-tighter mb-1 leading-none drop-shadow-sm">
                             {getDaysLeft(nextExam.date)}
                         </h3>
-                        <p className="text-xs font-bold opacity-90 uppercase tracking-wider truncate max-w-full px-2 leading-tight">
+                        <p className="text-sm font-bold opacity-90 uppercase tracking-wider truncate max-w-full px-2 leading-tight">
                             {nextExamSubject?.name || "Exam"}
                         </p>
-                        <p className="text-[10px] opacity-70 mt-1 truncate max-w-full px-2">
+                        <p className="text-xs opacity-80 mt-1 truncate max-w-full px-2 font-medium">
                             {nextExam.title} • {format(new Date(nextExam.date), "MMM d")}
                         </p>
                     </div>
                 ) : (
-                    <div className="rounded-xl border-2 border-dashed p-6 text-center text-muted-foreground text-xs flex flex-col items-center gap-2">
+                    <div className="rounded-2xl border-2 border-dashed border-surface-container-highest/50 p-6 text-center text-muted-foreground text-xs flex flex-col items-center gap-2 bg-surface-container/30">
                         <IconCalendarEvent className="w-8 h-8 opacity-20" />
                         No upcoming exams.
                         <br /> Enjoy the peace! 😌
@@ -143,26 +146,26 @@ export function ExamWidget() {
                 )}
 
                 {allExams.length > 1 && (
-                    <div className="space-y-1.5 flex-1 min-h-0 overflow-hidden">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pl-1 mb-1">Up Next</p>
+                    <div className="space-y-2 flex-1 min-h-0 overflow-hidden">
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider pl-1 mb-1">Up Next</p>
                         {allExams.slice(1).map((exam: any) => {
                             const sub = subjects.find(s => s.id === exam.subjectId)
                             return (
-                                <div key={exam.id} className="flex items-center justify-between gap-3 text-xs p-2.5 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
+                                <div key={exam.id} className="flex items-center justify-between gap-3 text-xs p-3 rounded-xl bg-surface-container hover:bg-surface-container-high transition-colors group">
                                     <div className="flex flex-col min-w-0 flex-1">
-                                        <span className="font-medium truncate leading-tight">{sub?.name || exam.title}</span>
+                                        <span className="font-semibold truncate leading-tight text-foreground">{sub?.name || exam.title}</span>
                                         <span className="text-[10px] text-muted-foreground leading-tight">{exam.title}</span>
                                     </div>
                                     <div className="flex items-center gap-2 shrink-0">
-                                        <span className="text-muted-foreground bg-muted px-1.5 py-0.5 rounded text-[10px]">
+                                        <span className="text-primary font-medium bg-primary/10 px-2 py-0.5 rounded-full text-[10px]">
                                             {format(new Date(exam.date), "MMM d")}
                                         </span>
                                         {exam.source === 'manual' && (
                                             <button
                                                 onClick={() => deleteExam(Number(exam.id.replace('manual-', '')))}
-                                                className="text-muted-foreground hover:text-destructive transition-colors"
+                                                className="text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
                                             >
-                                                <IconTrash className="w-3 h-3" />
+                                                <IconTrash className="w-3.5 h-3.5" />
                                             </button>
                                         )}
                                     </div>

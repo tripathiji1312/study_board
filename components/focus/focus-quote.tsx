@@ -25,12 +25,14 @@ export function FocusQuote({ active }: { active: boolean }) {
     return (
         <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: active ? 0.8 : 0.4 }}
-            className="text-center max-w-lg mt-8"
+            animate={{ opacity: active ? 1 : 0.6 }}
+            className="text-center max-w-lg mt-8 relative"
         >
-            <p className="text-lg md:text-xl font-light italic text-muted-foreground/80 font-serif">
-                "{quote}"
+             <span className="text-4xl text-primary/10 absolute -top-4 -left-4 select-none font-serif">"</span>
+            <p className="text-lg md:text-xl font-medium italic text-muted-foreground font-serif tracking-wide leading-relaxed">
+                {quote}
             </p>
+             <span className="text-4xl text-primary/10 absolute -bottom-4 -right-4 select-none font-serif">"</span>
         </motion.div>
     )
 }

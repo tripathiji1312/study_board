@@ -75,8 +75,8 @@ export function AppSidebar({ className, isOpen, onOpenChange }: SidebarProps) {
         <Button
             variant={pathname === route.href ? "secondary" : "ghost"}
             className={cn(
-                "w-full justify-start gap-3 h-9",
-                pathname === route.href && "font-semibold bg-primary/10 text-primary",
+                "w-full justify-start gap-3 h-9 hover-lift",
+                pathname === route.href && "font-semibold bg-primary/10 text-primary shadow-sm",
                 route.highlight && pathname !== route.href && "text-primary/80 hover:text-primary hover:bg-primary/5"
             )}
             asChild
@@ -125,7 +125,7 @@ export function AppSidebar({ className, isOpen, onOpenChange }: SidebarProps) {
 
             {/* Scrollable Content - Navigation */}
             <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar">
-                <div className="flex flex-col gap-4 px-3 py-4">
+                <div className="flex flex-col gap-4 px-3 py-4 animate-enter">
                     {/* Global Search */}
                     <div id="quick-actions-menu">
                         <GlobalSearch />

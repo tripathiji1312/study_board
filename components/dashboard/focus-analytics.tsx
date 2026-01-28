@@ -30,27 +30,27 @@ export function FocusAnalytics() {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
             {/* Stat Cards */}
-            <div className="bg-card/50 border border-border/50 rounded-xl p-4 flex items-center justify-between">
+            <div className="bg-surface-container border border-transparent rounded-2xl p-5 flex items-center justify-between shadow-sm hover:shadow-md transition-all group">
                 <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-widest font-medium mb-1">Today's Focus</p>
-                    <p className="text-2xl font-light">
-                        {Math.floor(todayMinutes / 60)}<span className="text-sm font-medium text-muted-foreground">h</span> {todayMinutes % 60}<span className="text-sm font-medium text-muted-foreground">m</span>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold mb-1">Today's Focus</p>
+                    <p className="text-3xl font-light text-foreground group-hover:text-primary transition-colors">
+                        {Math.floor(todayMinutes / 60)}<span className="text-sm font-medium text-muted-foreground ml-0.5">h</span> {todayMinutes % 60}<span className="text-sm font-medium text-muted-foreground ml-0.5">m</span>
                     </p>
                 </div>
-                <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center">
-                    <IconClock className="w-5 h-5 text-blue-500" />
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <IconClock className="w-5 h-5 text-primary" />
                 </div>
             </div>
 
-            <div className="bg-card/50 border border-border/50 rounded-xl p-4 flex items-center justify-between">
+            <div className="bg-surface-container border border-transparent rounded-2xl p-5 flex items-center justify-between shadow-sm hover:shadow-md transition-all group">
                 <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-widest font-medium mb-1">Daily Record</p>
-                    <p className="text-2xl font-light">
-                        {Math.floor(maxMinutes / 60)}<span className="text-sm font-medium text-muted-foreground">h</span> {maxMinutes % 60}<span className="text-sm font-medium text-muted-foreground">m</span>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold mb-1">Daily Record</p>
+                    <p className="text-3xl font-light text-foreground group-hover:text-amber-500 transition-colors">
+                        {Math.floor(maxMinutes / 60)}<span className="text-sm font-medium text-muted-foreground ml-0.5">h</span> {maxMinutes % 60}<span className="text-sm font-medium text-muted-foreground ml-0.5">m</span>
                     </p>
                 </div>
-                <div className="w-10 h-10 rounded-full bg-yellow-500/10 flex items-center justify-center">
-                    <IconTrophy className="w-5 h-5 text-yellow-500" />
+                <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <IconTrophy className="w-5 h-5 text-amber-500" />
                 </div>
             </div>
         </div>

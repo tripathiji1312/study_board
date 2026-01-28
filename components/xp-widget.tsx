@@ -33,7 +33,16 @@ export function XPProvider({ children }: { children: React.ReactNode }) {
         if (typeof window === "undefined") return
         try {
             const saved = localStorage.getItem("study_xp")
-            if (saved) setXP(parseInt(saved, 10))
+            if (saved) {
+                setXP(parseInt(saved, 10))
+            } else {
+                // Welcome Bonus for new users
+                const starterXP = 50
+                setXP(starterXP)
+                localStorage.setItem("study_xp", String(starterXP))
+                // Use a timeout to ensure the toast appears after hydration/render
+                setTimeout(() => toast.success("Welcome! Here's 50 XP to start ⚔️", { duration: 3000 }), 500)
+            }
         } catch (error) {
             console.error("Failed to load XP:", error)
         }

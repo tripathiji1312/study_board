@@ -56,7 +56,7 @@ export function SpotifyWidget() {
 
     if (loading) {
         return (
-            <Card className="h-full flex flex-col justify-center">
+            <Card className="h-full flex flex-col justify-center bg-surface-container-low shadow-none border-0">
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium flex items-center gap-2">
                         <IconBrandSpotify className="w-4 h-4 text-[#1DB954]" />
@@ -65,10 +65,10 @@ export function SpotifyWidget() {
                 </CardHeader>
                 <CardContent>
                     <div className="flex items-center gap-3 animate-pulse">
-                        <div className="w-14 h-14 rounded bg-muted" />
+                        <div className="w-14 h-14 rounded bg-surface-container-high" />
                         <div className="flex-1 space-y-2">
-                            <div className="h-4 bg-muted rounded w-3/4" />
-                            <div className="h-3 bg-muted rounded w-1/2" />
+                            <div className="h-4 bg-surface-container-high rounded w-3/4" />
+                            <div className="h-3 bg-surface-container-high rounded w-1/2" />
                         </div>
                     </div>
                 </CardContent>
@@ -79,7 +79,7 @@ export function SpotifyWidget() {
     // Not connected - show connect button
     if (!data?.connected) {
         return (
-            <Card className="h-full flex flex-col justify-center">
+            <Card className="h-full flex flex-col justify-center bg-surface-container-low shadow-none border-0">
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium flex items-center gap-2">
                         <IconBrandSpotify className="w-4 h-4 text-[#1DB954]" />
@@ -94,7 +94,7 @@ export function SpotifyWidget() {
                         <div className="flex-1">
                             <p className="text-sm font-medium">Connect Spotify</p>
                             <p className="text-xs text-muted-foreground mb-2">Show what you're playing</p>
-                            <Button size="sm" className="h-7 text-xs bg-[#1DB954] hover:bg-[#1aa34a]" asChild>
+                            <Button size="sm" className="h-7 text-xs bg-[#1DB954] hover:bg-[#1aa34a] shadow-sm hover:shadow-md" asChild>
                                 <a href="/api/spotify/login">Connect</a>
                             </Button>
                         </div>
@@ -107,7 +107,7 @@ export function SpotifyWidget() {
     // Connected but nothing playing
     if (!data.isPlaying || !data.track) {
         return (
-            <Card className="h-full flex flex-col justify-center">
+            <Card className="h-full flex flex-col justify-center bg-surface-container-low shadow-none border-0">
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium flex items-center gap-2">
                         <IconBrandSpotify className="w-4 h-4 text-[#1DB954]" />
@@ -116,7 +116,7 @@ export function SpotifyWidget() {
                 </CardHeader>
                 <CardContent>
                     <div className="flex items-center gap-3">
-                        <div className="w-14 h-14 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                        <div className="w-14 h-14 rounded-lg bg-surface-container-high flex items-center justify-center shrink-0">
                             <IconPlayerPause className="w-6 h-6 text-muted-foreground" />
                         </div>
                         <div className="flex-1">
@@ -131,8 +131,14 @@ export function SpotifyWidget() {
 
     // Playing!
     return (
-        <Card className="overflow-hidden h-full flex flex-col justify-center">
-            <CardHeader className="pb-2">
+        <Card className="overflow-hidden h-full flex flex-col justify-center bg-surface-container-low shadow-none border-0 relative">
+            {/* Ambient Background Glow */}
+            <div 
+                className="absolute inset-0 opacity-10 bg-cover bg-center blur-3xl"
+                style={{ backgroundImage: `url(${data.track.albumArt})` }}
+            />
+            
+            <CardHeader className="pb-2 relative z-10">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                     <IconBrandSpotify className="w-4 h-4 text-[#1DB954]" />
                     Now Playing
@@ -141,27 +147,31 @@ export function SpotifyWidget() {
                     </div>
                 </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="relative z-10">
                 <a
                     href={data.track.url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-3 group"
                 >
-                    <img
-                        src={data.track.albumArt}
-                        alt={data.track.album}
-                        className="w-14 h-14 rounded shadow-md shrink-0 group-hover:shadow-lg transition-shadow"
-                    />
+                    <div className="relative shrink-0">
+                         <img
+                            src={data.track.albumArt}
+                            alt={data.track.album}
+                            className="w-14 h-14 rounded-lg shadow-md group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <div className="absolute inset-0 rounded-lg shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)] pointer-events-none" />
+                    </div>
+                   
                     <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate group-hover:text-[#1DB954] transition-colors">
                             {data.track.name}
                         </p>
                         <p className="text-xs text-muted-foreground truncate">{data.track.artist}</p>
                         {/* Progress bar */}
-                        <div className="mt-2 h-1 bg-muted rounded-full overflow-hidden">
+                        <div className="mt-2 h-1 bg-surface-container-highest/50 rounded-full overflow-hidden">
                             <div
-                                className="h-full bg-[#1DB954] transition-all duration-1000"
+                                className="h-full bg-[#1DB954] transition-all duration-1000 ease-linear"
                                 style={{ width: `${progressPercent}%` }}
                             />
                         </div>

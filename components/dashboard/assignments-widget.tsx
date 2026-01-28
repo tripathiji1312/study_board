@@ -19,15 +19,15 @@ export function AssignmentsWidget() {
     )
 
     return (
-        <Card className="flex flex-col h-full shadow-sm hover:shadow-md transition-shadow duration-200">
+        <Card className="flex flex-col h-full bg-surface-container-low shadow-none border-0 overflow-hidden">
             <CardHeader className="pb-3 flex flex-row items-center justify-between flex-shrink-0 space-y-0">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                     Assignments
-                    <Badge variant="secondary" className="text-[10px] h-5 px-1.5 font-normal">
+                    <Badge variant="secondary" className="text-[10px] h-5 px-1.5 font-normal bg-surface-container-high hover:bg-surface-container-highest">
                         {activeAssignments.length}
                     </Badge>
                 </CardTitle>
-                <Button variant="ghost" size="sm" asChild className="h-7 text-xs px-2 text-muted-foreground">
+                <Button variant="ghost" size="sm" asChild className="h-7 text-xs px-2 text-muted-foreground hover:bg-surface-container-high rounded-full">
                     <Link href="/assignments">View All</Link>
                 </Button>
             </CardHeader>
@@ -42,7 +42,7 @@ export function AssignmentsWidget() {
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: i * 0.1 }}
-                                        className="group flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors border border-transparent hover:border-border/50"
+                                        className="group flex items-start gap-3 p-2 rounded-lg bg-surface-container hover:bg-surface-container-high transition-colors shadow-sm border-0"
                                     >
                                         <div className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${a.priority === "Urgent" ? "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]" :
                                             a.priority === "High" ? "bg-orange-500" :
@@ -58,7 +58,7 @@ export function AssignmentsWidget() {
                                             </p>
                                         </div>
 
-                                        <Badge variant="outline" className="text-[10px] h-5 px-1.5 shrink-0 bg-background/50">
+                                        <Badge variant="outline" className="text-[10px] h-5 px-1.5 shrink-0 bg-surface-container-highest/50 border-transparent text-muted-foreground">
                                             {a.status}
                                         </Badge>
                                     </motion.div>
@@ -68,7 +68,7 @@ export function AssignmentsWidget() {
                     </ScrollArea>
                 ) : (
                     <div className="h-full flex flex-col items-center justify-center text-center p-6 animate-in fade-in duration-500">
-                        <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/20 flex items-center justify-center mb-3">
+                        <div className="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center mb-3">
                             <IconTrophy className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
                         </div>
                         <p className="text-sm font-medium">All Caught Up!</p>

@@ -48,13 +48,13 @@ export default function SignInPage() {
     }
 
     return (
-        <div className="min-h-screen w-full flex items-center justify-center bg-background p-4 relative overflow-hidden">
+        <div className="min-h-screen w-full flex items-center justify-center bg-surface p-4 relative overflow-hidden text-on-surface">
             {/* Animated Background */}
-            <div className="absolute inset-0 z-0">
+            <div className="absolute inset-0 z-0 opacity-40">
                 <div className="absolute top-0 left-0 w-[800px] h-[800px] bg-primary/10 rounded-full blur-[150px] -translate-x-1/2 -translate-y-1/2" />
-                <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-accent/10 rounded-full blur-[120px] translate-x-1/3 translate-y-1/3" />
+                <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-tertiary/10 rounded-full blur-[120px] translate-x-1/3 translate-y-1/3" />
                 <div className="absolute inset-0" style={{
-                    backgroundImage: `radial-gradient(circle at 1px 1px, hsl(var(--muted-foreground) / 0.08) 1px, transparent 0)`,
+                    backgroundImage: `radial-gradient(circle at 1px 1px, hsl(var(--on-surface-variant) / 0.08) 1px, transparent 0)`,
                     backgroundSize: '32px 32px'
                 }} />
             </div>
@@ -65,29 +65,29 @@ export default function SignInPage() {
                 transition={{ duration: 0.5 }}
                 className="relative z-10 w-full max-w-[420px]"
             >
-                <div className="bg-card/80 backdrop-blur-xl border border-border/50 rounded-3xl shadow-2xl shadow-black/10 p-8 md:p-10 space-y-8">
+                <div className="bg-surface-container-high/80 backdrop-blur-xl border border-outline-variant/30 rounded-[2.5rem] shadow-expressive p-8 md:p-10 space-y-8">
                     <div className="text-center space-y-4">
                         <div className="flex justify-center mb-6">
                             <Logo className="scale-125" />
                         </div>
-                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Welcome back</h1>
-                        <p className="text-muted-foreground text-sm">
+                        <h1 className="text-3xl font-bold tracking-tight text-on-surface">Welcome back</h1>
+                        <p className="text-on-surface-variant text-sm">
                             Sign in to continue managing your academic life.
                         </p>
                     </div>
 
                     <div className="space-y-4">
-                        <Button variant="outline" onClick={() => handleOAuthLogin("github")} disabled={isLoading} className="w-full h-11 rounded-xl hover:bg-accent/50">
-                            <IconBrandGithub className="mr-2 h-4 w-4" />
+                        <Button variant="outline" onClick={() => handleOAuthLogin("github")} disabled={isLoading} className="w-full h-12 rounded-full border-outline hover:bg-surface-container-highest hover:text-on-surface">
+                            <IconBrandGithub className="mr-2 h-5 w-5" />
                             Continue with GitHub
                         </Button>
 
                         <div className="relative">
                             <div className="absolute inset-0 flex items-center">
-                                <span className="w-full border-t border-border" />
+                                <span className="w-full border-t border-outline-variant" />
                             </div>
                             <div className="relative flex justify-center text-xs uppercase">
-                                <span className="bg-card px-3 text-muted-foreground">
+                                <span className="bg-surface-container-high px-3 text-on-surface-variant">
                                     or continue with email
                                 </span>
                             </div>
@@ -95,7 +95,7 @@ export default function SignInPage() {
 
                         <form onSubmit={handleCredentialsLogin} className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+                                <Label htmlFor="email" className="text-sm font-medium text-on-surface">Email</Label>
                                 <Input
                                     id="email"
                                     type="email"
@@ -103,12 +103,12 @@ export default function SignInPage() {
                                     required
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="h-11 rounded-xl bg-background/50"
+                                    className="h-12 rounded-xl bg-surface-container-highest/50 border-transparent focus:border-primary focus:bg-surface-container-highest transition-all"
                                 />
                             </div>
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between">
-                                    <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+                                    <Label htmlFor="password" className="text-sm font-medium text-on-surface">Password</Label>
                                     <Link href="/auth/reset-password" className="text-xs text-primary hover:underline">
                                         Forgot password?
                                     </Link>
@@ -119,10 +119,10 @@ export default function SignInPage() {
                                     required
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="h-11 rounded-xl bg-background/50"
+                                    className="h-12 rounded-xl bg-surface-container-highest/50 border-transparent focus:border-primary focus:bg-surface-container-highest transition-all"
                                 />
                             </div>
-                            <Button type="submit" className="w-full h-11 rounded-xl font-semibold" disabled={isLoading}>
+                            <Button type="submit" className="w-full h-12 rounded-full font-semibold text-base shadow-md" disabled={isLoading}>
                                 {isLoading && <IconLoader className="mr-2 h-4 w-4 animate-spin" />}
                                 Sign In
                             </Button>
@@ -130,7 +130,7 @@ export default function SignInPage() {
 
                     </div>
 
-                    <p className="text-center text-sm text-muted-foreground">
+                    <p className="text-center text-sm text-on-surface-variant">
                         Don&apos;t have an account?{" "}
                         <Link href="/auth/signup" className="text-primary font-medium hover:underline">
                             Create one
@@ -138,11 +138,11 @@ export default function SignInPage() {
                     </p>
                 </div>
 
-                <p className="text-center text-xs text-muted-foreground mt-6">
+                <p className="text-center text-xs text-on-surface-variant mt-6">
                     By continuing, you agree to our{" "}
-                    <Link href="/terms" className="underline hover:text-foreground">Terms</Link>
+                    <Link href="/terms" className="underline hover:text-on-surface">Terms</Link>
                     {" "}and{" "}
-                    <Link href="/privacy" className="underline hover:text-foreground">Privacy Policy</Link>.
+                    <Link href="/privacy" className="underline hover:text-on-surface">Privacy Policy</Link>.
                 </p>
             </motion.div>
         </div>

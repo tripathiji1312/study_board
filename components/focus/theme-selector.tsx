@@ -92,14 +92,14 @@ export function ThemeSelector({ currentTheme, onThemeChange }: ThemeSelectorProp
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="rounded-full border border-white/5 bg-white/5 text-white/40 hover:text-white hover:bg-white/10 hover:border-white/10 transition-all duration-300 w-9 h-9"
+                    className="rounded-full border border-white/10 bg-white/5 text-white/50 hover:text-white hover:bg-white/10 hover:border-white/20 transition-all duration-300 w-10 h-10 shadow-sm"
                 >
-                    <IconPalette className="w-4 h-4" />
+                    <IconPalette className="w-5 h-5" />
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-xl bg-zinc-950/80 border-white/10 backdrop-blur-2xl text-white p-6 shadow-2xl">
+            <DialogContent className="sm:max-w-xl bg-surface-container-high/90 border-white/10 backdrop-blur-2xl text-foreground p-6 shadow-expressive rounded-3xl">
                 <DialogHeader className="mb-4">
-                    <DialogTitle className="text-xl font-light tracking-wide text-center">Select Atmosphere</DialogTitle>
+                    <DialogTitle className="text-xl font-bold tracking-tight text-center">Select Atmosphere</DialogTitle>
                 </DialogHeader>
                 <div className="grid grid-cols-2 gap-4">
                     {entries.map(([key, theme]) => (
@@ -107,13 +107,13 @@ export function ThemeSelector({ currentTheme, onThemeChange }: ThemeSelectorProp
                             key={key}
                             onClick={() => onThemeChange(key as ThemeKey)}
                             className={cn(
-                                "relative h-24 rounded-2xl overflow-hidden border transition-all duration-300 group",
+                                "relative h-28 rounded-2xl overflow-hidden border transition-all duration-500 group",
                                 currentTheme === key 
-                                    ? "border-white/50 ring-4 ring-white/10 scale-[1.02] shadow-xl" 
-                                    : "border-white/5 hover:border-white/20 hover:scale-[1.02] opacity-70 hover:opacity-100"
+                                    ? "border-primary ring-2 ring-primary/30 scale-[1.02] shadow-xl" 
+                                    : "border-white/5 hover:border-white/20 hover:scale-[1.02] opacity-80 hover:opacity-100 shadow-md"
                             )}
                         >
-                            <div className={cn("absolute inset-0", theme.bg)} />
+                            <div className={cn("absolute inset-0 transition-transform duration-700 group-hover:scale-110", theme.bg)} />
                             {theme.gradient && (
                                 <div
                                     className="absolute inset-0 opacity-70"
@@ -125,12 +125,12 @@ export function ThemeSelector({ currentTheme, onThemeChange }: ThemeSelectorProp
                             )}
 
                             <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-center p-2 z-10">
-                                <span className="text-[10px] uppercase tracking-[0.2em] font-medium text-white/50 group-hover:text-white/70 transition-colors">{theme.type}</span>
-                                <span className="font-medium text-sm text-white drop-shadow-lg tracking-wide">{theme.name}</span>
+                                <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-white/40 group-hover:text-white/60 transition-colors">{theme.type}</span>
+                                <span className="font-bold text-lg text-white drop-shadow-md tracking-tight">{theme.name}</span>
                             </div>
 
                             {currentTheme === key && (
-                                <div className="absolute top-2 right-2 bg-white text-black rounded-full p-1 shadow-lg animate-in fade-in zoom-in duration-300">
+                                <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full p-1 shadow-lg animate-in fade-in zoom-in duration-300">
                                     <IconCheck className="w-3 h-3" strokeWidth={3} />
                                 </div>
                             )}

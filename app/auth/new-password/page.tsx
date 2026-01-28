@@ -68,22 +68,22 @@ function NewPasswordContent() {
 
     if (isSuccess) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-background p-4">
+            <div className="min-h-screen flex items-center justify-center bg-surface p-4 text-on-surface">
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="w-full max-w-[420px] bg-card/80 backdrop-blur-xl border rounded-3xl shadow-2xl p-8 text-center space-y-6"
+                    className="w-full max-w-[420px] bg-surface-container-high/80 backdrop-blur-xl border border-outline-variant/30 rounded-[2.5rem] shadow-expressive p-8 text-center space-y-6"
                 >
                     <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
                         <IconCheck className="w-6 h-6 text-primary" />
                     </div>
                     <div className="space-y-2">
-                        <h1 className="text-2xl font-bold">Password Reset</h1>
-                        <p className="text-muted-foreground">
+                        <h1 className="text-2xl font-bold text-on-surface">Password Reset</h1>
+                        <p className="text-on-surface-variant">
                             Your password has been successfully reset. You can now log in with your new password.
                         </p>
                     </div>
-                    <Button asChild className="w-full h-11 rounded-xl">
+                    <Button asChild className="w-full h-12 rounded-full shadow-md">
                         <Link href="/auth/signin">Sign In</Link>
                     </Button>
                 </motion.div>
@@ -92,8 +92,8 @@ function NewPasswordContent() {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
-            <div className="absolute inset-0 z-0">
+        <div className="min-h-screen flex items-center justify-center bg-surface p-4 relative overflow-hidden text-on-surface">
+            <div className="absolute inset-0 z-0 opacity-40">
                 <div className="absolute top-0 left-0 w-[800px] h-[800px] bg-primary/10 rounded-full blur-[150px] -translate-x-1/2 -translate-y-1/2" />
             </div>
 
@@ -102,20 +102,20 @@ function NewPasswordContent() {
                 animate={{ opacity: 1, y: 0 }}
                 className="relative z-10 w-full max-w-[420px]"
             >
-                <div className="bg-card/80 backdrop-blur-xl border border-border/50 rounded-3xl shadow-2xl p-8 md:p-10 space-y-8">
+                <div className="bg-surface-container-high/80 backdrop-blur-xl border border-outline-variant/30 rounded-[2.5rem] shadow-expressive p-8 md:p-10 space-y-8">
                     <div className="text-center space-y-4">
                         <div className="flex justify-center">
                             <Logo className="scale-110" />
                         </div>
-                        <h1 className="text-2xl font-bold tracking-tight">Set new password</h1>
-                        <p className="text-muted-foreground text-sm">
+                        <h1 className="text-2xl font-bold tracking-tight text-on-surface">Set new password</h1>
+                        <p className="text-on-surface-variant text-sm">
                             Please enter your new password below.
                         </p>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="password">New Password</Label>
+                            <Label htmlFor="password" className="text-on-surface">New Password</Label>
                             <Input
                                 id="password"
                                 type="password"
@@ -123,11 +123,11 @@ function NewPasswordContent() {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
-                                className="h-11 rounded-xl bg-background/50"
+                                className="h-12 rounded-xl bg-surface-container-highest/50 border-transparent focus:border-primary focus:bg-surface-container-highest transition-all"
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="confirmPassword">Confirm Password</Label>
+                            <Label htmlFor="confirmPassword" className="text-on-surface">Confirm Password</Label>
                             <Input
                                 id="confirmPassword"
                                 type="password"
@@ -135,10 +135,10 @@ function NewPasswordContent() {
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                 required
-                                className="h-11 rounded-xl bg-background/50"
+                                className="h-12 rounded-xl bg-surface-container-highest/50 border-transparent focus:border-primary focus:bg-surface-container-highest transition-all"
                             />
                         </div>
-                        <Button type="submit" className="w-full h-11 rounded-xl" disabled={isLoading}>
+                        <Button type="submit" className="w-full h-12 rounded-full font-semibold shadow-md" disabled={isLoading}>
                             {isLoading && <IconLoader className="mr-2 h-4 w-4 animate-spin" />}
                             Reset Password
                         </Button>
@@ -152,7 +152,7 @@ function NewPasswordContent() {
 export default function NewPasswordPage() {
     return (
         <React.Suspense fallback={
-            <div className="min-h-screen flex items-center justify-center bg-background p-4">
+            <div className="min-h-screen flex items-center justify-center bg-surface p-4">
                 <IconLoader className="w-8 h-8 animate-spin text-primary" />
             </div>
         }>

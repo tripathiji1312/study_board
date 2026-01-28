@@ -41,12 +41,12 @@ export function AcademicHeatmap() {
                                 key={i}
                                 title={`${format(day, 'MMM d')}: ${intensity} hrs`}
                                 className={cn(
-                                    "w-3 h-3 rounded-[2px] transition-colors",
-                                    intensity === 0 && "bg-muted/50",
-                                    intensity === 1 && "bg-green-200 dark:bg-green-900",
-                                    intensity === 2 && "bg-green-300 dark:bg-green-800",
-                                    intensity === 3 && "bg-green-400 dark:bg-green-700",
-                                    intensity === 4 && "bg-green-500 dark:bg-green-600",
+                                    "w-3 h-3 rounded-[4px] transition-all duration-300",
+                                    intensity === 0 && "bg-surface-container-highest/50",
+                                    intensity === 1 && "bg-primary/20",
+                                    intensity === 2 && "bg-primary/40",
+                                    intensity === 3 && "bg-primary/60",
+                                    intensity === 4 && "bg-primary shadow-[0_0_8px_-2px_var(--primary)]",
                                 )}
                             />
                         )

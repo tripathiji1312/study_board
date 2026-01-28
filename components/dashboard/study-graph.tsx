@@ -159,14 +159,14 @@ export function StudyGraph() {
     }, [daysData])
 
     const getIntensityClass = (score: number) => {
-        if (score === 0) return "bg-muted hover:bg-muted/80"
-        if (score <= 1) return "bg-emerald-200 dark:bg-emerald-900/50 hover:bg-emerald-300 dark:hover:bg-emerald-800"
-        if (score <= 2) return "bg-emerald-400 dark:bg-emerald-700 hover:bg-emerald-500 dark:hover:bg-emerald-600"
-        return "bg-emerald-600 dark:bg-emerald-500 hover:bg-emerald-700 dark:hover:bg-emerald-400"
+        if (score === 0) return "bg-surface-container-high hover:bg-surface-container-highest"
+        if (score <= 1) return "bg-primary/30 hover:bg-primary/40"
+        if (score <= 2) return "bg-primary/60 hover:bg-primary/70"
+        return "bg-primary hover:bg-primary/90"
     }
 
     return (
-        <Card className="flex flex-col">
+        <Card className="flex flex-col bg-surface-container-low shadow-none border-0 overflow-hidden">
             <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
                     <div>
@@ -202,7 +202,7 @@ export function StudyGraph() {
                                                 className={`w-3.5 h-3.5 rounded-sm transition-colors ${getIntensityClass(day.score)}`}
                                             />
                                         </TooltipTrigger>
-                                        <TooltipContent side="top" className="text-xs p-2">
+                                        <TooltipContent side="top" className="text-xs p-2 bg-surface-container-highest border-0 shadow-expressive-sm">
                                             <p className="font-semibold mb-1">{format(day.date, "MMM d, yyyy")}</p>
                                             <div className="space-y-0.5 text-muted-foreground">
                                                 {day.studyMinutes > 0 && <p>📚 {day.studyMinutes}m studied</p>}
@@ -214,8 +214,6 @@ export function StudyGraph() {
                                 </TooltipProvider>
                             ))}
                         </div>
-
-                        {/* Month Labels (Optional enhancement, tricky with grid-flow-col but lets skip for simplicity or approximate) */}
                     </div>
                 </div>
 
@@ -223,10 +221,10 @@ export function StudyGraph() {
                 <div className="flex items-center justify-end gap-2 mt-4 text-[10px] text-muted-foreground px-1">
                     <span>Less</span>
                     <div className="flex gap-1">
-                        <div className="w-3 h-3 rounded-sm bg-muted" />
-                        <div className="w-3 h-3 rounded-sm bg-emerald-200 dark:bg-emerald-900/50" />
-                        <div className="w-3 h-3 rounded-sm bg-emerald-400 dark:bg-emerald-700" />
-                        <div className="w-3 h-3 rounded-sm bg-emerald-600 dark:bg-emerald-500" />
+                        <div className="w-3 h-3 rounded-sm bg-surface-container-high" />
+                        <div className="w-3 h-3 rounded-sm bg-primary/30" />
+                        <div className="w-3 h-3 rounded-sm bg-primary/60" />
+                        <div className="w-3 h-3 rounded-sm bg-primary" />
                     </div>
                     <span>More</span>
                 </div>

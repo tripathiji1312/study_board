@@ -28,6 +28,7 @@ const themes = [
     { name: "Coffee", value: "theme-coffee", color: "bg-[#f5f0e6] border-[#8b5a2b]" },
     { name: "Nordic", value: "theme-nordic", color: "bg-[#f0f4ff] border-[#3b82f6]" },
     { name: "Cosmic", value: "theme-cosmic", color: "bg-[#0d0516] border-[#7c3aed]" },
+    { name: "Retro Pop", value: "theme-retro-pop", color: "bg-[#fffacd] border-[#ff69b4]" },
 ]
 
 export function ThemeSwitcher() {

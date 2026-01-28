@@ -405,16 +405,16 @@ export default function FocusPage() {
                         variant="ghost"
                         size="sm"
                         asChild
-                        className="rounded-full border border-white/5 bg-white/5 text-white/40 hover:text-white hover:bg-white/10 hover:border-white/10 transition-all duration-300 text-[10px] font-medium tracking-[0.2em] uppercase px-4 h-9"
+                        className="rounded-full border border-white/10 bg-surface-container/20 text-muted-foreground hover:text-foreground hover:bg-surface-container hover:border-white/20 transition-all duration-300 text-[10px] font-bold tracking-[0.2em] uppercase px-5 h-10 shadow-sm"
                         onClick={() => {
                             if (document.fullscreenElement && document.exitFullscreen) {
                                 document.exitFullscreen().catch(() => {})
                             }
                         }}
                     >
-                        <Link href="/"><IconArrowLeft className="w-3 h-3 mr-2" />Dashboard</Link>
+                        <Link href="/"><IconArrowLeft className="w-3.5 h-3.5 mr-2" />Dashboard</Link>
                     </Button>
-                    <div className="hidden md:block h-4 w-[1px] bg-white/5" />
+                    <div className="hidden md:block h-6 w-[1px] bg-white/10" />
                     <ThemeSelector currentTheme={theme} onThemeChange={handleThemeChange} />
 
                     <Sheet>
@@ -422,14 +422,14 @@ export default function FocusPage() {
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className="rounded-full border border-white/5 bg-white/5 text-white/40 hover:text-white hover:bg-white/10 hover:border-white/10 transition-all duration-300 text-[10px] font-medium tracking-[0.2em] uppercase px-4 h-9"
+                                className="rounded-full border border-white/10 bg-surface-container/20 text-muted-foreground hover:text-foreground hover:bg-surface-container hover:border-white/20 transition-all duration-300 text-[10px] font-bold tracking-[0.2em] uppercase px-5 h-10 shadow-sm"
                             >
-                                <IconChartBar className="w-3 h-3 mr-2" />History
+                                <IconChartBar className="w-3.5 h-3.5 mr-2" />History
                             </Button>
                         </SheetTrigger>
-                        <SheetContent className="w-[300px] sm:w-[400px] md:w-[540px] border-l border-white/10 bg-zinc-950/90 backdrop-blur-2xl text-white shadow-2xl p-6">
+                        <SheetContent className="w-[300px] sm:w-[400px] md:w-[540px] border-l border-white/10 bg-surface-container-high/95 backdrop-blur-2xl text-foreground shadow-expressive p-6">
                             <SheetHeader className="mb-6">
-                                <SheetTitle className="text-white uppercase tracking-[0.2em] font-medium text-xs opacity-70">Session History</SheetTitle>
+                                <SheetTitle className="text-foreground/70 uppercase tracking-[0.2em] font-bold text-xs">Session History</SheetTitle>
                             </SheetHeader>
                             <div className="mt-4">
                                 <FocusHistory />
@@ -440,16 +440,16 @@ export default function FocusPage() {
                     {/* Subject Selector */}
                     <div className="relative group z-30">
                         <select
-                            className="rounded-full border border-white/5 bg-white/5 text-[10px] font-medium tracking-[0.2em] uppercase px-4 py-2 outline-none focus:border-white/20 transition-all duration-300 appearance-none cursor-pointer pr-10 h-9 text-white/40 hover:text-white hover:bg-white/10 hover:border-white/10"
+                            className="rounded-full border border-white/10 bg-surface-container/20 text-[10px] font-bold tracking-[0.2em] uppercase px-5 py-2 outline-none focus:border-primary/50 transition-all duration-300 appearance-none cursor-pointer pr-10 h-10 text-muted-foreground hover:text-foreground hover:bg-surface-container hover:border-white/20 shadow-sm"
                             value={selectedSubjectId}
                             onChange={(e) => setSelectedSubjectId(e.target.value)}
                         >
-                            <option value="none" className="bg-black text-white/50">Subject</option>
+                            <option value="none" className="bg-surface-container-high text-muted-foreground">Subject</option>
                             {subjects.map(sub => (
-                                <option key={sub.id} value={sub.id} className="bg-black text-white">{sub.code}</option>
+                                <option key={sub.id} value={sub.id} className="bg-surface-container-high text-foreground">{sub.code}</option>
                             ))}
                         </select>
-                        <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-30 group-hover:opacity-100 transition-opacity duration-300">
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-50 group-hover:opacity-100 transition-opacity duration-300 text-muted-foreground">
                             <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M1 3L4 6L7 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                         </div>
                     </div>
@@ -462,18 +462,18 @@ export default function FocusPage() {
                             variant="ghost"
                             size="icon"
                             className={cn(
-                                "rounded-full transition-all duration-300 w-9 h-9",
-                                showBlocker ? "text-red-400 bg-red-400/10" : "text-white/30 hover:text-white hover:bg-white/5"
+                                "rounded-full transition-all duration-300 w-10 h-10 shadow-sm border border-transparent",
+                                showBlocker ? "text-red-500 bg-red-500/10 border-red-500/20" : "text-muted-foreground hover:text-foreground hover:bg-surface-container hover:border-white/10"
                             )}
                             onClick={() => {
                                 setShowBlocker(!showBlocker)
                                 setShowAmbience(false)
                             }}
                         >
-                            <IconShieldLock className="w-4 h-4" />
+                            <IconShieldLock className="w-5 h-5" />
                         </Button>
                         <div className={cn(
-                            "absolute top-full right-0 mt-4 origin-top-right transition-all duration-200 z-50 shadow-2xl rounded-2xl overflow-hidden border border-white/10 bg-zinc-950/90 backdrop-blur-2xl",
+                            "absolute top-full right-0 mt-4 origin-top-right transition-all duration-300 z-50",
                             showBlocker ? "opacity-100 scale-100 visible" : "opacity-0 scale-95 invisible pointer-events-none"
                         )}>
                             <DistractionBlocker />
@@ -486,29 +486,29 @@ export default function FocusPage() {
                             variant="ghost"
                             size="icon"
                             className={cn(
-                                "rounded-full transition-all duration-300 w-9 h-9",
-                                showAmbience ? "text-white bg-white/10" : "text-white/30 hover:text-white hover:bg-white/5"
+                                "rounded-full transition-all duration-300 w-10 h-10 shadow-sm border border-transparent",
+                                showAmbience ? "text-primary bg-primary/10 border-primary/20" : "text-muted-foreground hover:text-foreground hover:bg-surface-container hover:border-white/10"
                             )}
                             onClick={() => setShowAmbience(!showAmbience)}
                         >
-                            <IconVolume className="w-4 h-4" />
+                            <IconVolume className="w-5 h-5" />
                         </Button>
                         <div className={cn(
-                            "absolute top-full right-0 mt-4 w-72 md:w-80 bg-zinc-950/90 border border-white/10 backdrop-blur-2xl text-white p-5 rounded-2xl shadow-2xl z-50 transition-all duration-200 origin-top-right",
+                            "absolute top-full right-0 mt-4 w-80 md:w-96 bg-surface-container-high/95 border border-white/10 backdrop-blur-2xl text-foreground p-6 rounded-3xl shadow-expressive z-50 transition-all duration-300 origin-top-right",
                             showAmbience ? "opacity-100 scale-100 visible" : "opacity-0 scale-95 invisible pointer-events-none"
                         )}>
-                            <div className="flex items-center justify-between mb-4">
-                                <h4 className="text-[10px] font-medium tracking-[0.2em] uppercase opacity-50 text-white">Ambience Mixer</h4>
-                                <Button variant="ghost" size="icon" className="h-6 w-6 text-white/40 hover:text-white rounded-full hover:bg-white/10 transition-colors" onClick={() => setShowAmbience(false)}>
-                                    <IconMinimize className="w-3 h-3" />
+                            <div className="flex items-center justify-between mb-5">
+                                <h4 className="text-[10px] font-bold tracking-[0.2em] uppercase opacity-60 text-muted-foreground">Ambience Mixer</h4>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground rounded-full hover:bg-white/10 transition-colors" onClick={() => setShowAmbience(false)}>
+                                    <IconMinimize className="w-3.5 h-3.5" />
                                 </Button>
                             </div>
                             <AmbienceWidget />
                         </div>
                     </div>
 
-                    <Button variant="ghost" size="icon" onClick={toggleFullscreen} className="text-white/30 hover:text-white hover:bg-white/5 rounded-full w-9 h-9 transition-all duration-300">
-                        {isFullscreen ? <IconMinimize className="w-4 h-4" /> : <IconMaximize className="w-4 h-4" />}
+                    <Button variant="ghost" size="icon" onClick={toggleFullscreen} className="text-muted-foreground hover:text-foreground hover:bg-surface-container hover:border-white/10 border border-transparent rounded-full w-10 h-10 transition-all duration-300 shadow-sm">
+                        {isFullscreen ? <IconMinimize className="w-5 h-5" /> : <IconMaximize className="w-5 h-5" />}
                     </Button>
                 </div>
             </div>
@@ -521,8 +521,8 @@ export default function FocusPage() {
 
                 {/* Left: Task List (Desktop only) - Hidden when active */}
                 <div className={cn(
-                    "hidden md:flex flex-col items-start w-[250px] lg:w-[300px] h-full justify-center pt-20 transition-all duration-700",
-                    isActive && !showControls ? "opacity-0 pointer-events-none translate-x-[-20px]" : "opacity-100 translate-x-0"
+                    "hidden md:flex flex-col items-start w-[300px] lg:w-[350px] h-full justify-center pt-20 transition-all duration-700",
+                    isActive && !showControls ? "opacity-0 pointer-events-none translate-x-[-40px]" : "opacity-100 translate-x-0"
                 )}>
                     <FocusTaskList
                         todos={todos.filter(t => t.dueDate === new Date().toISOString().split('T')[0])}
@@ -533,24 +533,23 @@ export default function FocusPage() {
                     />
                 </div>
 
-                {/* Center: Timer & Clock Display */}
+                    {/* Center: Timer & Clock Display */}
                 <div className="flex flex-col items-center justify-center flex-1 min-w-0 z-50 relative">
                     
                     {/* Task & Status */}
                     <div className={cn(
-                        "text-center mb-8 space-y-4 transition-all duration-700",
+                        "text-center mb-10 space-y-4 transition-all duration-700",
                         isActive ? "mt-0" : "mt-0"
                     )}>
                         <span className={cn(
-                            "inline-flex items-center gap-2 text-[10px] font-bold tracking-[0.2em] uppercase opacity-100",
-                            isActive && "animate-pulse",
-                            currentTheme.accent
+                            "inline-flex items-center gap-2 text-[10px] font-bold tracking-[0.2em] uppercase px-3 py-1 rounded-full border transition-all duration-300",
+                            isActive ? "animate-pulse bg-primary/20 text-primary border-primary/20" : "bg-white/10 text-white/60 border-white/5"
                         )}>
-                            {isActive ? "Flow State" : "Ready"}
+                            {isActive ? "Flow State" : "Ready to Focus"}
                         </span>
                         <h2 className={cn(
-                            "text-xl md:text-4xl font-black text-white tracking-tighter uppercase transition-all duration-500",
-                            isActive && !showControls ? "opacity-100" : "opacity-100"
+                            "text-xl md:text-5xl font-black text-white tracking-tighter uppercase transition-all duration-500 drop-shadow-sm max-w-2xl mx-auto leading-tight",
+                            isActive && !showControls ? "opacity-90" : "opacity-100"
                         )}>
                             {selectedTaskText}
                         </h2>
@@ -563,12 +562,14 @@ export default function FocusPage() {
 
                     {/* Main Timer */}
                     <div
-                        className="relative group cursor-pointer mb-8 select-none"
+                        className="relative group cursor-pointer mb-12 select-none"
                         onClick={toggleTimer}
                     >
                         <div className={cn(
-                            "text-[13rem] sm:text-[16rem] md:text-[20rem] leading-none tabular-nums tracking-tighter transition-all duration-300 select-none font-black mix-blend-difference",
-                            isActive ? "text-white scale-100" : "text-white/20 scale-95"
+                            "text-[12rem] sm:text-[15rem] md:text-[20rem] leading-none tabular-nums tracking-tighter transition-all duration-500 select-none font-black",
+                            isActive 
+                                ? "text-white scale-110 drop-shadow-[0_0_40px_rgba(var(--primary),0.2)]" 
+                                : "text-white/20 scale-100 group-hover:text-white/30 group-hover:scale-105"
                         )}>
                             {formatTime(seconds)}
                         </div>
@@ -577,15 +578,15 @@ export default function FocusPage() {
                     {/* Controls - Always centered */}
                     <div className={cn(
                         "flex items-center gap-8 transition-all duration-500",
-                        isActive && !showControls ? "opacity-30" : "opacity-100"
+                        isActive && !showControls ? "opacity-30 blur-[2px] hover:opacity-100 hover:blur-0" : "opacity-100 blur-0"
                     )}>
                         <Button
                             size="icon"
                             variant="ghost"
                             className={cn(
-                                "w-24 h-24 rounded-none border-2 bg-transparent transition-all duration-300",
+                                "w-24 h-24 rounded-full border-2 transition-all duration-300",
                                 isActive 
-                                    ? "border-white text-white hover:bg-white hover:text-black hover:scale-105" 
+                                    ? "border-white text-white hover:bg-white hover:text-black hover:scale-105 shadow-[0_0_20px_rgba(255,255,255,0.2)]" 
                                     : "border-white/20 text-white/40 hover:text-white hover:border-white hover:bg-white/10"
                             )}
                             onClick={toggleTimer}
@@ -597,11 +598,11 @@ export default function FocusPage() {
                             <Button
                                 size="icon"
                                 variant="ghost"
-                                className="w-16 h-16 rounded-none border-2 border-white/20 bg-transparent text-white/40 hover:text-red-500 hover:border-red-500 hover:bg-red-500/10 transition-all duration-300"
+                                className="w-16 h-16 rounded-full border-2 border-white/10 bg-transparent text-white/30 hover:text-red-500 hover:border-red-500 hover:bg-red-500/10 transition-all duration-300"
                                 onClick={stopSession}
                                 title="Finish Session"
                             >
-                                <IconPlayerStop className="w-8 h-8 fill-current" />
+                                <IconPlayerStop className="w-7 h-7 fill-current" />
                             </Button>
                         )}
                     </div>
@@ -615,30 +616,30 @@ export default function FocusPage() {
                             variant="ghost" 
                             size="icon" 
                             onClick={toggleFullscreen} 
-                            className="text-white/30 hover:text-white hover:bg-white/10 rounded-full w-10 h-10 transition-all duration-300 border border-white/5"
+                            className="text-white/40 hover:text-white hover:bg-white/10 rounded-full w-12 h-12 transition-all duration-300 border border-white/5 backdrop-blur-sm"
                         >
-                            {isFullscreen ? <IconMinimize className="w-4 h-4" /> : <IconMaximize className="w-4 h-4" />}
+                            {isFullscreen ? <IconMinimize className="w-5 h-5" /> : <IconMaximize className="w-5 h-5" />}
                         </Button>
                     </div>
 
                     {/* Quote - Fades when active */}
                     <div className={cn(
-                        "mt-8 transition-all duration-700",
-                        isActive && !showControls ? "opacity-0" : "opacity-40"
+                        "mt-12 transition-all duration-700",
+                        isActive && !showControls ? "opacity-0 translate-y-4" : "opacity-100 translate-y-0"
                     )}>
                         <FocusQuote active={isActive} />
                     </div>
 
                     {/* Date/Time Widget (Bottom Left) */}
                     <div className={cn(
-                        "absolute bottom-4 left-4 text-left transition-all duration-700",
-                        isActive ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
+                        "absolute bottom-4 left-4 text-left transition-all duration-1000",
+                        isActive ? "opacity-80 translate-y-0" : "opacity-0 translate-y-8 pointer-events-none"
                     )}>
                         <div className="flex flex-col items-start gap-0.5">
-                            <p className="text-6xl font-black text-white tracking-tighter tabular-nums">
+                            <p className="text-7xl font-black text-white/10 tracking-tighter tabular-nums select-none">
                                 {formatClockTime(currentTime)}
                             </p>
-                            <p className="text-sm font-bold text-white/40 tracking-[0.1em] uppercase">
+                            <p className="text-sm font-bold text-white/30 tracking-[0.2em] uppercase pl-1">
                                 {formatDate(currentTime)}
                             </p>
                         </div>
@@ -647,31 +648,31 @@ export default function FocusPage() {
 
                 {/* Right: Gamification (Desktop only) - Hidden when active */}
                 <div className={cn(
-                    "hidden md:flex flex-col items-end w-[250px] lg:w-[300px] h-full justify-center transition-all duration-700",
-                    isActive && !showControls ? "opacity-0 pointer-events-none translate-x-[20px]" : "opacity-100 translate-x-0"
+                    "hidden md:flex flex-col items-end w-[300px] lg:w-[350px] h-full justify-center transition-all duration-700",
+                    isActive && !showControls ? "opacity-0 pointer-events-none translate-x-[40px]" : "opacity-100 translate-x-0"
                 )}>
                     <GamificationWidget todayMinutes={todayMinutes} />
                 </div>
 
                 {/* Mobile: Bottom Stats Bar - Hidden when active */}
                 <div className={cn(
-                    "md:hidden fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-xl border-t border-white/10 p-4 z-40 transition-all duration-500",
+                    "md:hidden fixed bottom-0 left-0 right-0 bg-surface-container-high/90 backdrop-blur-xl border-t border-white/10 p-4 z-40 transition-all duration-500 shadow-expressive",
                     isActive ? "opacity-0 pointer-events-none translate-y-full" : "opacity-100 translate-y-0"
                 )}>
                     <div className="flex items-center justify-around">
                         <div className="text-center">
-                            <p className="text-2xl font-light text-white">{todayMinutes}</p>
-                            <p className="text-[10px] uppercase tracking-wider text-white/50">Min Today</p>
+                            <p className="text-2xl font-light text-foreground">{todayMinutes}</p>
+                            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Min Today</p>
                         </div>
                         <div className="w-px h-8 bg-white/10" />
                         <div className="text-center">
-                            <p className="text-2xl font-light text-white">{Math.floor(totalMinutes / 60)}</p>
-                            <p className="text-[10px] uppercase tracking-wider text-white/50">Hours Total</p>
+                            <p className="text-2xl font-light text-foreground">{Math.floor(totalMinutes / 60)}</p>
+                            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Hours Total</p>
                         </div>
                         <div className="w-px h-8 bg-white/10" />
                         <div className="text-center">
-                            <p className="text-2xl font-light text-white">{selectedSubjectId !== "none" ? subjects.find(s => s.id === selectedSubjectId)?.code || "—" : "—"}</p>
-                            <p className="text-[10px] uppercase tracking-wider text-white/50">Subject</p>
+                            <p className="text-2xl font-light text-foreground">{selectedSubjectId !== "none" ? subjects.find(s => s.id === selectedSubjectId)?.code || "—" : "—"}</p>
+                            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Subject</p>
                         </div>
                     </div>
                 </div>

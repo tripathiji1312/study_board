@@ -380,7 +380,7 @@ export function SmartScheduleWidget() {
                         initial={{ scale: 0.8, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                        className="bg-accent/50 p-6 rounded-full mb-4"
+                        className="bg-surface-container-high p-6 rounded-full mb-4"
                     >
                         <IconCalendar className="w-10 h-10" />
                     </motion.div>
@@ -410,10 +410,10 @@ export function SmartScheduleWidget() {
                                 exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.15 } }}
                                 onClick={isTodo ? () => handleToggle(item.id, item.type, isCompleted) : undefined}
                                 className={cn(
-                                    "group/item flex items-center gap-3 p-2.5 rounded-lg transition-all border border-transparent",
-                                    isTodo && "hover:bg-accent/50 cursor-pointer active:scale-[0.98]",
-                                    !isTodo && "hover:bg-accent/30",
-                                    isCompleted && "opacity-50"
+                                    "group/item flex items-center gap-3 p-2.5 rounded-lg transition-all border border-transparent shadow-sm",
+                                    isTodo && "bg-surface-container hover:bg-surface-container-high cursor-pointer active:scale-[0.98]",
+                                    !isTodo && "bg-surface-container hover:bg-surface-container-high",
+                                    isCompleted && "opacity-50 bg-surface-container-lowest shadow-none"
                                 )}
                             >
                                 {/* Icon / Action Column */}
@@ -427,11 +427,11 @@ export function SmartScheduleWidget() {
                                         </div>
                                     ) : (
                                         <div className={cn(
-                                            "w-8 h-8 rounded-full flex items-center justify-center border text-xs shadow-sm",
-                                            item.type === "Exam" ? "bg-red-100 border-red-200 text-red-600 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400" :
-                                                item.type === "Assignment" ? "bg-orange-100 border-orange-200 text-orange-600 dark:bg-orange-900/20 dark:border-orange-800 dark:text-orange-400" :
-                                                    item.type === "Google" ? "bg-white border-slate-200 text-slate-700 dark:bg-white/10 dark:border-white/10 dark:text-white" :
-                                                        "bg-blue-100 border-blue-200 text-blue-600 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-400"
+                                            "w-8 h-8 rounded-full flex items-center justify-center border-none text-xs shadow-none",
+                                            item.type === "Exam" ? "bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400" :
+                                                item.type === "Assignment" ? "bg-orange-100 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400" :
+                                                    item.type === "Google" ? "bg-white text-slate-700 dark:bg-white/10 dark:text-white" :
+                                                        "bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
                                         )}>
                                             {item.type === "Exam" && <IconAlertTriangle className="w-4 h-4" />}
                                             {item.type === "Assignment" && <IconFlag className="w-4 h-4" />}
@@ -451,7 +451,7 @@ export function SmartScheduleWidget() {
                                             {item.title}
                                         </span>
                                         {item.time && (
-                                            <Badge variant="outline" className="text-[10px] h-5 font-mono text-muted-foreground border-border/50 bg-background/50">
+                                            <Badge variant="outline" className="text-[10px] h-5 font-mono text-muted-foreground border-transparent bg-surface-container-highest/50">
                                                 {item.time}
                                             </Badge>
                                         )}
@@ -481,7 +481,7 @@ export function SmartScheduleWidget() {
                         initial={{ scale: 0.8, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                        className="bg-accent/50 p-6 rounded-full mb-4"
+                        className="bg-surface-container-high p-6 rounded-full mb-4"
                     >
                         <IconCalendar className="w-10 h-10" />
                     </motion.div>
@@ -500,7 +500,7 @@ export function SmartScheduleWidget() {
 
                     return (
                         <div key={dateStr} className="space-y-2">
-                            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground sticky top-0 bg-card/95 backdrop-blur py-2 z-10 border-b w-full">
+                            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground sticky top-0 bg-surface-container-low/95 backdrop-blur py-2 z-10 border-b w-full pl-1">
                                 {format(day, "EEEE, MMM d")}
                             </h4>
                             {renderList(items)}
@@ -512,11 +512,11 @@ export function SmartScheduleWidget() {
     }
 
     return (
-        <Card className="h-full min-h-[500px] flex flex-col shadow-sm group" id="smart-schedule-widget">
-            <CardHeader className="p-4 pb-2 space-y-0 flex flex-row items-center justify-between border-b bg-card shrink-0">
+        <Card className="h-full min-h-[500px] flex flex-col shadow-none border-0 bg-surface-container-low group overflow-hidden" id="smart-schedule-widget">
+            <CardHeader className="p-4 pb-2 space-y-0 flex flex-row items-center justify-between border-b bg-surface-container-low shrink-0">
                 <div className="flex items-center gap-3">
                     <CardTitle className="text-sm font-medium">Smart Agenda</CardTitle>
-                    <Badge variant="secondary" className="text-[10px] h-5 px-1.5 font-normal text-muted-foreground">
+                    <Badge variant="secondary" className="text-[10px] h-5 px-1.5 font-normal text-muted-foreground bg-surface-container-high hover:bg-surface-container-highest">
                         {activeTab === "today" ? format(today, "MMM d") :
                             activeTab === "tomorrow" ? format(tomorrow, "MMM d") :
                                 "Next 7 Days"}
@@ -527,9 +527,9 @@ export function SmartScheduleWidget() {
                 <div className="flex items-center gap-2">
                     {!session && (
                         <Button
-                            variant="outline"
+                            variant="ghost"
                             size="icon"
-                            className="h-7 w-7 rounded-sm"
+                            className="h-7 w-7 rounded-sm hover:bg-surface-container-high"
                             onClick={() => signIn("google")}
                             title="Connect Google Calendar"
                         >
@@ -537,22 +537,22 @@ export function SmartScheduleWidget() {
                         </Button>
                     )}
                     <Tabs value={activeTab} onValueChange={setActiveTab} className="h-7 w-auto">
-                        <TabsList className="h-7 p-0 bg-muted/50 gap-1 rounded-sm">
+                        <TabsList className="h-7 p-0 bg-surface-container-high gap-1 rounded-sm">
                             <TabsTrigger
                                 value="today"
-                                className="h-6 text-[10px] px-2.5 rounded-sm data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+                                className="h-6 text-[10px] px-2.5 rounded-sm data-[state=active]:bg-surface-container-low data-[state=active]:shadow-sm transition-all"
                             >
                                 Today
                             </TabsTrigger>
                             <TabsTrigger
                                 value="tomorrow"
-                                className="h-6 text-[10px] px-2.5 rounded-sm data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+                                className="h-6 text-[10px] px-2.5 rounded-sm data-[state=active]:bg-surface-container-low data-[state=active]:shadow-sm transition-all"
                             >
                                 Tmrw
                             </TabsTrigger>
                             <TabsTrigger
                                 value="week"
-                                className="h-6 text-[10px] px-2.5 rounded-sm data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+                                className="h-6 text-[10px] px-2.5 rounded-sm data-[state=active]:bg-surface-container-low data-[state=active]:shadow-sm transition-all"
                             >
                                 Week
                             </TabsTrigger>
@@ -561,7 +561,7 @@ export function SmartScheduleWidget() {
                 </div>
             </CardHeader>
 
-            <CardContent className="flex-1 p-0 overflow-hidden relative bg-card/50 flex flex-col">
+            <CardContent className="flex-1 p-0 overflow-hidden relative bg-surface-container-low/50 flex flex-col">
                 {showPanic && (
                     <motion.div
                         initial={{ height: 0, opacity: 0 }}

@@ -31,13 +31,13 @@ export function ResourcesWidget() {
     const recentResources = resources.slice(0, 4)
 
     return (
-        <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
+        <Card className="shadow-none hover:shadow-md transition-shadow duration-200 bg-surface-container-low border-0">
             <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                     <IconBook className="w-4 h-4 text-purple-500" />
                     Recent Resources
                 </CardTitle>
-                <Button variant="ghost" size="sm" asChild className="h-7 text-xs px-2 text-muted-foreground">
+                <Button variant="ghost" size="sm" asChild className="h-7 text-xs px-2 text-muted-foreground hover:bg-surface-container-high rounded-full">
                     <Link href="/resources">
                         View All <IconArrowRight className="w-3 h-3 ml-1" />
                     </Link>
@@ -54,7 +54,7 @@ export function ResourcesWidget() {
                                     href={r.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className={`flex flex-col p-3 rounded-lg border bg-card hover:bg-secondary/50 transition-all group hover:-translate-y-0.5 hover:shadow-sm ${r.scoutedByAi ? "border-indigo-500/30 bg-indigo-50/5 relative" : ""}`}
+                                    className={`flex flex-col p-3 rounded-xl border-0 bg-surface-container hover:bg-surface-container-high transition-all group hover-lift hover:shadow-sm ${r.scoutedByAi ? "ring-1 ring-indigo-500/30 bg-indigo-50/5 relative" : ""}`}
                                 >
                                     {r.scoutedByAi && (
                                         <div className="absolute top-2 right-2 flex items-center gap-1">
@@ -63,10 +63,10 @@ export function ResourcesWidget() {
                                         </div>
                                     )}
                                     <div className="flex items-center justify-between mb-2">
-                                        <div className="p-1.5 rounded-md bg-secondary text-secondary-foreground group-hover:bg-background group-hover:text-primary transition-colors">
+                                        <div className="p-1.5 rounded-lg bg-surface-container-highest text-secondary-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors">
                                             <Icon className="w-4 h-4" />
                                         </div>
-                                        <Badge variant="outline" className="text-[10px] h-5 px-1 font-normal opacity-70">
+                                        <Badge variant="outline" className="text-[10px] h-5 px-1 font-normal opacity-70 bg-surface-container-highest border-transparent">
                                             {r.type}
                                         </Badge>
                                     </div>
@@ -84,20 +84,20 @@ export function ResourcesWidget() {
 
                         {/* Add Button as the last card if < 4 resources */}
                         {recentResources.length < 4 && (
-                            <Link href="/resources" className="flex flex-col items-center justify-center p-3 rounded-lg border border-dashed hover:border-primary/50 hover:bg-primary/5 transition-all text-muted-foreground hover:text-primary gap-1">
+                            <Link href="/resources" className="flex flex-col items-center justify-center p-3 rounded-xl border-2 border-dashed border-surface-container-highest hover:border-primary/50 hover:bg-primary/5 transition-all text-muted-foreground hover:text-primary gap-1">
                                 <IconPlus className="w-5 h-5" />
                                 <span className="text-xs font-medium">Add New</span>
                             </Link>
                         )}
                     </div>
                 ) : (
-                    <div className="flex flex-col items-center justify-center py-8 text-center bg-muted/20 rounded-lg border border-dashed">
-                        <div className="p-3 rounded-full bg-background mb-3">
+                    <div className="flex flex-col items-center justify-center py-8 text-center bg-surface-container/50 rounded-xl border-2 border-dashed border-surface-container-highest">
+                        <div className="p-3 rounded-full bg-surface-container-high mb-3">
                             <IconLink className="w-5 h-5 text-muted-foreground" />
                         </div>
                         <p className="text-sm font-medium">No resources saved</p>
                         <p className="text-xs text-muted-foreground mb-3">Keep your study materials handy.</p>
-                        <Button variant="outline" size="sm" asChild className="h-8">
+                        <Button variant="outline" size="sm" asChild className="h-8 border-primary/20 hover:bg-primary/5">
                             <Link href="/resources">
                                 <IconPlus className="w-3.5 h-3.5 mr-1.5" />
                                 Add Resource

@@ -59,35 +59,28 @@ export function AmbienceWidget() {
     }
 
     return (
-        <Card>
-            <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    <IconMusic className="w-4 h-4" /> Ambience
-                </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                {SOUNDS.map(sound => (
-                    <div key={sound.id} className="space-y-2">
-                        <div className="flex items-center justify-between text-xs">
-                            <div className="flex items-center gap-2">
-                                <sound.icon className={cn("w-3 h-3", volumes[sound.id] > 0 ? "text-primary" : "text-muted-foreground")} />
-                                <span>{sound.name}</span>
-                            </div>
-                            <span className="text-muted-foreground">{volumes[sound.id]}%</span>
+        <div className="space-y-4">
+            {SOUNDS.map(sound => (
+                <div key={sound.id} className="group">
+                    <div className="flex items-center justify-between text-xs mb-2">
+                        <div className="flex items-center gap-2">
+                            <sound.icon className={cn("w-3.5 h-3.5 transition-colors", volumes[sound.id] > 0 ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
+                            <span className={cn("font-medium transition-colors", volumes[sound.id] > 0 ? "text-foreground" : "text-muted-foreground group-hover:text-foreground")}>{sound.name}</span>
                         </div>
-                        <div className="h-4">
-                            <input
-                                type="range"
-                                min="0"
-                                max="100"
-                                value={volumes[sound.id]}
-                                onChange={(e) => handleVolumeChange(sound.id, [parseInt(e.target.value)])}
-                                className="w-full accent-primary h-1 bg-muted rounded-lg appearance-none cursor-pointer"
-                            />
-                        </div>
+                        <span className="text-muted-foreground font-mono text-[10px]">{volumes[sound.id]}%</span>
                     </div>
-                ))}
-            </CardContent>
-        </Card>
+                    <div className="h-6 flex items-center">
+                        <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={volumes[sound.id]}
+                            onChange={(e) => handleVolumeChange(sound.id, [parseInt(e.target.value)])}
+                            className="w-full accent-primary h-1.5 bg-muted rounded-full appearance-none cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                        />
+                    </div>
+                </div>
+            ))}
+        </div>
     )
 }

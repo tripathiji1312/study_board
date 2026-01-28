@@ -134,18 +134,18 @@ export default function AssignmentsPage() {
 
     const getPriorityConfig = (p: Priority) => {
         switch (p) {
-            case "Urgent": return { color: "bg-red-500", text: "text-red-500", ring: "ring-red-500/20" }
-            case "High": return { color: "bg-orange-500", text: "text-orange-500", ring: "ring-orange-500/20" }
-            case "Medium": return { color: "bg-yellow-500", text: "text-yellow-500", ring: "ring-yellow-500/20" }
-            case "Low": return { color: "bg-green-500", text: "text-green-500", ring: "ring-green-500/20" }
+            case "Urgent": return { color: "bg-error", text: "text-error", ring: "ring-error/20" }
+            case "High": return { color: "bg-tertiary", text: "text-tertiary", ring: "ring-tertiary/20" }
+            case "Medium": return { color: "bg-primary", text: "text-primary", ring: "ring-primary/20" }
+            case "Low": return { color: "bg-secondary", text: "text-secondary", ring: "ring-secondary/20" }
         }
     }
 
     const getStatusConfig = (s: Status) => {
         switch (s) {
-            case "Completed": return { icon: IconCheck, color: "bg-emerald-500", text: "Completed" }
-            case "In Progress": return { icon: IconClock, color: "bg-blue-500", text: "In Progress" }
-            case "Pending": return { icon: IconCalendar, color: "bg-slate-500", text: "Pending" }
+            case "Completed": return { icon: IconCheck, color: "bg-secondary", text: "Completed" }
+            case "In Progress": return { icon: IconClock, color: "bg-primary", text: "In Progress" }
+            case "Pending": return { icon: IconCalendar, color: "bg-tertiary", text: "Pending" }
         }
     }
 
@@ -162,51 +162,55 @@ export default function AssignmentsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 className={cn(
-                    "group p-4 rounded-xl border bg-card hover:shadow-lg transition-all",
-                    assignment.status === "Completed" && "opacity-60 bg-muted/30",
+                    "group p-6 rounded-[1.5rem] border transition-all relative overflow-hidden",
+                    assignment.status === "Completed" 
+                        ? "opacity-60 bg-surface-container-low border-transparent" 
+                        : "bg-surface border-transparent hover:border-border/20 shadow-sm hover:shadow-md",
                     daysInfo.urgent && assignment.status !== "Completed" && "ring-2",
                     priorityConfig.ring
                 )}
             >
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-4">
                     {/* Priority Indicator */}
-                    <div className={cn("w-1 self-stretch rounded-full", priorityConfig.color)} />
+                    <div className={cn("w-1.5 self-stretch rounded-full my-1", priorityConfig.color)} />
 
-                    <div className="flex-1 min-w-0 space-y-2">
+                    <div className="flex-1 min-w-0 space-y-3">
                         {/* Title & Subject */}
                         <div>
-                            <h3 className={cn(
-                                "font-semibold",
-                                assignment.status === "Completed" && "line-through"
-                            )}>
-                                {assignment.title}
-                            </h3>
-                            <p className="text-sm text-muted-foreground">{assignment.course}</p>
+                            <div className="flex justify-between items-start">
+                                <h3 className={cn(
+                                    "font-medium text-lg text-on-surface leading-tight",
+                                    assignment.status === "Completed" && "line-through text-on-surface-variant"
+                                )}>
+                                    {assignment.title}
+                                </h3>
+                            </div>
+                            <p className="text-sm text-on-surface-variant mt-1 bg-surface-container-high/50 inline-block px-2 py-0.5 rounded-md">{assignment.course}</p>
                         </div>
 
                         {/* Due Date & Status */}
                         <div className="flex flex-wrap items-center gap-2">
                             <div className={cn(
-                                "flex items-center gap-1 text-xs px-2 py-1 rounded-full",
+                                "flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-medium transition-colors",
                                 daysInfo.urgent && assignment.status !== "Completed"
-                                    ? "bg-red-500/10 text-red-500 font-medium"
-                                    : "bg-muted text-muted-foreground"
+                                    ? "bg-error/10 text-error"
+                                    : "bg-surface-container-high text-on-surface-variant"
                             )}>
-                                {daysInfo.urgent && assignment.status !== "Completed" && <IconFlame className="w-3 h-3" />}
-                                <IconCalendar className="w-3 h-3" />
+                                {daysInfo.urgent && assignment.status !== "Completed" && <IconFlame className="w-3.5 h-3.5" />}
+                                <IconCalendar className="w-3.5 h-3.5" />
                                 {daysInfo.text}
                             </div>
-                            <Badge variant="outline" className={cn("text-xs", priorityConfig.text)}>
+                            <Badge variant="outline" className={cn("text-xs border-0 bg-opacity-10 px-2.5 py-1 h-auto", priorityConfig.text, priorityConfig.color.replace("bg-", "bg-opacity-10 bg-"))}>
                                 {assignment.priority}
                             </Badge>
                         </div>
 
                         {/* Quick Status Toggle */}
-                        <div className="flex items-center gap-1 pt-2">
+                        <div className="flex items-center gap-2 pt-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <Button
                                 variant={assignment.status === "Pending" ? "secondary" : "ghost"}
                                 size="sm"
-                                className="h-7 text-xs"
+                                className="h-8 text-xs rounded-full px-3"
                                 onClick={() => updateAssignment({ ...assignment, status: "Pending" })}
                             >
                                 Pending
@@ -214,7 +218,7 @@ export default function AssignmentsPage() {
                             <Button
                                 variant={assignment.status === "In Progress" ? "secondary" : "ghost"}
                                 size="sm"
-                                className="h-7 text-xs"
+                                className="h-8 text-xs rounded-full px-3"
                                 onClick={() => updateAssignment({ ...assignment, status: "In Progress" })}
                             >
                                 In Progress
@@ -222,24 +226,24 @@ export default function AssignmentsPage() {
                             <Button
                                 variant={assignment.status === "Completed" ? "default" : "ghost"}
                                 size="sm"
-                                className="h-7 text-xs"
+                                className="h-8 text-xs rounded-full px-3"
                                 onClick={() => updateAssignment({ ...assignment, status: "Completed" })}
                             >
-                                <IconCheck className="w-3 h-3 mr-1" />
+                                <IconCheck className="w-3.5 h-3.5 mr-1.5" />
                                 Done
                             </Button>
                         </div>
                     </div>
 
                     {/* Actions */}
-                    <div className="flex flex-col gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(assignment)}>
+                    <div className="flex flex-col gap-1">
+                         <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full text-on-surface-variant hover:bg-surface-container-high hover:text-primary" onClick={() => openEditDialog(assignment)}>
                             <IconPencil className="w-4 h-4" />
                         </Button>
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                            className="h-9 w-9 rounded-full text-on-surface-variant hover:bg-surface-container-high hover:text-error"
                             onClick={() => deleteAssignment(assignment.id)}
                         >
                             <IconTrash className="w-4 h-4" />
@@ -252,55 +256,56 @@ export default function AssignmentsPage() {
 
     return (
         <Shell>
-            <div className="max-w-4xl mx-auto space-y-6">
+            <div className="max-w-[1600px] mx-auto space-y-8 min-h-[calc(100vh-8rem)]">
                 {/* Header */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight">Assignments</h1>
-                        <p className="text-muted-foreground">Track your academic deadlines.</p>
+                        <h1 className="text-4xl font-normal tracking-tight text-on-surface">Assignments</h1>
+                        <p className="text-on-surface-variant mt-2 text-lg">Track your academic deadlines.</p>
                     </div>
-                    <Button onClick={openAddDialog} className="shadow-lg shadow-primary/20">
-                        <IconPlus className="w-4 h-4 mr-2" /> Add Assignment
+                    <Button onClick={openAddDialog} className="shadow-lg shadow-primary/20 rounded-2xl h-12 px-6 text-base">
+                        <IconPlus className="w-5 h-5 mr-2" /> Add Assignment
                     </Button>
                 </div>
 
                 {/* Stats Cards */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div className="p-4 rounded-xl bg-slate-500/10 border border-slate-500/20">
-                        <p className="text-2xl font-bold">{pending}</p>
-                        <p className="text-xs text-muted-foreground">Pending</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="p-6 rounded-[2rem] bg-surface-container-low border border-transparent hover:border-border/20 transition-colors">
+                        <p className="text-4xl font-medium text-on-surface mb-1">{pending}</p>
+                        <p className="text-sm font-medium text-on-surface-variant uppercase tracking-wider">Pending</p>
                     </div>
-                    <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
-                        <p className="text-2xl font-bold">{inProgress}</p>
-                        <p className="text-xs text-muted-foreground">In Progress</p>
+                    <div className="p-6 rounded-[2rem] bg-surface-container-low border border-transparent hover:border-border/20 transition-colors">
+                        <p className="text-4xl font-medium text-primary mb-1">{inProgress}</p>
+                        <p className="text-sm font-medium text-on-surface-variant uppercase tracking-wider">In Progress</p>
                     </div>
-                    <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                        <p className="text-2xl font-bold">{completed}</p>
-                        <p className="text-xs text-muted-foreground">Completed</p>
+                    <div className="p-6 rounded-[2rem] bg-surface-container-low border border-transparent hover:border-border/20 transition-colors">
+                        <p className="text-4xl font-medium text-secondary mb-1">{completed}</p>
+                        <p className="text-sm font-medium text-on-surface-variant uppercase tracking-wider">Completed</p>
                     </div>
-                    <div className="p-4 rounded-xl bg-primary/10 border border-primary/20">
-                        <p className="text-2xl font-bold">{Math.round(completionRate)}%</p>
-                        <p className="text-xs text-muted-foreground">Completion</p>
+                    <div className="p-6 rounded-[2rem] bg-surface-container-low border border-transparent hover:border-border/20 transition-colors">
+                        <p className="text-4xl font-medium text-tertiary mb-1">{Math.round(completionRate)}%</p>
+                        <p className="text-sm font-medium text-on-surface-variant uppercase tracking-wider">Completion</p>
                     </div>
                 </div>
 
                 {/* Filters */}
-                <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex flex-col sm:flex-row gap-4 bg-surface-container rounded-[2rem] p-2 pr-4 shadow-sm">
                     <div className="relative flex-1">
-                        <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <IconSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-on-surface-variant" />
                         <Input
                             placeholder="Search assignments..."
-                            className="pl-9"
+                            className="pl-12 h-12 bg-transparent border-none text-base focus-visible:ring-0 placeholder:text-on-surface-variant/50"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
                     </div>
+                    <div className="w-px bg-on-surface-variant/10 my-2 hidden sm:block" />
                     <Select value={filterStatus} onValueChange={setFilterStatus}>
-                        <SelectTrigger className="w-full sm:w-[160px]">
-                            <IconFilter className="w-4 h-4 mr-2" />
+                        <SelectTrigger className="w-full sm:w-[180px] h-12 border-none bg-transparent focus:ring-0 text-base font-medium">
+                            <IconFilter className="w-5 h-5 mr-2 text-on-surface-variant" />
                             <SelectValue placeholder="Filter" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="rounded-xl border-border/20 bg-surface-container-high">
                             <SelectItem value="all">All Status</SelectItem>
                             <SelectItem value="pending">Pending</SelectItem>
                             <SelectItem value="in-progress">In Progress</SelectItem>
@@ -310,20 +315,22 @@ export default function AssignmentsPage() {
                 </div>
 
                 {/* Assignment List */}
-                <ScrollArea className="h-[calc(100vh-26rem)]">
-                    <div className="space-y-3 pr-4">
+                <ScrollArea className="h-[calc(100vh-28rem)]">
+                    <div className="space-y-4 pr-4 pb-12">
                         <AnimatePresence mode="popLayout">
                             {sortedAssignments.length > 0 ? (
-                                sortedAssignments.map(a => <AssignmentCard key={a.id} assignment={a} />)
+                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                                    {sortedAssignments.map(a => <AssignmentCard key={a.id} assignment={a} />)}
+                                </div>
                             ) : (
                                 <motion.div
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
-                                    className="py-16 text-center text-muted-foreground border-2 border-dashed rounded-xl"
+                                    className="py-24 text-center text-on-surface-variant/50 border-2 border-dashed border-border/20 rounded-[2rem] bg-surface-container-lowest/30"
                                 >
-                                    <IconCalendar className="w-10 h-10 mx-auto mb-4 opacity-30" />
-                                    <p className="font-medium">No assignments found</p>
-                                    <p className="text-sm mt-1">Add your first assignment to get started</p>
+                                    <IconCalendar className="w-16 h-16 mx-auto mb-6 opacity-30" />
+                                    <p className="text-xl font-medium text-on-surface">No assignments found</p>
+                                    <p className="text-base mt-2">Add your first assignment to get started</p>
                                 </motion.div>
                             )}
                         </AnimatePresence>
@@ -332,25 +339,31 @@ export default function AssignmentsPage() {
 
                 {/* Add/Edit Dialog */}
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogContent className="max-w-md">
+                    <DialogContent className="max-w-md rounded-[2.5rem] bg-surface-container border-none shadow-xl p-8">
                         <DialogHeader>
-                            <DialogTitle>{editingId ? "Edit Assignment" : "New Assignment"}</DialogTitle>
-                            <DialogDescription>
+                            <DialogTitle className="text-2xl font-normal">{editingId ? "Edit Assignment" : "New Assignment"}</DialogTitle>
+                            <DialogDescription className="text-base text-on-surface-variant">
                                 {editingId ? "Update the assignment details." : "Add a new assignment to track."}
                             </DialogDescription>
                         </DialogHeader>
-                        <form onSubmit={handleSave} className="space-y-4">
+                        <form onSubmit={handleSave} className="space-y-6 mt-4">
                             <div className="space-y-2">
-                                <Label>Title</Label>
-                                <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Lab Report 5" required />
+                                <Label className="text-on-surface-variant pl-1">Title</Label>
+                                <Input 
+                                    value={title} 
+                                    onChange={e => setTitle(e.target.value)} 
+                                    placeholder="Lab Report 5" 
+                                    required 
+                                    className="h-12 rounded-xl bg-surface border-transparent focus:bg-surface-container-high transition-colors"
+                                />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label>Subject</Label>
+                                    <Label className="text-on-surface-variant pl-1">Subject</Label>
                                     <Select value={subjectId} onValueChange={setSubjectId}>
-                                        <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                                        <SelectContent>
+                                        <SelectTrigger className="h-12 rounded-xl bg-surface border-transparent"><SelectValue placeholder="Select" /></SelectTrigger>
+                                        <SelectContent className="rounded-xl">
                                             <SelectItem value="general">General</SelectItem>
                                             {currentSubjects.map(s => (
                                                 <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
@@ -359,17 +372,23 @@ export default function AssignmentsPage() {
                                     </Select>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Due Date</Label>
-                                    <Input type="date" value={due} onChange={e => setDue(e.target.value)} required />
+                                    <Label className="text-on-surface-variant pl-1">Due Date</Label>
+                                    <Input 
+                                        type="date" 
+                                        value={due} 
+                                        onChange={e => setDue(e.target.value)} 
+                                        required 
+                                        className="h-12 rounded-xl bg-surface border-transparent"
+                                    />
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label>Priority</Label>
+                                    <Label className="text-on-surface-variant pl-1">Priority</Label>
                                     <Select value={priority} onValueChange={(v: Priority) => setPriority(v)}>
-                                        <SelectTrigger><SelectValue /></SelectTrigger>
-                                        <SelectContent>
+                                        <SelectTrigger className="h-12 rounded-xl bg-surface border-transparent"><SelectValue /></SelectTrigger>
+                                        <SelectContent className="rounded-xl">
                                             <SelectItem value="Low">🟢 Low</SelectItem>
                                             <SelectItem value="Medium">🟡 Medium</SelectItem>
                                             <SelectItem value="High">🟠 High</SelectItem>
@@ -379,10 +398,10 @@ export default function AssignmentsPage() {
                                 </div>
                                 {editingId && (
                                     <div className="space-y-2">
-                                        <Label>Status</Label>
+                                        <Label className="text-on-surface-variant pl-1">Status</Label>
                                         <Select value={status} onValueChange={(v: Status) => setStatus(v)}>
-                                            <SelectTrigger><SelectValue /></SelectTrigger>
-                                            <SelectContent>
+                                            <SelectTrigger className="h-12 rounded-xl bg-surface border-transparent"><SelectValue /></SelectTrigger>
+                                            <SelectContent className="rounded-xl">
                                                 <SelectItem value="Pending">Pending</SelectItem>
                                                 <SelectItem value="In Progress">In Progress</SelectItem>
                                                 <SelectItem value="Completed">Completed</SelectItem>
@@ -392,9 +411,9 @@ export default function AssignmentsPage() {
                                 )}
                             </div>
 
-                            <DialogFooter>
-                                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-                                <Button type="submit">{editingId ? "Update" : "Create"}</Button>
+                            <DialogFooter className="gap-2 sm:gap-0">
+                                <Button type="button" variant="ghost" onClick={() => setIsDialogOpen(false)} className="rounded-full h-12 px-6">Cancel</Button>
+                                <Button type="submit" className="rounded-full h-12 px-8">{editingId ? "Update" : "Create"}</Button>
                             </DialogFooter>
                         </form>
                     </DialogContent>

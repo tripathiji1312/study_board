@@ -11,7 +11,7 @@ function Card({
     <div
       data-slot="card"
       data-size={size}
-      className={cn("bg-surface-container-low text-card-foreground gap-6 overflow-hidden rounded-3xl py-6 text-sm shadow-none has-[>img:first-child]:pt-0 data-[size=sm]:gap-4 data-[size=sm]:py-4 *:[img:first-child]:rounded-t-3xl *:[img:last-child]:rounded-b-3xl group/card flex flex-col", className)}
+      className={cn("bg-surface-container text-on-surface gap-6 overflow-hidden rounded-[2rem] py-6 text-sm shadow-expressive has-[>img:first-child]:pt-0 data-[size=sm]:gap-4 data-[size=sm]:py-4 *:[img:first-child]:rounded-t-[2rem] *:[img:last-child]:rounded-b-[2rem] group/card flex flex-col hover-lift animate-enter border border-outline-variant/30", className)}
       {...props}
     />
   )
@@ -44,7 +44,7 @@ function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-description"
-      className={cn("text-muted-foreground text-sm", className)}
+      className={cn("text-on-surface-variant text-sm", className)}
       {...props}
     />
   )

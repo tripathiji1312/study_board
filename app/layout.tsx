@@ -63,7 +63,7 @@ export default async function RootLayout({
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-surface text-on-surface`}
       >
         <AuthProvider>
           <ThemeProvider
@@ -71,7 +71,7 @@ export default async function RootLayout({
             defaultTheme="system"
             enableSystem
             disableTransitionOnChange
-            themes={["light", "dark", "system", "theme-purple", "theme-pink", "theme-pink-dark", "theme-midnight", "theme-forest", "theme-sunset", "theme-cyberpunk", "theme-coffee", "theme-nordic", "theme-cosmic"]}
+            themes={["light", "dark", "system", "theme-purple", "theme-pink", "theme-pink-dark", "theme-midnight", "theme-forest", "theme-sunset", "theme-cyberpunk", "theme-coffee", "theme-nordic", "theme-cosmic", "theme-retro-pop"]}
           >
             <StarfieldBackground />
             <XPProvider>

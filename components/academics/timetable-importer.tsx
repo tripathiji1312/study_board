@@ -140,53 +140,61 @@ export function TimetableImporter({ onImportComplete }: TimetableImporterProps) 
                     Import Timetable with AI
                 </Button>
             </DialogTrigger>
-            <DialogContent className="w-[95vw] max-w-3xl h-[90vh] sm:h-[85vh] p-0 flex flex-col gap-0">
-                <DialogHeader className="shrink-0 p-6 pb-4 border-b">
-                    <DialogTitle className="flex items-center gap-2">
-                        <IconCalendarTime className="w-5 h-5" />
+            <DialogContent className="w-[95vw] max-w-3xl h-[90vh] sm:h-[85vh] p-0 flex flex-col gap-0 border-border/50 bg-surface-container-low shadow-xl">
+                <DialogHeader className="shrink-0 p-6 pb-4 border-b border-border/50 bg-surface-container-low/50 backdrop-blur-sm">
+                    <DialogTitle className="flex items-center gap-2 text-xl font-bold text-on-surface">
+                        <IconCalendarTime className="w-5 h-5 text-primary" />
                         Import Timetable
                         {isOcrActive && (
-                            <Badge variant="secondary" className="bg-amber-500/10 text-amber-500 text-[10px] ml-2">
+                            <Badge variant="secondary" className="bg-amber-500/10 text-amber-500 text-[10px] ml-2 font-mono">
                                 <IconLoader2 className="w-3 h-3 mr-1 animate-spin" /> OCR
                             </Badge>
                         )}
                     </DialogTitle>
-                    <DialogDescription>
+                    <DialogDescription className="text-on-surface-variant">
                         Upload a PDF or image of your timetable. We&apos;ll extract course details automatically.
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="flex-1 overflow-hidden p-6">
+                <div className="flex-1 overflow-hidden p-6 bg-surface-container-lowest">
                     {step === "upload" ? (
-                        <div className="h-full flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-xl bg-muted/20 hover:bg-muted/30 transition-colors">
+                        <div className="h-full flex flex-col items-center justify-center p-8 border-2 border-dashed border-border/60 rounded-3xl bg-surface-container-low hover:bg-surface-container transition-all duration-300">
                             {isParsing ? (
-                                <div className="text-center space-y-3">
-                                    <IconLoader2 className="w-12 h-12 animate-spin text-primary mx-auto" />
-                                    <p className="text-lg font-medium">Analyzing timetable...</p>
-                                    <p className="text-sm text-muted-foreground">This may take a moment</p>
+                                <div className="text-center space-y-4">
+                                    <div className="relative w-16 h-16 mx-auto">
+                                        <div className="absolute inset-0 rounded-full border-4 border-primary/20"></div>
+                                        <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+                                        <IconLoader2 className="absolute inset-0 m-auto w-6 h-6 text-primary animate-pulse" />
+                                    </div>
+                                    <p className="text-lg font-medium text-on-surface">Analyzing timetable...</p>
+                                    <p className="text-sm text-on-surface-variant">This may take a moment</p>
                                 </div>
                             ) : file ? (
-                                <div className="text-center space-y-4">
-                                    <IconFileText className="w-12 h-12 text-primary mx-auto" />
+                                <div className="text-center space-y-6">
+                                    <div className="w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto text-primary">
+                                        <IconFileText className="w-10 h-10" />
+                                    </div>
                                     <div>
-                                        <p className="text-lg font-medium">{file.name}</p>
-                                        <p className="text-sm text-muted-foreground">{(file.size / 1024).toFixed(1)} KB</p>
+                                        <p className="text-xl font-bold text-on-surface">{file.name}</p>
+                                        <p className="text-sm text-on-surface-variant">{(file.size / 1024).toFixed(1)} KB</p>
                                     </div>
                                     <div className="flex gap-3 justify-center">
-                                        <Button variant="outline" onClick={() => setFile(null)}>Change</Button>
-                                        <Button onClick={parseTimetable} className="gap-2">
+                                        <Button variant="outline" onClick={() => setFile(null)} className="rounded-full border-border/50">Change</Button>
+                                        <Button onClick={parseTimetable} className="gap-2 rounded-full shadow-lg shadow-primary/20">
                                             Parse <IconArrowRight className="w-4 h-4" />
                                         </Button>
                                     </div>
                                 </div>
                             ) : (
-                                <div className="text-center space-y-4">
-                                    <IconUpload className="w-12 h-12 text-muted-foreground mx-auto" />
-                                    <div>
-                                        <p className="text-lg font-medium">Drop your file here</p>
-                                        <p className="text-sm text-muted-foreground">PDF or Image (PNG, JPG)</p>
+                                <div className="text-center space-y-6">
+                                    <div className="w-24 h-24 bg-surface-container-highest rounded-3xl flex items-center justify-center mx-auto text-on-surface-variant/50 group-hover:text-primary group-hover:scale-110 transition-all duration-500">
+                                        <IconUpload className="w-10 h-10" />
                                     </div>
-                                    <Button onClick={() => inputRef.current?.click()}>
+                                    <div>
+                                        <p className="text-xl font-bold text-on-surface">Drop your file here</p>
+                                        <p className="text-sm text-on-surface-variant mt-1">PDF or Image (PNG, JPG)</p>
+                                    </div>
+                                    <Button onClick={() => inputRef.current?.click()} size="lg" className="rounded-full px-8 shadow-lg shadow-primary/20">
                                         Select File
                                     </Button>
                                     <input
@@ -201,23 +209,23 @@ export function TimetableImporter({ onImportComplete }: TimetableImporterProps) 
                         </div>
                     ) : (
                         <div className="h-full flex flex-col gap-4">
-                            <div className="shrink-0 flex items-center justify-between">
-                                <p className="text-sm text-muted-foreground">
-                                    Found <span className="font-semibold text-foreground">{parsedSubjects.length}</span> subjects
+                            <div className="shrink-0 flex items-center justify-between px-1">
+                                <p className="text-sm text-on-surface-variant">
+                                    Found <span className="font-bold text-primary text-base">{parsedSubjects.length}</span> subjects
                                 </p>
                                 <div className="flex gap-2">
-                                    <Button variant="ghost" size="sm" onClick={() => setShowDebug(!showDebug)}>
+                                    <Button variant="ghost" size="sm" onClick={() => setShowDebug(!showDebug)} className="text-on-surface-variant hover:text-primary rounded-full">
                                         {showDebug ? "Show Subjects" : "Debug"}
                                     </Button>
-                                    <Button variant="ghost" size="sm" onClick={resetState}>
+                                    <Button variant="ghost" size="sm" onClick={resetState} className="text-on-surface-variant hover:text-primary rounded-full">
                                         <IconRefresh className="w-4 h-4" />
                                     </Button>
                                 </div>
                             </div>
 
                             {showDebug ? (
-                                <ScrollArea className="h-[calc(90vh-280px)] sm:h-[calc(85vh-280px)] border rounded-lg">
-                                    <pre className="p-4 text-xs font-mono whitespace-pre-wrap">
+                                <ScrollArea className="h-[calc(90vh-280px)] sm:h-[calc(85vh-280px)] border border-border/50 rounded-2xl bg-surface-container-low">
+                                    <pre className="p-4 text-xs font-mono whitespace-pre-wrap text-on-surface-variant">
                                         {debugText || "No debug text."}
                                     </pre>
                                 </ScrollArea>
@@ -225,70 +233,70 @@ export function TimetableImporter({ onImportComplete }: TimetableImporterProps) 
                                 <ScrollArea className="h-[calc(90vh-280px)] sm:h-[calc(85vh-280px)]">
                                     <div className="grid gap-3 sm:grid-cols-2 pr-4 pb-4">
                                         {parsedSubjects.map((sub, i) => (
-                                            <Card key={i} className="group relative p-3 sm:p-4">
+                                            <Card key={i} className="group relative p-4 bg-surface-container hover:bg-surface-container-high transition-colors border-border/40 hover:border-primary/30 rounded-2xl shadow-sm">
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100 text-destructive"
+                                                    className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 text-error hover:text-error hover:bg-error/10 rounded-lg transition-all"
                                                     onClick={() => removeSubject(i)}
                                                 >
-                                                    <IconX className="w-3 h-3" />
+                                                    <IconX className="w-4 h-4" />
                                                 </Button>
 
-                                                <div className="space-y-2">
-                                                    <div className="grid grid-cols-2 gap-2">
-                                                        <div>
-                                                            <Label className="text-[10px] text-muted-foreground uppercase">Code</Label>
+                                                <div className="space-y-3">
+                                                    <div className="grid grid-cols-2 gap-3">
+                                                        <div className="space-y-1">
+                                                            <Label className="text-[10px] text-on-surface-variant uppercase font-semibold tracking-wider">Code</Label>
                                                             <Input
                                                                 value={sub.code}
                                                                 onChange={(e) => updateSubject(i, 'code', e.target.value)}
-                                                                className="h-8 font-mono text-xs"
+                                                                className="h-9 font-mono text-xs bg-surface-container-highest/50 border-transparent focus:border-primary/50 focus:bg-surface-container-highest transition-all rounded-lg"
                                                             />
                                                         </div>
-                                                        <div>
-                                                            <Label className="text-[10px] text-muted-foreground uppercase">Type</Label>
+                                                        <div className="space-y-1">
+                                                            <Label className="text-[10px] text-on-surface-variant uppercase font-semibold tracking-wider">Type</Label>
                                                             <Input
                                                                 value={sub.type}
                                                                 onChange={(e) => updateSubject(i, 'type', e.target.value)}
-                                                                className="h-8 text-xs"
+                                                                className="h-9 text-xs bg-surface-container-highest/50 border-transparent focus:border-primary/50 focus:bg-surface-container-highest transition-all rounded-lg"
                                                             />
                                                         </div>
                                                     </div>
 
-                                                    <div>
-                                                        <Label className="text-[10px] text-muted-foreground uppercase">Name</Label>
+                                                    <div className="space-y-1">
+                                                        <Label className="text-[10px] text-on-surface-variant uppercase font-semibold tracking-wider">Name</Label>
                                                         <Input
                                                             value={sub.name}
                                                             onChange={(e) => updateSubject(i, 'name', e.target.value)}
-                                                            className="h-8 text-xs"
+                                                            className="h-9 text-xs bg-surface-container-highest/50 border-transparent focus:border-primary/50 focus:bg-surface-container-highest transition-all rounded-lg font-medium"
                                                         />
                                                     </div>
 
-                                                    <div className="grid grid-cols-2 gap-2">
-                                                        <div>
-                                                            <Label className="text-[10px] text-muted-foreground uppercase">Slot</Label>
+                                                    <div className="grid grid-cols-2 gap-3">
+                                                        <div className="space-y-1">
+                                                            <Label className="text-[10px] text-on-surface-variant uppercase font-semibold tracking-wider">Slot</Label>
                                                             <Input
                                                                 value={sub.slot}
                                                                 onChange={(e) => updateSubject(i, 'slot', e.target.value)}
-                                                                className="h-8 text-xs"
+                                                                className="h-9 text-xs bg-surface-container-highest/50 border-transparent focus:border-primary/50 focus:bg-surface-container-highest transition-all rounded-lg"
                                                             />
                                                         </div>
-                                                        <div>
-                                                            <Label className="text-[10px] text-muted-foreground uppercase">Room</Label>
+                                                        <div className="space-y-1">
+                                                            <Label className="text-[10px] text-on-surface-variant uppercase font-semibold tracking-wider">Room</Label>
                                                             <Input
                                                                 value={sub.room || ''}
                                                                 onChange={(e) => updateSubject(i, 'room', e.target.value)}
-                                                                className="h-8 text-xs"
+                                                                className="h-9 text-xs bg-surface-container-highest/50 border-transparent focus:border-primary/50 focus:bg-surface-container-highest transition-all rounded-lg"
                                                             />
                                                         </div>
                                                     </div>
 
-                                                    <div>
-                                                        <Label className="text-[10px] text-muted-foreground uppercase">Faculty</Label>
+                                                    <div className="space-y-1">
+                                                        <Label className="text-[10px] text-on-surface-variant uppercase font-semibold tracking-wider">Faculty</Label>
                                                         <Input
                                                             value={sub.teacher || ''}
                                                             onChange={(e) => updateSubject(i, 'teacher', e.target.value)}
-                                                            className="h-8 text-xs"
+                                                            className="h-9 text-xs bg-surface-container-highest/50 border-transparent focus:border-primary/50 focus:bg-surface-container-highest transition-all rounded-lg"
                                                         />
                                                     </div>
                                                 </div>
@@ -302,9 +310,9 @@ export function TimetableImporter({ onImportComplete }: TimetableImporterProps) 
                 </div>
 
                 {step === "review" && !showDebug && (
-                    <DialogFooter className="shrink-0 p-6 pt-4 border-t flex-row gap-2 sm:justify-end">
-                        <Button variant="outline" onClick={resetState}>Cancel</Button>
-                        <Button onClick={handleSave} disabled={isSaving || parsedSubjects.length === 0} className="gap-2">
+                    <DialogFooter className="shrink-0 p-6 pt-4 border-t border-border/50 flex-row gap-3 sm:justify-end bg-surface-container-low/50 backdrop-blur-sm">
+                        <Button variant="outline" onClick={resetState} className="rounded-full border-border/50">Cancel</Button>
+                        <Button onClick={handleSave} disabled={isSaving || parsedSubjects.length === 0} className="gap-2 rounded-full shadow-lg shadow-primary/20">
                             {isSaving ? <IconLoader2 className="w-4 h-4 animate-spin" /> : <IconCheck className="w-4 h-4" />}
                             Sync {parsedSubjects.length} Subjects
                         </Button>

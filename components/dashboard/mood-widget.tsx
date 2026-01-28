@@ -94,16 +94,16 @@ export function MoodWidget() {
 
     return (
         <>
-            <Card className="flex flex-col h-full shadow-sm hover:shadow-md transition-shadow duration-200">
+            <Card className="flex flex-col h-full bg-surface-container-low shadow-none border-0 overflow-hidden">
                 <CardHeader className="pb-2 flex flex-row items-center justify-between">
                     <CardTitle className="text-sm font-medium">Daily Mood</CardTitle>
                     {todayLog && (
-                        <Button variant="ghost" size="sm" onClick={() => handleLog(0)} className="h-6 text-[10px] px-2 text-muted-foreground hover:text-destructive">
+                        <Button variant="ghost" size="sm" onClick={() => handleLog(0)} className="h-6 text-[10px] px-2 text-muted-foreground hover:text-destructive hover:bg-surface-container-high rounded-full">
                             Reset
                         </Button>
                     )}
                 </CardHeader>
-                <CardContent className="flex-1 flex flex-col justify-between">
+                <CardContent className="flex-1 flex flex-col justify-between p-4 pt-0">
                     <div className="flex justify-between gap-1 mb-4 px-1">
                         {MOODS.map(m => (
                             <TooltipProvider key={m.level}>
@@ -112,15 +112,15 @@ export function MoodWidget() {
                                         <button
                                             onClick={() => handleLog(m.level)}
                                             className={cn(
-                                                "w-9 h-9 rounded-full transition-all flex items-center justify-center text-xl shadow-sm border border-transparent",
-                                                todayLog?.mood === m.level ? "scale-110 ring-4 ring-primary/20 bg-accent" : "grayscale opacity-70 hover:grayscale-0 hover:opacity-100 hover:scale-110",
+                                                "w-9 h-9 rounded-full transition-all flex items-center justify-center text-xl shadow-sm border border-transparent hover-lift",
+                                                todayLog?.mood === m.level ? "scale-110 ring-4 ring-primary/20 bg-accent shadow-expressive-sm" : "grayscale opacity-70 hover:grayscale-0 hover:opacity-100 hover:scale-110",
                                                 todayLog?.mood === m.level ? "" : "bg-transparent"
                                             )}
                                         >
                                             {m.emoji}
                                         </button>
                                     </TooltipTrigger>
-                                    <TooltipContent>
+                                    <TooltipContent className="bg-surface-container-highest border-none shadow-expressive-sm">
                                         <p>{m.label}</p>
                                     </TooltipContent>
                                 </Tooltip>
@@ -136,11 +136,11 @@ export function MoodWidget() {
                                         <div
                                             className={cn(
                                                 "w-2.5 h-2.5 rounded-[2px] transition-colors",
-                                                item.log ? MOODS.find(m => m.level === item.log!.mood)?.color : "bg-muted/50 hover:bg-muted"
+                                                item.log ? MOODS.find(m => m.level === item.log!.mood)?.color : "bg-surface-container-high hover:bg-surface-container-highest"
                                             )}
                                         />
                                     </TooltipTrigger>
-                                    <TooltipContent>
+                                    <TooltipContent className="bg-surface-container-highest border-none shadow-expressive-sm">
                                         <p className="text-xs font-semibold">
                                             {format(item.date, "MMM d")}
                                         </p>
@@ -157,7 +157,7 @@ export function MoodWidget() {
 
             {/* Suggestions Dialog */}
             <Dialog open={showDialog} onOpenChange={setShowDialog}>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-md bg-surface-container-high border-none shadow-expressive-md">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                             <IconSparkles className="w-5 h-5 text-primary" />
@@ -185,7 +185,7 @@ export function MoodWidget() {
                                     const todo = todos.find(t => t.id === rec.id)
                                     if (!todo) return null
                                     return (
-                                        <div key={`${rec.id}-${index}`} className="group bg-muted/30 p-3 rounded-lg border hover:border-primary/30 transition-colors">
+                                        <div key={`${rec.id}-${index}`} className="group bg-surface-container p-3 rounded-lg border-0 hover:bg-surface-container-highest transition-colors shadow-sm">
                                             <div className="flex items-start gap-3">
                                                 <button
                                                     onClick={() => toggleTodo(todo.id, !todo.completed)}
@@ -205,7 +205,7 @@ export function MoodWidget() {
                                                         <Button
                                                             size="sm"
                                                             variant="default"
-                                                            className="h-6 text-[10px] px-2"
+                                                            className="h-6 text-[10px] px-2 shadow-sm"
                                                             onClick={() => {
                                                                 const today = format(new Date(), 'yyyy-MM-dd')
                                                                 updateTodo(todo.id, { dueDate: today })
@@ -217,7 +217,7 @@ export function MoodWidget() {
                                                         <Button
                                                             size="sm"
                                                             variant="secondary"
-                                                            className="h-6 text-[10px] px-2"
+                                                            className="h-6 text-[10px] px-2 bg-surface-container-highest hover:bg-surface-container-highest/80"
                                                             onClick={() => {
                                                                 const tomorrow = new Date()
                                                                 tomorrow.setDate(tomorrow.getDate() + 1)
@@ -230,7 +230,7 @@ export function MoodWidget() {
                                                         <Button
                                                             size="sm"
                                                             variant="outline"
-                                                            className="h-6 text-[10px] px-2"
+                                                            className="h-6 text-[10px] px-2 border-primary/20 hover:bg-primary/5"
                                                             onClick={() => {
                                                                 toggleTodo(todo.id, true)
                                                             }}
@@ -248,7 +248,7 @@ export function MoodWidget() {
                     )}
 
                     <div className="flex justify-end pt-2">
-                        <Button variant="outline" size="sm" onClick={() => setShowDialog(false)}>
+                        <Button variant="ghost" size="sm" onClick={() => setShowDialog(false)} className="hover:bg-surface-container-highest">
                             Close
                         </Button>
                     </div>

@@ -62,15 +62,41 @@ const container = {
     show: {
         opacity: 1,
         transition: {
-            staggerChildren: 0.1
+            staggerChildren: 0.1,
+            delayChildren: 0.1
         }
     }
 }
 
 const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 }
-}
+    hidden: { 
+        opacity: 0, 
+        y: 20,
+        scale: 0.95
+    },
+    show: { 
+        opacity: 1, 
+        y: 0,
+        scale: 1,
+        transition: {
+            type: "spring",
+            stiffness: 100,
+            damping: 15
+        }
+    }
+} as const
+
+const widgetHover = {
+    rest: { scale: 1 },
+    hover: { 
+        scale: 1.02,
+        transition: {
+            type: "spring",
+            stiffness: 400,
+            damping: 25
+        }
+    }
+} as const
 
 export function DashboardView() {
     const {
@@ -164,34 +190,34 @@ export function DashboardView() {
             >
                 {/* Header - Beautiful Greeting Card */}
                 <motion.header variants={item}>
-                    <div className="relative overflow-hidden rounded-3xl bg-primary/5 border border-primary/10 shadow-lg p-6 md:p-8">
+                    <div className="relative overflow-hidden rounded-[2rem] bg-surface-container-low/50 border-0 shadow-sm p-6 md:p-8">
                         {/* Mesh Gradient Background - Toned down to match solid vibe */}
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl opacity-50 -translate-y-1/2 translate-x-1/2 animate-pulse" />
-                        <div className="absolute bottom-0 left-0 w-48 h-48 bg-primary/5 rounded-full blur-3xl opacity-50 translate-y-1/2 -translate-x-1/2" />
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl opacity-50 -translate-y-1/2 translate-x-1/2 animate-pulse" />
+                        <div className="absolute bottom-0 left-0 w-48 h-48 bg-secondary/20 rounded-full blur-3xl opacity-50 translate-y-1/2 -translate-x-1/2" />
 
                         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                             <div className="flex items-center gap-5">
                                 {settings?.avatarUrl ? (
-                                    <Avatar className="h-14 w-14 md:h-20 md:w-20 border-2 border-primary/20 shadow-lg">
+                                    <Avatar className="h-14 w-14 md:h-20 md:w-20 border-2 border-surface-container-highest shadow-lg">
                                         <AvatarImage src={settings.avatarUrl} alt={settings.displayName} className="object-cover" />
                                         <AvatarFallback className="text-lg md:text-2xl bg-gradient-to-tr from-sky-400 to-blue-600 text-white">
                                             {settings.displayName.substring(0, 2).toUpperCase()}
                                         </AvatarFallback>
                                     </Avatar>
                                 ) : (
-                                    <div className="h-14 w-14 md:h-20 md:w-20 rounded-full bg-gradient-to-tr from-sky-400 to-blue-600 flex items-center justify-center shadow-lg border-2 border-primary/20">
-                                        <IconUserBolt className="h-7 w-7 md:h-10 md:w-10 text-white" strokeWidth={2} />
+                                    <div className="h-14 w-14 md:h-20 md:w-20 rounded-full bg-surface-container-highest flex items-center justify-center shadow-lg border-2 border-surface-container-highest/50">
+                                        <IconUserBolt className="h-7 w-7 md:h-10 md:w-10 text-primary" strokeWidth={2} />
                                     </div>
                                 )}
                                 <div className="space-y-1">
                                     {isLoading ? (
                                         <div className="space-y-2">
-                                            <Skeleton className="h-8 w-64" />
-                                            <Skeleton className="h-5 w-40" />
+                                            <Skeleton className="h-8 w-64 bg-surface-container-highest" />
+                                            <Skeleton className="h-5 w-40 bg-surface-container-highest" />
                                         </div>
                                     ) : (
                                         <>
-                                            <h1 className="text-2xl md:text-3xl lg:text-4xl font-extrabold tracking-tight text-foreground">
+                                            <h1 className="text-2xl md:text-3xl lg:text-4xl font-black tracking-tight text-foreground">
                                                 {getGreeting()}, <span className="text-primary">{settings?.displayName || "Student"}</span>
                                             </h1>
                                             <div className="flex items-center gap-2 text-muted-foreground text-sm md:text-base font-medium">
@@ -207,7 +233,7 @@ export function DashboardView() {
                             <div className="flex items-center gap-2 md:gap-3">
                                 <StreakWidget />
                                 <BadgesWidget />
-                                <Button variant="default" size="default" className="hidden md:flex rounded-full px-5 gap-2 shadow-lg shadow-primary/20" asChild>
+                                <Button variant="default" size="default" className="hidden md:flex rounded-full px-5 gap-2 shadow-primary-md hover:shadow-lg transition-shadow bg-primary text-primary-foreground hover:bg-primary/90" asChild>
                                     <Link href="/focus">
                                         <IconTargetArrow className="w-4 h-4" />
                                         <span>Laser Mode</span>
@@ -220,9 +246,9 @@ export function DashboardView() {
 
                 {/* Alert Banner */}
                 {overdueCount > 0 && (
-                    <motion.div variants={item} className={`rounded-xl p-4 border flex items-center justify-between shadow-sm ${isCrisis
-                        ? 'bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-400'
-                        : 'bg-orange-500/10 border-orange-500/20 text-orange-600 dark:text-orange-400'
+                    <motion.div variants={item} className={`rounded-2xl p-4 border-0 flex items-center justify-between shadow-sm ${isCrisis
+                        ? 'bg-red-500/10 text-red-600 dark:text-red-400'
+                        : 'bg-orange-500/10 text-orange-600 dark:text-orange-400'
                         }`}>
                         <div className="flex items-center gap-3">
                             <div className={`p-2 rounded-full ${isCrisis ? 'bg-red-500/20 animate-pulse' : 'bg-orange-500/20'}`}>
@@ -237,7 +263,7 @@ export function DashboardView() {
                                 </p>
                             </div>
                         </div>
-                        <Button variant="ghost" size="sm" className="hover:bg-background/50 h-8 text-xs" asChild>
+                        <Button variant="ghost" size="sm" className="hover:bg-surface-container-highest/50 h-8 text-xs rounded-full" asChild>
                             <Link href="/todos">Review</Link>
                         </Button>
                     </motion.div>
@@ -261,7 +287,7 @@ export function DashboardView() {
                                 { label: "Schedule", val: todayEvents, icon: IconCalendarEvent, color: "text-emerald-500", bg: "bg-emerald-500/10", href: "/schedule" },
                             ].map((stat, i) => (
                                 <Link key={i} href={stat.href} className="flex-shrink-0 w-[140px] md:w-auto">
-                                    <Card className="hover:bg-muted/50 hover:border-primary/20 transition-all cursor-pointer group touch-manipulation active:scale-[0.98]">
+                                    <Card className="hover:bg-surface-container-high transition-all cursor-pointer group touch-manipulation active:scale-[0.98] border-0 shadow-none bg-surface-container-low hover-lift">
                                         <CardContent className="p-3 md:p-4 flex items-center gap-3 md:gap-4">
                                             <div className={`p-2 md:p-3 rounded-xl ${stat.bg} ${stat.color} group-hover:scale-110 transition-transform`}>
                                                 <stat.icon className="w-5 h-5 md:w-6 md:h-6" />
@@ -286,12 +312,12 @@ export function DashboardView() {
                             value={quickTask}
                             onChange={e => setQuickTask(e.target.value)}
                             placeholder="What needs to be done? (Press 'N')"
-                            className="h-12 pl-4 pr-12 bg-background/50 backdrop-blur-sm border-muted-foreground/20 focus:border-primary/50 shadow-sm rounded-xl transition-all"
+                            className="h-12 pl-4 pr-12 bg-surface-container-low border-0 focus:ring-2 focus:ring-primary/20 shadow-none rounded-2xl transition-all placeholder:text-muted-foreground/50"
                         />
                         <Button
                             type="submit"
                             size="icon"
-                            className="absolute right-1.5 top-1.5 h-9 w-9 rounded-lg shadow-none opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="absolute right-1.5 top-1.5 h-9 w-9 rounded-xl shadow-none opacity-0 group-hover:opacity-100 transition-opacity bg-primary text-primary-foreground hover:bg-primary/90"
                             disabled={!quickTask.trim()}
                         >
                             <IconPlus className="w-4 h-4" />
@@ -322,19 +348,19 @@ export function DashboardView() {
                         <>
                             {/* Column 1: Exams & Mood */}
                             <div className="flex flex-col gap-6 h-auto md:h-[500px]">
-                                <div className="flex-1 min-h-[300px] md:min-h-0"><ExamWidget /></div>
-                                <div className="h-[200px] shrink-0"><MoodWidget /></div>
+                                <motion.div variants={widgetHover} initial="rest" whileHover="hover" className="flex-1 min-h-[300px] md:min-h-0"><ExamWidget /></motion.div>
+                                <motion.div variants={widgetHover} initial="rest" whileHover="hover" className="h-[200px] shrink-0"><MoodWidget /></motion.div>
                             </div>
 
                             {/* Column 2: Schedule (Tall) */}
                             <div className="h-[500px] md:h-[500px]">
-                                <SmartScheduleWidget />
+                                <motion.div variants={widgetHover} initial="rest" whileHover="hover" className="h-full"><SmartScheduleWidget /></motion.div>
                             </div>
 
                             {/* Column 3: Assignments & Spotify */}
                             <div className="flex flex-col gap-6 h-auto md:h-[500px] md:col-span-2 xl:col-span-1">
-                                <div className="flex-1 min-h-[300px] md:min-h-0"><AssignmentsWidget /></div>
-                                <div className="h-[200px] shrink-0"><SpotifyWidget /></div>
+                                <motion.div variants={widgetHover} initial="rest" whileHover="hover" className="flex-1 min-h-[300px] md:min-h-0"><AssignmentsWidget /></motion.div>
+                                <motion.div variants={widgetHover} initial="rest" whileHover="hover" className="h-[200px] shrink-0"><SpotifyWidget /></motion.div>
                             </div>
                         </>
                     )}

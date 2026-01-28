@@ -27,6 +27,7 @@ const themes = [
     { name: "Midnight", value: "theme-midnight", color: "bg-[#0a0a23] border-[#1a1a3a]" },
     { name: "Forest", value: "theme-forest", color: "bg-[#0b1a0b] border-[#1a3a1a]" },
     { name: "Sunset", value: "theme-sunset", color: "bg-[#1a0b0b] border-[#3a1a1a]" },
+    { name: "Retro Pop", value: "theme-retro-pop", color: "bg-[#fffacd] border-[#ff69b4]" },
 ]
 
 export default function OnboardingPage() {

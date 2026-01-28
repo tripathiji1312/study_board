@@ -29,7 +29,7 @@ export function FocusTaskList({ todos, activeTaskId, onSelectTask, onToggleTodo,
 
     return (
         <div className="w-full max-w-sm space-y-4 transition-opacity duration-500 opacity-20 hover:opacity-100">
-            <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest pl-2">Focus Queue</h3>
+            <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest pl-2">Focus Queue</h3>
             <div className="max-h-[60vh] overflow-y-auto pr-2 space-y-2 no-scrollbar mask-gradient-b">
                 {todos.map(todo => {
                     const isActive = activeTaskId === String(todo.id)
@@ -37,19 +37,19 @@ export function FocusTaskList({ todos, activeTaskId, onSelectTask, onToggleTodo,
                         <div
                             key={todo.id}
                             className={cn(
-                                "group flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 border border-transparent",
+                                "group flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all duration-300 border",
                                 isActive
-                                    ? "bg-white/10 border-white/10 shadow-lg backdrop-blur-sm"
-                                    : "hover:bg-white/5 hover:border-white/5 active:bg-white/10"
+                                    ? "bg-primary/10 border-primary/20 shadow-expressive"
+                                    : "bg-surface-container-low/40 border-transparent hover:bg-surface-container-low/80 hover:scale-[1.02] hover:shadow-sm"
                             )}
                         >
                             <div className="flex items-center gap-4 min-w-0 flex-1 cursor-pointer" onClick={() => onToggleTodo(todo.id, todo.completed)}>
                                 {todo.completed ? (
-                                    <IconCircleCheck className="w-4 h-4 text-white/40" />
+                                    <IconCircleCheck className="w-5 h-5 text-primary/40" />
                                 ) : (
-                                    <IconCircle className="w-4 h-4 text-white/20 group-hover:text-white/60 transition-colors" />
+                                    <IconCircle className={cn("w-5 h-5 transition-colors", isActive ? "text-primary" : "text-muted-foreground/50 group-hover:text-primary/80")} />
                                 )}
-                                <span className={cn("text-sm truncate font-light transition-all tracking-wide", todo.completed ? "line-through opacity-30" : "text-white/70 group-hover:text-white")}>
+                                <span className={cn("text-sm font-medium transition-all", todo.completed ? "line-through opacity-40 text-muted-foreground" : "text-foreground/90")}>
                                     {todo.text}
                                 </span>
                             </div>
@@ -59,21 +59,21 @@ export function FocusTaskList({ todos, activeTaskId, onSelectTask, onToggleTodo,
                                     <Button
                                         size="icon"
                                         variant="ghost"
-                                        className="w-6 h-6 rounded-full text-white/30 hover:text-white"
+                                        className="w-8 h-8 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                                         onClick={(e) => { e.stopPropagation(); onClearFocus(); }}
                                         title="Stop Focusing on this"
                                     >
-                                        <IconX className="w-3 h-3" />
+                                        <IconX className="w-4 h-4" />
                                     </Button>
                                 ) : (
                                     !todo.completed && (
                                         <Button
                                             size="icon"
                                             variant="ghost"
-                                            className="w-6 h-6 rounded-full text-white/30 hover:text-white"
+                                            className="w-8 h-8 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10"
                                             onClick={(e) => { e.stopPropagation(); onSelectTask(String(todo.id), todo.text); }}
                                         >
-                                            <IconPlayerPlay className="w-3 h-3 fill-current" />
+                                            <IconPlayerPlay className="w-4 h-4 fill-current" />
                                         </Button>
                                     )
                                 )}
