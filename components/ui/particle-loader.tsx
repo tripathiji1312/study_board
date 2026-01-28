@@ -26,7 +26,7 @@ export function ParticleLoader() {
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ duration: 0.5, ease: "easeOut" }}
-                    className="relative z-10 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary/60 shadow-xl shadow-primary/20"
+                    className="relative z-10 flex h-16 w-16 items-center justify-center rounded-[24px] bg-gradient-to-br from-primary to-primary/60 shadow-xl shadow-primary/20"
                 >
                     <IconSchool className="h-8 w-8 text-primary-foreground" />
                 </motion.div>
@@ -35,7 +35,7 @@ export function ParticleLoader() {
                 <motion.div
                     animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
                     transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute inset-0 -z-10 rounded-2xl bg-primary/20 blur-xl"
+                    className="absolute inset-0 -z-10 rounded-[24px] bg-primary/20 blur-xl"
                 />
 
                 {/* Orbiting Particles */}

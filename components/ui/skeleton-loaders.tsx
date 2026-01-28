@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils"
 
 export function WidgetSkeleton({ className }: { className?: string }) {
     return (
-        <div className={cn("h-full w-full p-4 border rounded-xl space-y-4 bg-card/50", className)}>
+        <div className={cn("h-full w-full p-4 border rounded-[28px] space-y-4 bg-card/50", className)}>
             <div className="flex items-center justify-between">
                 <Skeleton className="h-4 w-[100px]" />
                 <Skeleton className="h-4 w-4 rounded-full" />
@@ -19,19 +19,19 @@ export function WidgetSkeleton({ className }: { className?: string }) {
 
 export function StatCardSkeleton() {
     return (
-        <div className="h-[120px] w-full p-4 border rounded-xl flex items-center justify-between bg-card/50">
+        <div className="h-[120px] w-full p-4 border rounded-[28px] flex items-center justify-between bg-card/50">
             <div className="space-y-2">
                 <Skeleton className="h-8 w-16" />
                 <Skeleton className="h-3 w-24" />
             </div>
-            <Skeleton className="h-12 w-12 rounded-xl" />
+            <Skeleton className="h-12 w-12 rounded-[16px]" />
         </div>
     )
 }
 
 export function ChartSkeleton() {
     return (
-        <div className="h-[300px] w-full p-4 border rounded-xl space-y-4 bg-card/50">
+        <div className="h-[300px] w-full p-4 border rounded-[28px] space-y-4 bg-card/50">
             <div className="flex items-center justify-between">
                 <Skeleton className="h-5 w-[140px]" />
                 <Skeleton className="h-8 w-[100px]" />

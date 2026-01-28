@@ -99,9 +99,9 @@ export function AppSidebar({ className, isOpen, onOpenChange }: SidebarProps) {
     )
 
     const content = (
-        <div className="flex h-screen flex-col bg-card/50 backdrop-blur-sm border-r">
+        <div className="flex h-screen flex-col bg-surface-container-low backdrop-blur-sm border-none">
             {/* Header - Fixed */}
-            <div className="flex h-14 items-center justify-between border-b px-3 shrink-0 bg-background/50">
+            <div className="flex h-14 items-center justify-between px-3 shrink-0 bg-transparent">
                 {/* Close button for mobile */}
                 <Button
                     variant="ghost"
@@ -139,7 +139,7 @@ export function AppSidebar({ className, isOpen, onOpenChange }: SidebarProps) {
             </div>
 
             {/* Fixed Footer */}
-            <div className="border-t p-4 space-y-4 shrink-0 bg-background/50">
+            <div className="p-4 space-y-4 shrink-0 bg-transparent">
                 {/* XP Widget */}
                 <XPWidget />
 

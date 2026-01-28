@@ -37,7 +37,7 @@ export default function Home() {
 
                         {/* Progress Bar & Text */}
                         <div className="w-64 space-y-4">
-                            <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
+                            <div className="h-1 w-full bg-surface-container rounded-full overflow-hidden">
                                 <motion.div
                                     className="h-full bg-primary rounded-full"
                                     initial={{ x: "-100%" }}

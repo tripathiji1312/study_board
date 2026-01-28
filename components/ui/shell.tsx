@@ -13,7 +13,7 @@ export function Shell({ children, className, ...props }: ShellProps) {
     const [sidebarOpen, setSidebarOpen] = React.useState(false)
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-surface-container-lowest">
             <AppSidebar isOpen={sidebarOpen} onOpenChange={setSidebarOpen} />
             <main
                 className={cn(
