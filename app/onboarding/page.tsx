@@ -20,15 +20,7 @@ import { useTheme } from "next-themes"
 import { cn } from "@/lib/utils"
 import { IconPalette } from "@tabler/icons-react"
 
-const themes = [
-    { name: "Amethyst (Pro)", value: "theme-purple", color: "bg-[#12081d] border-[#3d1a6d]" },
-    { name: "Sakura (Light)", value: "theme-pink", color: "bg-[#fff5f7] border-[#ffb6c1]" },
-    { name: "Rose Noir (Dark)", value: "theme-pink-dark", color: "bg-[#1a0a14] border-[#3a1a2a]" },
-    { name: "Midnight", value: "theme-midnight", color: "bg-[#0a0a23] border-[#1a1a3a]" },
-    { name: "Forest", value: "theme-forest", color: "bg-[#0b1a0b] border-[#1a3a1a]" },
-    { name: "Sunset", value: "theme-sunset", color: "bg-[#1a0b0b] border-[#3a1a1a]" },
-    { name: "Retro Pop", value: "theme-retro-pop", color: "bg-[#fffacd] border-[#ff69b4]" },
-]
+import { themes } from "@/lib/themes"
 
 export default function OnboardingPage() {
     const { data: session, status } = useSession({ required: true })

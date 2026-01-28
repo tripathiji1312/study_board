@@ -121,7 +121,7 @@ export function ExamWidget() {
             <CardContent className="flex-1 flex flex-col gap-4 p-4 pt-0">
                 {nextExam ? (
                     <div className={cn(
-                        "rounded-2xl p-5 flex flex-col items-center justify-center text-center transition-all overflow-hidden relative isolate",
+                        "rounded-2xl p-4 flex flex-col items-center justify-center text-center transition-all overflow-hidden relative isolate shrink-0",
                         getUrgencyColor(nextExam.date)
                     )}>
                         {/* Pattern overlay for texture */}
@@ -146,32 +146,36 @@ export function ExamWidget() {
                 )}
 
                 {allExams.length > 1 && (
-                    <div className="space-y-2 flex-1 min-h-0 overflow-hidden">
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider pl-1 mb-1">Up Next</p>
-                        {allExams.slice(1).map((exam: any) => {
-                            const sub = subjects.find(s => s.id === exam.subjectId)
-                            return (
-                                <div key={exam.id} className="flex items-center justify-between gap-3 text-xs p-3 rounded-xl bg-surface-container hover:bg-surface-container-high transition-colors group">
-                                    <div className="flex flex-col min-w-0 flex-1">
-                                        <span className="font-semibold truncate leading-tight text-foreground">{sub?.name || exam.title}</span>
-                                        <span className="text-[10px] text-muted-foreground leading-tight">{exam.title}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 shrink-0">
-                                        <span className="text-primary font-medium bg-primary/10 px-2 py-0.5 rounded-full text-[10px]">
-                                            {format(new Date(exam.date), "MMM d")}
-                                        </span>
-                                        {exam.source === 'manual' && (
-                                            <button
-                                                onClick={() => deleteExam(Number(exam.id.replace('manual-', '')))}
-                                                className="text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
-                                            >
-                                                <IconTrash className="w-3.5 h-3.5" />
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-                            )
-                        })}
+                    <div className="flex flex-col">
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider pl-1 mb-2">Up Next</p>
+                        <div className="max-h-[140px] overflow-y-auto pr-1">
+                            <div className="space-y-2 pb-1">
+                                {allExams.slice(1).map((exam: any) => {
+                                    const sub = subjects.find(s => s.id === exam.subjectId)
+                                    return (
+                                        <div key={exam.id} className="flex items-center justify-between gap-3 text-xs p-3 rounded-xl bg-surface-container hover:bg-surface-container-high transition-colors group">
+                                            <div className="flex flex-col min-w-0 flex-1">
+                                                <span className="font-semibold truncate leading-tight text-foreground">{sub?.name || exam.title}</span>
+                                                <span className="text-[10px] text-muted-foreground leading-tight">{exam.title}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                <span className="text-primary font-medium bg-primary/10 px-2 py-0.5 rounded-full text-[10px]">
+                                                    {format(new Date(exam.date), "MMM d")}
+                                                </span>
+                                                {exam.source === 'manual' && (
+                                                    <button
+                                                        onClick={() => deleteExam(Number(exam.id.replace('manual-', '')))}
+                                                        className="text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
+                                                    >
+                                                        <IconTrash className="w-3.5 h-3.5" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        </div>
                     </div>
                 )}
             </CardContent>

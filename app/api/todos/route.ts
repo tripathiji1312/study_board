@@ -146,10 +146,12 @@ export async function POST(request: Request) {
                 })
             )
         )
-    } else if (body.text.length > 5) {
+    } else if (body.text && body.text.length > 5) {
         try {
             const groq = await getGroqClient(userId)
             if (groq) {
+                console.log("[Auto-Tag] Starting AI tagging for:", body.text)
+                
                 // 1. Get existing tags for context (USER specific)
                 const existingTags = await prisma.tag.findMany({
                     where: { userId },
@@ -182,12 +184,15 @@ export async function POST(request: Request) {
                 })
 
                 const aiContent = completion.choices[0]?.message?.content
+                console.log("[Auto-Tag] AI Response:", aiContent)
+                
                 if (aiContent) {
                     const result = JSON.parse(aiContent)
 
                     // 3. Process Tags
                     for (const tag of result.tags || []) {
                         const tagName = tag.name.toLowerCase().trim()
+                        console.log("[Auto-Tag] Processing tag:", tagName)
 
                         // Upsert tag (find or create) for USER
                         let tagRecord = await prisma.tag.findUnique({
@@ -202,17 +207,21 @@ export async function POST(request: Request) {
                                     color: tag.color || '#6366f1'
                                 }
                             })
+                            console.log("[Auto-Tag] Created new tag:", tagRecord)
                         }
 
                         // Link to Todo
                         await prisma.todoTag.create({
                             data: { todoId: todo.id, tagId: tagRecord.id }
                         })
+                        console.log("[Auto-Tag] Linked tag to todo")
                     }
                 }
+            } else {
+                console.log("[Auto-Tag] No Groq client available (API key not configured)")
             }
         } catch (error) {
-            console.error("Auto-tagging failed:", error)
+            console.error("[Auto-Tag] Auto-tagging failed:", error)
         }
     }
 

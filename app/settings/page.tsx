@@ -37,12 +37,16 @@ import {
     IconClock,
     IconSparkles,
     IconEye,
-    IconEyeOff
+    IconEyeOff,
+    IconPalette
 } from "@tabler/icons-react"
 import { useStore } from "@/components/providers/store-provider"
 import { toast } from "sonner"
 import { signOut } from "next-auth/react"
 import { IconLogout } from "@tabler/icons-react"
+import { useTheme } from "next-themes"
+import { themes } from "@/lib/themes"
+import { cn } from "@/lib/utils"
 
 export default function SettingsPage() {
     const {
@@ -93,6 +97,7 @@ export default function SettingsPage() {
     const [subCabin, setSubCabin] = React.useState("")
     const [subLabRoom, setSubLabRoom] = React.useState("")
     const [subClassRoom, setSubClassRoom] = React.useState("")
+    const { theme, setTheme } = useTheme()
 
     // Load settings
     React.useEffect(() => {
@@ -239,6 +244,36 @@ export default function SettingsPage() {
                                     <div className="space-y-2">
                                         <Label htmlFor="avatar" className="text-on-surface-variant pl-1">Avatar URL</Label>
                                         <Input id="avatar" value={avatarUrl} onChange={e => setAvatarUrl(e.target.value)} placeholder="https://example.com/me.jpg" className="h-12 rounded-xl bg-surface border-transparent" />
+                                    </div>
+                                </div>
+
+                                <div className="border-t border-border/10 pt-8">
+                                    <h3 className="font-medium text-lg mb-6 flex items-center gap-2 text-on-surface">
+                                        <IconPalette className="w-5 h-5 text-purple-500" /> Appearance
+                                    </h3>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                                        {themes.map((t) => (
+                                            <button
+                                                key={t.value}
+                                                onClick={() => setTheme(t.value)}
+                                                className={cn(
+                                                    "flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all duration-200 text-left relative overflow-hidden",
+                                                    theme === t.value
+                                                        ? "border-primary bg-primary/5 ring-2 ring-primary/20"
+                                                        : "border-border/40 hover:border-border/80 hover:bg-surface-container-high"
+                                                )}
+                                            >
+                                                <div className={cn("h-10 w-10 rounded-full border shadow-sm", t.color)} />
+                                                <div className="flex flex-col items-center z-10">
+                                                    <span className="text-sm font-semibold text-on-surface">{t.name}</span>
+                                                    {theme === t.value && (
+                                                        <span className="text-[10px] text-primary font-bold uppercase tracking-wider mt-1">
+                                                            Active
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </button>
+                                        ))}
                                     </div>
                                 </div>
 

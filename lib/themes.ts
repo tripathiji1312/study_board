@@ -1,0 +1,17 @@
+export const themes = [
+    { name: "Default", value: "light", color: "bg-white border-gray-200" },
+    { name: "Dark", value: "dark", color: "bg-slate-950 border-slate-800" },
+    { name: "System", value: "system", color: "bg-gradient-to-br from-white to-slate-950 border-gray-200" },
+    { name: "Amethyst (Pro)", value: "theme-purple", color: "bg-[#12081d] border-[#3d1a6d]" },
+    { name: "Sakura (Light)", value: "theme-pink", color: "bg-[#fff5f7] border-[#ffb6c1]" },
+    { name: "Rose Noir (Dark)", value: "theme-pink-dark", color: "bg-[#1a0a14] border-[#3a1a2a]" },
+    { name: "Midnight", value: "theme-midnight", color: "bg-[#0a0a23] border-[#1a1a3a]" },
+    { name: "Forest", value: "theme-forest", color: "bg-[#0b1a0b] border-[#1a3a1a]" },
+    { name: "Sunset", value: "theme-sunset", color: "bg-[#1a0b0b] border-[#3a1a1a]" },
+    { name: "Cyberpunk", value: "theme-cyberpunk", color: "bg-[#150a25] border-[#b026ff]" },
+    { name: "Coffee", value: "theme-coffee", color: "bg-[#f5f0e6] border-[#8b5a2b]" },
+    { name: "Nordic", value: "theme-nordic", color: "bg-[#f0f4ff] border-[#3b82f6]" },
+    { name: "Cosmic", value: "theme-cosmic", color: "bg-[#0d0516] border-[#7c3aed]" },
+    { name: "Retro Pop", value: "theme-retro-pop", color: "bg-[#fffacd] border-[#ff69b4]" },
+    { name: "Candy", value: "theme-candy", color: "bg-[#faeef4] border-[#e667af]" },
+]

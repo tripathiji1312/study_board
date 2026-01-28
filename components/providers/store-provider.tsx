@@ -523,7 +523,20 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         if (res.ok) {
             const saved = await res.json()
             setTodos(prev => prev.map(t => t.id === tempId ? saved : t))
-            toast.success("Task added")
+            
+            // Check if AI auto-tagged (no manual tags were provided but tags exist on response)
+            const wasAutoTagged = !todo.tagIds?.length && saved.tags?.length > 0
+            if (wasAutoTagged) {
+                const tagNames = saved.tags.map((t: { name: string }) => `#${t.name}`).join(', ')
+                toast.success("Task added", {
+                    description: `AI tagged: ${tagNames}`
+                })
+                // Refresh tags in case AI created new ones
+                const tagsRes = await fetch('/api/tags')
+                if (tagsRes.ok) setTags(await tagsRes.json())
+            } else {
+                toast.success("Task added")
+            }
         }
     }
 
