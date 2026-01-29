@@ -209,10 +209,10 @@ export default function SettingsPage() {
                 </div>
 
                 <Tabs defaultValue="profile" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3 bg-surface-container-high rounded-[1.5rem] h-14 p-1">
-                        <TabsTrigger value="profile" className="rounded-[1.2rem] h-12 text-base data-[state=active]:bg-surface data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all">Profile</TabsTrigger>
-                        <TabsTrigger value="semesters" className="rounded-[1.2rem] h-12 text-base data-[state=active]:bg-surface data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all">Semesters</TabsTrigger>
-                        <TabsTrigger value="subjects" className="rounded-[1.2rem] h-12 text-base data-[state=active]:bg-surface data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all">Subjects</TabsTrigger>
+                    <TabsList className="w-full bg-surface-container-high rounded-[1.5rem] h-14 p-1.5 gap-1">
+                        <TabsTrigger value="profile" className="flex-1 rounded-[1.2rem] h-full text-sm data-[state=active]:bg-primary data-[state=active]:text-on-primary data-[state=active]:shadow-sm">Profile</TabsTrigger>
+                        <TabsTrigger value="semesters" className="flex-1 rounded-[1.2rem] h-full text-sm data-[state=active]:bg-primary data-[state=active]:text-on-primary data-[state=active]:shadow-sm">Semesters</TabsTrigger>
+                        <TabsTrigger value="subjects" className="flex-1 rounded-[1.2rem] h-full text-sm data-[state=active]:bg-primary data-[state=active]:text-on-primary data-[state=active]:shadow-sm">Subjects</TabsTrigger>
                     </TabsList>
 
                     {/* PROFILE TAB */}

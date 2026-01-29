@@ -23,7 +23,7 @@ export function Shell({ children, className, ...props }: ShellProps) {
                 )}
                 {...props}
             >
-                <div className="container mx-auto p-4 md:p-8 pt-16 md:pt-8 pb-24 md:pb-8 max-w-7xl">
+                <div className="container mx-auto p-4 md:p-8 pt-6 md:pt-8 pb-24 md:pb-8 max-w-7xl">
                     {children}
                 </div>
             </main>
